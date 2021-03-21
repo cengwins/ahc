@@ -13,7 +13,7 @@ We Use [Github Flow](https://guides.github.com/introduction/flow/index.html), So
 
 ## Reporting Bugs
 
-Please se GitHub issues to report bugs  by [opening a new issue](https://github.com/cengwins/ahc/issues/new/choose). Write bug reports with detail, background, and sample code.
+Please se GitHub issues to report bugs  by [opening a new issue](https://github.com/cengwins/ahc/issues/new/choose). Write bug reports in [detail](https://github.com/cengwins/ahc/blob/master/.github/ISSUE_TEMPLATE/bug_report.md).
 
 ## Code of Conduct
 
