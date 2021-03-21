@@ -20,7 +20,7 @@ Please se GitHub issues to report bugs  by [opening a new issue](https://github.
 By participating and contributing to this project, you agree to abide by the [Code of Conduct](https://github.com/cengwins/ahc/blob/master/CODE_OF_CONDUCT.md).
 
 ## License
-By contributing, you agree that your contributions will be licensed under the [license](https://github.com/cengwins/ahc/blob/master/LICENSE) of the AHC project. 
+By contributing, you agree that your contributions will be licensed under the [GNU General Public License v3.0](https://github.com/cengwins/ahc/blob/master/LICENSE) of the AHC project. 
 
 ## References
 This document was adapted from the open-source contribution guidelines of github projects.
