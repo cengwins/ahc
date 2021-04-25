@@ -1,3 +1,3 @@
 # Contributors
 
--[Berker Acır](https://github.com/berkeracir)
+- [Berker Acır](https://github.com/berkeracir)
