@@ -5,4 +5,4 @@
 
 Ertan Onur - [@ertan10r](https://twitter.com/Ertan10r) - eronur@metu.edu.tr
 
-Berke Tezergil - 
+Berke Tezergil - btezergil@gmail.com
