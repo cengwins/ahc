@@ -326,7 +326,7 @@ class Topology:
   def print_forwarding_table(self):
     registry.print_components()
     print('\n'.join([''.join(['{:4}'.format(item) for item in row])
-                     for row in self.ForwardingTable]))
+                     for row in list(self.ForwardingTable.values())]))
 
   # returns the all-seeing eye routing based next hop id
   def get_next_hop(self, fromId, toId):
