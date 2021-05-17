@@ -153,13 +153,22 @@ class ComponentRegistry:
         for p in connectedcmp:
           print(f"\t{i} {p.componentname}.{p.componentinstancenumber}")
 
+  def get_non_channel_components(self):
+    res = []
+    for itemkey in self.components:
+      cmp = self.components[itemkey]
+      if cmp.componentname.find("Channel") != -1:
+        continue
+      res.append(cmp)
+    return res
+
 registry = ComponentRegistry()
 
 class ComponentModel:
   terminated = False
 
   def on_init(self, eventobj: Event):
-    # print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
+    print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
     pass
 
   def on_message_from_bottom(self, eventobj: Event):
