@@ -1,3 +1,8 @@
+import os
+import sys
+
+sys.path.insert(0, os.getcwd())
+
 from Ahc import ComponentModel, Event, ConnectorTypes, Topology, EventTypes
 from Ahc import ComponentRegistry
 
