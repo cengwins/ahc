@@ -41,6 +41,7 @@ class ARGUMENT(Enum):
     PRIVILEGE = "-privilege"
     FORWARDED = "-forwarded"
     MEAN = "-mean"
+    TOTAL = "-total"
 
 def processUserCommand(userInput: str):
     try:
@@ -84,8 +85,8 @@ def helpCommand(cmd=COMMAND.HELP):
               f"\t\"{COMMAND.GET.value} {ARGUMENT.ALL.value} nodeId\"\n"
               f"\t\"{COMMAND.GET.value} {ARGUMENT.ALL.value} [{ARGUMENT.REQUEST.value}/{ARGUMENT.REPLY.value}/{ARGUMENT.PRIVILEGE.value}/{ARGUMENT.FORWARDED.value}]\"\n"
               f"\t\"{COMMAND.GET.value} [{ARGUMENT.REQUEST.value}/{ARGUMENT.REPLY.value}/{ARGUMENT.PRIVILEGE.value}/{ARGUMENT.FORWARDED.value}] nodeId\"\n"
-              f"\t\"{COMMAND.GET.value} {ARGUMENT.MEAN.value}\"\n"
-              f"\t\"{COMMAND.GET.value} {ARGUMENT.MEAN.value} [{ARGUMENT.REQUEST.value}/{ARGUMENT.REPLY.value}/{ARGUMENT.PRIVILEGE.value}/{ARGUMENT.FORWARDED.value}]\"")
+              f"\t\"{COMMAND.GET.value} [{ARGUMENT.MEAN.value}/{ARGUMENT.TOTAL.value}]\"\n"
+              f"\t\"{COMMAND.GET.value} [{ARGUMENT.MEAN.value}/{ARGUMENT.TOTAL.value}] [{ARGUMENT.REQUEST.value}/{ARGUMENT.REPLY.value}/{ARGUMENT.PRIVILEGE.value}/{ARGUMENT.FORWARDED.value}]\"")
     else:
         helpCommand(COMMAND.REQUEST)
         helpCommand(COMMAND.DRAW)
@@ -164,6 +165,7 @@ def getCommand(args):
 
     isAll = ARGUMENT.ALL.value in args
     isMean = ARGUMENT.MEAN.value in args
+    isTotal = ARGUMENT.TOTAL.value in args
 
     isRequest = ARGUMENT.REQUEST.value in args
     isReply = ARGUMENT.REPLY.value in args
@@ -177,6 +179,8 @@ def getCommand(args):
         args.remove(ARGUMENT.ALL.value)
     if isMean:
         args.remove(ARGUMENT.MEAN.value)
+    if isTotal:
+        args.remove(ARGUMENT.TOTAL.value)
     if isRequest:
         args.remove(ARGUMENT.REQUEST.value)
     if isReply:
@@ -186,12 +190,12 @@ def getCommand(args):
     if isForwarded:
         args.remove(ARGUMENT.FORWARDED.value)
 
-    if isTime and not isAll and not isMean:
+    if isTime and not isAll and not (isMean or isTotal):
         if len(args) == 0 and not areAnyOtherArgumentsSet:
             print(f"Sleep amount in critical section is {RicartAgrawalaNode.privilegeSleepAmount} seconds.")
         else:
             helpCommand(COMMAND.GET)
-    elif isAll and not isTime and not isMean:
+    elif isAll and not isTime and not (isMean or isTotal):
         if not areAnyOtherArgumentsSet:
             isRequest = isReply = isPrivilege = isForwarded = True
 
@@ -201,13 +205,13 @@ def getCommand(args):
                 print(getNodeInformation(node, isRequest, isReply, isPrivilege, isForwarded))
         else:
             helpCommand(COMMAND.GET)
-    elif isMean and not isTime and not isAll:
+    elif (isMean or isTotal) and not isTime and not isAll:
         if not areAnyOtherArgumentsSet:
             isRequest = isReply = isPrivilege = isForwarded = True
 
         if len(args) == 0:
             N = len(Topology().nodes)
-            node = RicartAgrawalaNode("", f"Mean of {N} Nodes")
+            node = RicartAgrawalaNode("node", -1)
 
             for nodeID in Topology().nodes:
                 node.privilegeCount += Topology().nodes[nodeID].privilegeCount
@@ -217,14 +221,18 @@ def getCommand(args):
                 node.receivedReplyCount += Topology().nodes[nodeID].receivedReplyCount
                 node.forwardedMessageCount += Topology().nodes[nodeID].forwardedMessageCount
 
-            node.privilegeCount /= N
-            node.sentRequestCount /= N
-            node.sentReplyCount /= N
-            node.receivedRequestCount /= N
-            node.receivedReplyCount /= N
-            node.forwardedMessageCount /= N
-
-            print(getNodeInformation(node, isRequest, isReply, isPrivilege, isForwarded))
+            if isTotal:
+                node.componentinstancenumber = f"Total of {N} Nodes"
+                print(getNodeInformation(node, isRequest, isReply, isPrivilege, isForwarded))
+            if isMean:
+                node.componentinstancenumber = f"Mean of {N} Nodes"
+                node.privilegeCount /= N
+                node.sentRequestCount /= N
+                node.sentReplyCount /= N
+                node.receivedRequestCount /= N
+                node.receivedReplyCount /= N
+                node.forwardedMessageCount /= N
+                print(getNodeInformation(node, isRequest, isReply, isPrivilege, isForwarded))
         else:
             helpCommand(COMMAND.GET)
     else:
