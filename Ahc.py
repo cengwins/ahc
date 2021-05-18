@@ -209,6 +209,13 @@ class ComponentModel:
       self.connectors[name] = channel
     connectornameforchannel = self.componentname + str(self.componentinstancenumber)
     channel.connect_me_to_component(connectornameforchannel, self)
+    self.on_connected_to_channel(name, channel)
+
+  def on_connected_to_channel(self, name, channel):
+    print(f"Connected to channel: {name}:{channel.componentinstancenumber}")
+
+  def unique_name(self):
+    return f"{self.componentname}.{self.componentinstancenumber}"
 
   def terminate(self):
     self.terminated = True
@@ -315,7 +322,7 @@ class Topology:
           #mypath = path[i][j]
           # print(f"{i}to{j} path = {path[i][j]} nexthop = {path[i][j][1]}")
           #self.ForwardingTable[i][j] = path[i][j][1]
-        
+
           # print(f"{i}to{j}path = NONE")
           #self.ForwardingTable[i][j] = inf  # No paths
         #except IndexError:
