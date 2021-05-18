@@ -295,7 +295,10 @@ def graphDrawingDaemon():
         drawGraph()
         sleep(1.0/FPS)
 
-def completeBinomialGraph(n, p):
+def completeBinomialGraph(n, p, seed=None):
+    if seed is not None:
+        random.seed(seed)
+
     if p <= 0:
         G = nx.empty_graph(n)
     elif p >= 1:
@@ -312,10 +315,13 @@ def completeBinomialGraph(n, p):
                 if random.random() < p:
                     G.add_edge(*edge)
 
+    if seed is not None:
+        random.seed()
+
     return G
 
 def main():
-    G = completeBinomialGraph(20, 1.000001)
+    G = completeBinomialGraph(20, 0.00000001, seed=5)
 
     topology = Topology()
     topology.construct_from_graph(G, RicartAgrawalaNode, P2PFIFOPerfectChannel)
