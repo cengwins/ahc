@@ -1,9 +1,13 @@
-import random
+import os
+import sys
 import time
+import random
 from enum import Enum
 
-import matplotlib.pyplot as plt
+sys.path.insert(0, os.getcwd())
+
 import networkx as nx
+import matplotlib.pyplot as plt
 
 from Ahc import ComponentModel, Event, ConnectorTypes, Topology
 from Ahc import ComponentRegistry
