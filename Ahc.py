@@ -171,7 +171,8 @@ class ComponentModel:
   def on_message_from_peer(self, eventobj: Event):
     print(f"{EventTypes.MFRP}  {self.componentname}.{self.componentinstancenumber}")
 
-  def __init__(self, componentname, componentinstancenumber, num_worker_threads=1):
+  def __init__(self, componentname, componentinstancenumber, context=None, num_worker_threads=1):
+    self.context = context
     self.eventhandlers = {EventTypes.INIT: self.on_init, EventTypes.MFRB: self.on_message_from_bottom,
                           EventTypes.MFRT: self.on_message_from_top, EventTypes.MFRP: self.on_message_from_peer}
     # Add default handlers to all instantiated components.
@@ -255,12 +256,12 @@ class Topology:
   nodes = {}
   channels = {}
 
-  def construct_from_graph(self, G: nx.Graph, nodetype, channeltype):
+  def construct_from_graph(self, G: nx.Graph, nodetype, channeltype, context):
     self.G = G
     nodes = list(G.nodes)
     edges = list(G.edges)
     for i in nodes:
-      cc = nodetype(nodetype.__name__, i)
+      cc = nodetype(nodetype.__name__, i, context)
       self.nodes[i] = cc
     for k in edges:
       ch = channeltype(channeltype.__name__, str(k[0]) + "-" + str(k[1]))
