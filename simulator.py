@@ -72,5 +72,5 @@ if __name__ == "__main__":
 
     topo.start()
 
-    topo.plot()
+    N.plot()
     plt.show()
