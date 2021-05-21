@@ -19,9 +19,9 @@ from Ahc import (ComponentModel, Event, ConnectorTypes, Topology,
 parser = ArgumentParser()
 parser.add_argument("simulation_ticks", type=int)
 parser.add_argument("ms_per_tick", type=int)
-parser.add_argument("--node_min_activeness_after_receive", type=int, default=3)
-parser.add_argument("--node_max_activeness_after_receive", type=int, default=10)
-parser.add_argument("--node_activeness_communication_prob", type=float, default=0.5)
+parser.add_argument("--node_min_activeness_after_receive", type=int, default=3) # paket aldiktan sonra min bu kadar aktif kal
+parser.add_argument("--node_max_activeness_after_receive", type=int, default=10) # paket aldiktan sonra max bu kadar aktif kal
+parser.add_argument("--node_activeness_communication_prob", type=float, default=0.5) # alive iken baska nodelara paket gonderme olasiligi
 parser.add_argument("--node_initial_activeness_prob", type=float, default=0.8)
 
 sp = parser.add_subparsers()
