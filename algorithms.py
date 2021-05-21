@@ -8,6 +8,7 @@ import random
 import networkx as nx
 from enum import Enum
 import matplotlib.pyplot as plt
+from datetime import datetime as dt
 
 from Channels import P2PFIFOPerfectChannel
 from LinkLayers.GenericLinkLayer import LinkLayer
@@ -48,17 +49,14 @@ class ApplicationLayerComponent(ComponentModel):
         
         return GenericMessage(hdr, payload)
 
-    # def on_basic_message(self, *args, **kwargs):
-    #     print(f"Node-{self.componentinstancenumber}: on_basic_message: {args}, {kwargs}")
-
-    # def on_control_message(self, *args, **kwargs):
-    #     print(f"Node-{self.componentinstancenumber}: on_control_message: {args}, {kwargs}")
+    def send_random_basic_message(self, to: int) -> None:
+        self.send_down(Event(self, EventTypes.MFRT, self.prepare_application_layer_message(ApplicationLayerMessageType.BASIC, to, str(dt.now().timestamp()))))
 
     def on_init(self, eventobj: Event):
         print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
 
         if self.componentinstancenumber == 0:
-            self.send_down(Event(self, EventTypes.MFRT, self.prepare_application_layer_message(ApplicationLayerMessageType.BASIC, 3, "hey!")))
+            self.send_random_basic_message(3)
 
     def on_message_from_bottom(self, eventobj: Event):
         applmessage = eventobj.eventcontent
