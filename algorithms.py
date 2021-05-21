@@ -1,7 +1,9 @@
 import os
+import queue
 import sys
 import time
 import json
+import queue
 import random
 import networkx as nx
 from enum import Enum
@@ -17,108 +19,86 @@ from Ahc import (ComponentModel, Event, ConnectorTypes, Topology,
 registry = ComponentRegistry()
 
 # define your own message types
-class ApplicationLayerMessageTypes(Enum):
-  PROPOSE = "PROPOSE"
-  ACCEPT = "ACCEPT"
+class ApplicationLayerMessageType(Enum):
+    BASIC = "basic"
+    CONTROL = "control"
 
 # define your own message header structure
 class ApplicationLayerMessageHeader(GenericMessageHeader):
-  pass
+    pass
 
 # define your own message payload structure
 class ApplicationLayerMessagePayload(GenericMessagePayload):
-  pass
-
-class ApplicationLayerComponent(ComponentModel):
-  def on_init(self, eventobj: Event):
-    print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
-    print(self.context)
-
-    
-    if self.componentinstancenumber == 0:
-      print("HEEYOOOOO!!!", flush=True)
-      # destination = random.randint(len(Topology.G.nodes))
-      destination = 1
-      hdr = ApplicationLayerMessageHeader(ApplicationLayerMessageTypes.PROPOSE, self.componentinstancenumber,
-                                          destination)
-      payload = ApplicationLayerMessagePayload("23")
-      proposalmessage = GenericMessage(hdr, payload)
-      randdelay = random.randint(0, 5)
-      #time.sleep(randdelay)
-      self.send_self(Event(self, "propose", proposalmessage))
-    elif self.componentinstancenumber == 1:
-        #time.sleep(1)
-        pass
-    else:
-      pass
-
-  def on_message_from_bottom(self, eventobj: Event):
-    try:
-      applmessage = eventobj.eventcontent
-      hdr = applmessage.header
-      if hdr.messagetype == ApplicationLayerMessageTypes.ACCEPT:
-        print(f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
-      elif hdr.messagetype == ApplicationLayerMessageTypes.PROPOSE:
-        print(f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
-    except AttributeError:
-      print("Attribute Error")
-
-  # print(f"{self.componentname}.{self.componentinstancenumber}: Gotton message {eventobj.content} ")
-  # value = eventobj.content.value
-  # value += 1
-  # newmsg = MessageContent( value )
-  # myevent = Event( self, "agree", newmsg )
-  # self.trigger_event(myevent)
-
-  def on_propose(self, eventobj: Event):
-    destination = 1
-    hdr = ApplicationLayerMessageHeader(ApplicationLayerMessageTypes.ACCEPT, self.componentinstancenumber, destination)
-    payload = ApplicationLayerMessagePayload("23")
-    proposalmessage = GenericMessage(hdr, payload)
-    self.send_down(Event(self, EventTypes.MFRT, proposalmessage))
-
-  def on_agree(self, eventobj: Event):
-    print(f"Agreed on {eventobj.eventcontent}")
-
-  def on_timer_expired(self, eventobj: Event):
     pass
 
-  def __init__(self, componentname, componentinstancenumber, context):
-    self.context = context
-    super().__init__(componentname, componentinstancenumber, context=context)
-    self.eventhandlers["propose"] = self.on_propose
-    self.eventhandlers["agree"] = self.on_agree
-    self.eventhandlers["timerexpired"] = self.on_timer_expired
+class ApplicationLayerComponent(ComponentModel):
+    def __init__(self, componentname, componentinstancenumber, context):
+        super().__init__(componentname, componentinstancenumber, context=context)
+
+        self.context = context
+        # self.eventhandlers[ApplicationLayerMessageType.BASIC] = self.on_basic_message
+        # self.eventhandlers[ApplicationLayerMessageType.CONTROL] = self.on_control_message
+
+        self.basic_message_queue = queue.Queue(maxsize=-1)
+        self.control_message_queue = queue.Queue(maxsize=-1)
+
+    def prepare_application_layer_message(self, message_type: ApplicationLayerMessageType, destination_node_id: int, payload: object) -> GenericMessage:
+        hdr = ApplicationLayerMessageHeader(message_type, self.componentinstancenumber, destination_node_id)
+        payload = ApplicationLayerMessagePayload(payload)
+        
+        return GenericMessage(hdr, payload)
+
+    # def on_basic_message(self, *args, **kwargs):
+    #     print(f"Node-{self.componentinstancenumber}: on_basic_message: {args}, {kwargs}")
+
+    # def on_control_message(self, *args, **kwargs):
+    #     print(f"Node-{self.componentinstancenumber}: on_control_message: {args}, {kwargs}")
+
+    def on_init(self, eventobj: Event):
+        print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
+
+        if self.componentinstancenumber == 0:
+            self.send_down(Event(self, EventTypes.MFRT, self.prepare_application_layer_message(ApplicationLayerMessageType.BASIC, 3, "hey!")))
+
+    def on_message_from_bottom(self, eventobj: Event):
+        applmessage = eventobj.eventcontent
+        hdr = applmessage.header
+
+        print(f"Node-{self.componentinstancenumber}: Node-{hdr.messagefrom} has sent {hdr.messagetype} message (payload: {applmessage.payload})")
+
+        if hdr.messagetype == ApplicationLayerMessageType.BASIC:
+            self.basic_message_queue.put_nowait(applmessage)
+        elif hdr.messagetype == ApplicationLayerMessageType.CONTROL:
+            self.control_message_queue.put_nowait(applmessage)
 
 class AdHocNode(ComponentModel):
+    def __init__(self, componentname, componentid, context):
+        self.context = context
+        # SUBCOMPONENTS
+        self.appllayer = ApplicationLayerComponent("ApplicationLayer", componentid, context=self.context)
+        self.netlayer = AllSeingEyeNetworkLayer("NetworkLayer", componentid)
+        self.linklayer = LinkLayer("LinkLayer", componentid)
+        # self.failuredetect = GenericFailureDetector("FailureDetector", componentid)
 
-  def on_init(self, eventobj: Event):
-    print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
+        # CONNECTIONS AMONG SUBCOMPONENTS
+        self.appllayer.connect_me_to_component(ConnectorTypes.DOWN, self.netlayer)
+        # self.failuredetect.connectMeToComponent(PortNames.DOWN, self.netlayer)
+        self.netlayer.connect_me_to_component(ConnectorTypes.UP, self.appllayer)
+        # self.netlayer.connectMeToComponent(PortNames.UP, self.failuredetect)
+        self.netlayer.connect_me_to_component(ConnectorTypes.DOWN, self.linklayer)
+        self.linklayer.connect_me_to_component(ConnectorTypes.UP, self.netlayer)
 
-  def on_message_from_top(self, eventobj: Event):
-    self.send_down(Event(self, EventTypes.MFRT, eventobj.eventcontent))
+        # Connect the bottom component to the composite component....
+        self.linklayer.connect_me_to_component(ConnectorTypes.DOWN, self)
+        self.connect_me_to_component(ConnectorTypes.UP, self.linklayer)
 
-  def on_message_from_bottom(self, eventobj: Event):
-    self.send_up(Event(self, EventTypes.MFRB, eventobj.eventcontent))
+        super().__init__(componentname, componentid, context=self.context)
 
-  def __init__(self, componentname, componentid, context):
-    self.context = context
-    # SUBCOMPONENTS
-    self.appllayer = ApplicationLayerComponent("ApplicationLayer", componentid, context=self.context)
-    self.netlayer = AllSeingEyeNetworkLayer("NetworkLayer", componentid)
-    self.linklayer = LinkLayer("LinkLayer", componentid)
-    # self.failuredetect = GenericFailureDetector("FailureDetector", componentid)
+    def on_init(self, eventobj: Event):
+        print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
 
-    # CONNECTIONS AMONG SUBCOMPONENTS
-    self.appllayer.connect_me_to_component(ConnectorTypes.DOWN, self.netlayer)
-    # self.failuredetect.connectMeToComponent(PortNames.DOWN, self.netlayer)
-    self.netlayer.connect_me_to_component(ConnectorTypes.UP, self.appllayer)
-    # self.netlayer.connectMeToComponent(PortNames.UP, self.failuredetect)
-    self.netlayer.connect_me_to_component(ConnectorTypes.DOWN, self.linklayer)
-    self.linklayer.connect_me_to_component(ConnectorTypes.UP, self.netlayer)
+    def on_message_from_top(self, eventobj: Event):
+        self.send_down(Event(self, EventTypes.MFRT, eventobj.eventcontent))
 
-    # Connect the bottom component to the composite component....
-    self.linklayer.connect_me_to_component(ConnectorTypes.DOWN, self)
-    self.connect_me_to_component(ConnectorTypes.UP, self.linklayer)
-
-    super().__init__(componentname, componentid, context=self.context)
+    def on_message_from_bottom(self, eventobj: Event):
+        self.send_up(Event(self, EventTypes.MFRB, eventobj.eventcontent))
