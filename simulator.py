@@ -121,7 +121,7 @@ def run_dijkstra_scholten_simulation(args):
                 packages_waiting_on_queue,
                 control_packets_sent,
                 (control_packets_sent / packages_sent) if packages_sent > 0 else 0, # TODO: Fix later, find a better soln,,,
-                ((stats["df"]["control_packets_sent"].sum() + control_packets_sent) / total_pkgs_sent_cum) if total_pkgs_sent_cum > 0 else 0
+                (((stats["df"]["control_packets_sent"].sum() + control_packets_sent) / total_pkgs_sent_cum) if total_pkgs_sent_cum > 0 else 0) * 100
             ]
 
             # stats["dead_nodes"].append(num_dead_nodes)
@@ -148,11 +148,11 @@ def run_dijkstra_scholten_simulation(args):
             axes[1][1].cla()
 
             sns.lineplot(data=stats["df"]["active_nodes"], ax=axes[0][0], color="orange")
-            sns.lineplot(data=stats["df"]["dead_nodes"], ax=axes[1][0], color="blue")
+            sns.lineplot(data=stats["df"]["dead_nodes"], ax=axes[0][0], color="blue")
             sns.lineplot(data=stats["df"]["packets_in_transmit"], ax=axes[0][1], color="purple")
             sns.lineplot(data=stats["df"]["control_packets_sent"], ax=axes[0][1], color="green")
+            sns.lineplot(data=stats["df"]["control_total_cumulative_ratio"], ax=axes[1][0], color="mediumslateblue")
             sns.lineplot(data=stats["df"]["control_basic_instant_ratio"], ax=axes[1][1], color="red")
-            sns.lineplot(data=stats["df"]["control_total_cumulative_ratio"], ax=axes[1][1], color="mediumslateblue")
             # sns.lineplot(data=stats["active_nodes"], ax=axes, color="red")
             # sns.lineplot(data=stats["dead_nodes"], ax=axes, color="mediumslateblue")
             # sns.lineplot(data=stats["packages_in_transmit"], ax=axes, color="green")
