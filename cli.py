@@ -33,6 +33,8 @@ parser.add_argument("--hard_stop_min_tick", type=int, default=50)
 parser.add_argument("--hard_stop_max_tick", type=int, default=300)
 parser.add_argument("--hard_stop_prob", type=float, default=0.5)
 
+parser.add_argument("--no_realtime_plot", action="store_true", default=False)
+
 sp = parser.add_subparsers()
 
 erg_parser = sp.add_parser("erg")
