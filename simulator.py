@@ -10,7 +10,7 @@ from datetime import datetime as dt
 
 from Ahc import Topology
 from graph import ERG, Grid, Star
-from algorithms import AdHocNode, AHCNodeSimulationStatus
+from dijkstra_scholten import DijkstraScholtenAdHocNode, DSAHCNodeSimulationStatus
 from Channels import P2PFIFOPerfectChannel
 
 def run_dijkstra_scholten_simulation(args):
@@ -54,7 +54,7 @@ def run_dijkstra_scholten_simulation(args):
     # plt.show()
 
     topo = Topology()
-    topo.construct_from_graph(N.G, AdHocNode, P2PFIFOPerfectChannel, context=topo_context)
+    topo.construct_from_graph(N.G, DijkstraScholtenAdHocNode, P2PFIFOPerfectChannel, context=topo_context)
 
     topo.start()
 
@@ -86,9 +86,9 @@ def run_dijkstra_scholten_simulation(args):
             for node in topo.nodes.values():
                 new_state, pkg_sent_to_friend = node.simulation_tick()
 
-                if new_state == AHCNodeSimulationStatus.ACTIVE:
+                if new_state == DSAHCNodeSimulationStatus.ACTIVE:
                     num_nodes_active += 1
-                elif new_state == AHCNodeSimulationStatus.OUT_OF_CLOCK:
+                elif new_state == DSAHCNodeSimulationStatus.OUT_OF_CLOCK:
                     num_dead_nodes += 1
 
                 if pkg_sent_to_friend is not None:
