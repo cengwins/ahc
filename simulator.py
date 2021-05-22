@@ -36,6 +36,8 @@ def run_dijkstra_scholten_simulation(args):
         hard_stop_on_tick = [random.randint(args.hard_stop_min_tick, args.hard_stop_max_tick) for _ in range(total_nodes)]
 
     node_active_ticks_initial = [random.randint(args.node_min_activeness_after_receive, args.node_max_activeness_after_receive) if random.random() <= args.node_initial_activeness_prob else 0 for _ in range(total_nodes)]
+    alive_nodes = list(range(total_nodes))
+    
     topo_context = {
         "network": N,
         "ms_per_tick": args.ms_per_tick,
@@ -46,7 +48,8 @@ def run_dijkstra_scholten_simulation(args):
         "max_activeness_after_receive": args.node_max_activeness_after_receive,
         "node_package_process_per_tick": args.node_package_process_per_tick,
         "passiveness_death_thresh": args.passiveness_death_thresh,
-        "hard_stop_on_tick": hard_stop_on_tick
+        "hard_stop_on_tick": hard_stop_on_tick,
+        "alive_nodes": alive_nodes
     }
 
     print(topo_context)
@@ -62,9 +65,12 @@ def run_dijkstra_scholten_simulation(args):
         "df": pd.DataFrame(data={
             "dead_nodes": [],
             "active_nodes": [],
-            "packages_in_transmit": [],
+            "packets_in_transmit": [],
+            "queued_packets": [],
+            "control_packets_sent": []
         }),
-        "terminated_on_tick": None
+        "terminated_on_tick": None,
+        "announced_on_tick": None
     }
 
     fig, axes = plt.subplots(1, 1)
@@ -82,21 +88,28 @@ def run_dijkstra_scholten_simulation(args):
             packages_waiting_on_queue = 0
             num_nodes_active = 0
             num_dead_nodes = 0
+            break_this_tick = False
+            control_packets_sent = 0
 
-            for node in topo.nodes.values():
-                new_state, pkg_sent_to_friend = node.simulation_tick()
+            for index, node in topo.nodes.items():
+                new_state, pkg_sent_to_friend, cps = node.simulation_tick()
+
+                if index == N.root and new_state is None:
+                    break_this_tick = True
 
                 if new_state == DSAHCNodeSimulationStatus.ACTIVE:
                     num_nodes_active += 1
-                elif new_state == DSAHCNodeSimulationStatus.OUT_OF_CLOCK:
+                elif new_state == DSAHCNodeSimulationStatus.OUT_OF_TREE:
                     num_dead_nodes += 1
 
                 if pkg_sent_to_friend is not None:
                     packages_sent += 1
+
+                control_packets_sent += cps
                 
                 packages_waiting_on_queue += node.waiting_packages_on_queue
 
-            stats["df"].loc[t-1] = [num_dead_nodes, num_nodes_active, packages_sent]
+            stats["df"].loc[t-1] = [num_dead_nodes, num_nodes_active, packages_sent, packages_waiting_on_queue, control_packets_sent]
 
             # stats["dead_nodes"].append(num_dead_nodes)
             # stats["active_nodes"].append(num_nodes_active)
@@ -110,6 +123,9 @@ def run_dijkstra_scholten_simulation(args):
 
                 if args.exit_on_termination:
                     break
+
+            if break_this_tick:
+                break
 
             # axes.scatter(x=t, y=num_nodes_active)
             axes.cla()

@@ -28,6 +28,10 @@ class DSAHCNodeSimulationStatus(Enum):
     ACTIVE = "active"
     PASSIVE = "passive"
     OUT_OF_CLOCK = "ooc"
+    OUT_OF_TREE = "oot"
+
+    def __str__(self):
+        return self.name
 
 # define your own message header structure
 class ApplicationLayerMessageHeader(GenericMessageHeader):
@@ -63,16 +67,21 @@ class DijkstraScholtenApplicationLayerComponent(ComponentModel):
         else:
             self.hard_stop_on_tick = context["hard_stop_on_tick"][self.componentinstancenumber]
 
-        self.friend_ids = [i for i in context["network"].G.nodes() if i != componentinstancenumber]
-
         self.__tick_n = 0
         self._passive_counter = 0
 
         self._child_counter = 0
+        self._parent_node = None
+        self._in_tree = False
+        self._children = []
+        
+        self._cms = 0
+
         self._i_am_root = context["network"].root == self.componentinstancenumber
 
         if self._i_am_root:
-            self.alive_for_next_ticks = 10**6 # not inf, but enough!
+            self.alive_for_next_ticks = 5 # this may change though...
+            self._in_tree = True
         else:
             self.alive_for_next_ticks = 0
 
@@ -87,7 +96,13 @@ class DijkstraScholtenApplicationLayerComponent(ComponentModel):
 
     def send_random_basic_message(self, to: int) -> None:
         self._child_counter += 1
+        self._children.append(to)
         self.send_down(Event(self, EventTypes.MFRT, self.prepare_application_layer_message(ApplicationLayerMessageType.BASIC, to, str(dt.now().timestamp()))))
+
+    def send_ack_control_message(self, to: int, is_dead: bool) -> None:
+        # print(f"send_ack_control_message: N-{self.componentinstancenumber} ==> N-{to} ({self._parent_node}) : {'DEAD' if is_dead else 'PKG_RESP'}")
+        self.send_down(Event(self, EventTypes.MFRT, self.prepare_application_layer_message(ApplicationLayerMessageType.CONTROL, to, str(dt.now().timestamp()))))
+        self._cms += 1
 
     def on_init(self, eventobj: Event):
         # print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
@@ -101,29 +116,77 @@ class DijkstraScholtenApplicationLayerComponent(ComponentModel):
 
         if hdr.messagetype == ApplicationLayerMessageType.BASIC:
             self.basic_message_queue.put_nowait(applmessage)
+
+            if self._in_tree:
+                self.send_ack_control_message(hdr.messagefrom, False)
+            else:
+                self._parent_node = hdr.messagefrom
+                self._in_tree = True
+
         elif hdr.messagetype == ApplicationLayerMessageType.CONTROL:
             # self.control_message_queue.put_nowait(applmessage)
-            self._child_counter -= 1
+
+            try:
+                self._children.remove(hdr.messagefrom)
+                self._child_counter -= 1
+            except ValueError as e:
+                # print(f"\n\n\n{self.componentinstancenumber}: {e} {hdr.messagefrom} {self._children}\n\n\n")
+                pass
+
+    def exit_tree(self):
+        # Exit from the tree
+        if self._in_tree:
+            self.send_ack_control_message(self._parent_node, True)
+            self._in_tree = False
+            self._parent_node = None
+
+        self.context["alive_nodes"].remove(self.componentinstancenumber)
 
     def simulation_tick(self):
         next_state = None
         got_packages_from = None
         to_friend = None
 
-        if self.__tick_n >= self.simulation_ticks_total:
-            next_state = DSAHCNodeSimulationStatus.OUT_OF_CLOCK
+        _upd_children = []
+
+        for c in self._children:
+            if c in self.context["alive_nodes"]:
+                _upd_children.append(c)
+
+        self._children = _upd_children
+        self._child_counter = len(self._children)
+
+        if self.simulation_state == DSAHCNodeSimulationStatus.OUT_OF_TREE:
+            next_state = DSAHCNodeSimulationStatus.OUT_OF_TREE
+            print(f"   ==> N-{self.componentinstancenumber}: OUT OF TREE")
+        elif self.__tick_n >= self.simulation_ticks_total:
+            self.exit_tree()
+            next_state = DSAHCNodeSimulationStatus.OUT_OF_TREE
         elif self._passive_counter >= self.die_passiveness_threshold:
-            next_state = DSAHCNodeSimulationStatus.OUT_OF_CLOCK
+            self.exit_tree()
+            next_state = DSAHCNodeSimulationStatus.OUT_OF_TREE
         elif self.__tick_n >= self.hard_stop_on_tick:
-            next_state = DSAHCNodeSimulationStatus.OUT_OF_CLOCK
+            self.exit_tree()
+            next_state = DSAHCNodeSimulationStatus.OUT_OF_TREE
             print(f"   ==> N-{self.componentinstancenumber}: HARD STOP")
         else:
             if self.simulation_state == DSAHCNodeSimulationStatus.OUT_OF_CLOCK:
                 next_state = DSAHCNodeSimulationStatus.OUT_OF_CLOCK
             elif self.simulation_state == DSAHCNodeSimulationStatus.PASSIVE:
                 if self.basic_message_queue.empty():
-                    # no incoming package, still passive.
-                    next_state = DSAHCNodeSimulationStatus.PASSIVE
+                    if self._in_tree and self._child_counter == 0:
+                        if self._i_am_root:
+                            print(f"  **ROOT** N-{self.componentinstancenumber}: Termination!!!")
+                            __cms =  self._cms
+                            self._cms = 0
+                            return None, None, __cms
+                        else:
+                            self.exit_tree()
+                            next_state = DSAHCNodeSimulationStatus.OUT_OF_TREE
+                            print(f"   ==> N-{self.componentinstancenumber}: OUT OF TREE")
+                    else:
+                        # no incoming package, still passive.
+                        next_state = DSAHCNodeSimulationStatus.PASSIVE
                 else:
                     got_packages_from = []
 
@@ -150,8 +213,16 @@ class DijkstraScholtenApplicationLayerComponent(ComponentModel):
 
                 if random.random() <= self.communication_on_active_prob:
                     # send package to a random friend..
-                    to_friend = random.choice(self.friend_ids)
-                    self.send_random_basic_message(to_friend)
+
+                    _alive_ones = [n for n in self.context["alive_nodes"] if n != self.componentinstancenumber]
+
+                    if len(_alive_ones) == 0: # everyone is dead!!!
+                        # print(f"  **ROOT** N-{self.componentinstancenumber}: Eveyone is dead!!!")
+                        # return None, None       # time to go!
+                        to_friend = None
+                    else:
+                        to_friend = random.choice(_alive_ones)
+                        self.send_random_basic_message(to_friend)
 
                 self.alive_for_next_ticks -= 1
 
@@ -173,7 +244,7 @@ class DijkstraScholtenApplicationLayerComponent(ComponentModel):
         # SPF: sent package to friend
         # ANT: alive next ticks
         # P2P: packages to process
-        # print(f"   ==> N-{self.componentinstancenumber}: ST: {self.simulation_state}, NS: {next_state}, GPF: {got_packages_from}, SPF: {to_friend}, ANT: {self.alive_for_next_ticks}, P2P: {self.basic_message_queue.qsize()}")
+        # print(f"   {'ROOT' if self._i_am_root else '==>'} N-{self.componentinstancenumber}: P: {self._parent_node}, CC: ({self._child_counter}) {self._children}, ST: {self.simulation_state}, NS: {next_state}, GPF: {got_packages_from}, SPF: {to_friend}, ANT: {self.alive_for_next_ticks}, P2P: {self.basic_message_queue.qsize()}")
 
         # time.sleep(self.sleep_ms_per_tick / 1000)
         self.__tick_n += 1
@@ -184,7 +255,10 @@ class DijkstraScholtenApplicationLayerComponent(ComponentModel):
         elif self.simulation_state == DSAHCNodeSimulationStatus.ACTIVE:
             self._passive_counter = 0
 
-        return next_state, to_friend
+        __cms =  self._cms
+        self._cms = 0
+
+        return next_state, to_friend, __cms
 
 class DijkstraScholtenAdHocNode(ComponentModel):
     def __init__(self, componentname, componentid, context):
@@ -224,7 +298,7 @@ class DijkstraScholtenAdHocNode(ComponentModel):
 
     @property
     def waiting_packages_on_queue(self):
-        if self.appllayer.simulation_state == DSAHCNodeSimulationStatus.OUT_OF_CLOCK:
+        if self.appllayer.simulation_state == DSAHCNodeSimulationStatus.OUT_OF_CLOCK or self.appllayer.simulation_state == DSAHCNodeSimulationStatus.OUT_OF_TREE:
             return 0
 
         return self.appllayer.basic_message_queue.qsize()
