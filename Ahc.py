@@ -34,6 +34,7 @@ import datetime
 import queue
 from enum import Enum
 from threading import Thread, Lock
+from random import sample
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -360,3 +361,6 @@ class Topology:
     plt.draw()
     print(self.nodecolors)
     #self.lock.release()
+
+  def get_random_node(self):
+    return self.nodes[sample(self.G.nodes(), 1)[0]]
