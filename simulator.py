@@ -28,9 +28,15 @@ parser.add_argument("--node_max_activeness_after_receive", type=int, default=5) 
 parser.add_argument("--node_activeness_communication_prob", type=float, default=0.5) # alive iken baska nodelara paket gonderme olasiligi
 parser.add_argument("--node_initial_activeness_prob", type=float, default=0.5)
 parser.add_argument("--node_package_process_per_tick", type=int, default=5)
+
 parser.add_argument("--run_until_termination", action="store_true", default=False)
 parser.add_argument("--exit_on_termination", action="store_true", default=False)
+
 parser.add_argument("--passiveness_death_thresh", type=int, default=20)
+parser.add_argument("--hard_stop_nodes", action="store_true", default=False)
+parser.add_argument("--hard_stop_min_tick", type=int, default=50)
+parser.add_argument("--hard_stop_max_tick", type=int, default=300)
+parser.add_argument("--hard_stop_prob", type=float, default=0.5)
 
 sp = parser.add_subparsers()
 
@@ -65,6 +71,14 @@ if __name__ == "__main__":
     if args.run_until_termination:
         args.simulation_ticks = 10**10
 
+    assert args.hard_stop_max_tick < args.simulation_ticks
+    assert args.hard_stop_min_tick > 0
+
+    hard_stop_on_tick = None
+
+    if args.hard_stop_nodes:
+        hard_stop_on_tick = [random.randint(args.hard_stop_min_tick, args.hard_stop_max_tick) for _ in range(total_nodes)]
+
     node_active_ticks_initial = [random.randint(args.node_min_activeness_after_receive, args.node_max_activeness_after_receive) if random.random() <= args.node_initial_activeness_prob else 0 for _ in range(total_nodes)]
     topo_context = {
         "network": N,
@@ -75,7 +89,8 @@ if __name__ == "__main__":
         "min_activeness_after_receive": args.node_min_activeness_after_receive,
         "max_activeness_after_receive": args.node_max_activeness_after_receive,
         "node_package_process_per_tick": args.node_package_process_per_tick,
-        "passiveness_death_thresh": args.passiveness_death_thresh
+        "passiveness_death_thresh": args.passiveness_death_thresh,
+        "hard_stop_on_tick": hard_stop_on_tick
     }
 
     print(topo_context)

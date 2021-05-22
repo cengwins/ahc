@@ -58,6 +58,11 @@ class ApplicationLayerComponent(ComponentModel):
         self.package_process_per_tick = context["node_package_process_per_tick"]
         self.die_passiveness_threshold = context["passiveness_death_thresh"]
 
+        if context["hard_stop_on_tick"] is None:
+            self.hard_stop_on_tick = None
+        else:
+            self.hard_stop_on_tick = context["hard_stop_on_tick"][self.componentinstancenumber]
+
         self.friend_ids = [i for i in context["network"].G.nodes() if i != componentinstancenumber]
 
         self.__tick_n = 0
@@ -99,6 +104,9 @@ class ApplicationLayerComponent(ComponentModel):
             next_state = AHCNodeSimulationStatus.OUT_OF_CLOCK
         elif self._passive_counter >= self.die_passiveness_threshold:
             next_state = AHCNodeSimulationStatus.OUT_OF_CLOCK
+        elif self.__tick_n >= self.hard_stop_on_tick:
+            next_state = AHCNodeSimulationStatus.OUT_OF_CLOCK
+            print(f"   ==> N-{self.componentinstancenumber}: HARD STOP")
         else:
             if self.simulation_state == AHCNodeSimulationStatus.OUT_OF_CLOCK:
                 next_state = AHCNodeSimulationStatus.OUT_OF_CLOCK
