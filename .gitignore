@@ -1,6 +1,7 @@
 # Custom
 .DS_Store
 simdump/
+simdump_dev/
 
 
 # Byte-compiled / optimized / DLL files
