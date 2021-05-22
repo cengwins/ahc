@@ -67,15 +67,17 @@ def run_dijkstra_scholten_simulation(args):
             "active_nodes": [],
             "packets_in_transmit": [],
             "queued_packets": [],
-            "control_packets_sent": []
+            "control_packets_sent": [],
+            "control_basic_instant_ratio": [],
+            "control_total_cumulative_ratio": [],
         }),
         "terminated_on_tick": None,
         "announced_on_tick": None
     }
 
-    fig, axes = plt.subplots(1, 1)
-    fig.set_figwidth(20)
-    fig.set_figheight(5)
+    fig, axes = plt.subplots(2, 2)
+    fig.set_figwidth(8)
+    fig.set_figheight(8)
     # fig.tight_layout()
 
     input("\n>>> Proceed ?")
@@ -109,7 +111,17 @@ def run_dijkstra_scholten_simulation(args):
                 
                 packages_waiting_on_queue += node.waiting_packages_on_queue
 
-            stats["df"].loc[t-1] = [num_dead_nodes, num_nodes_active, packages_sent, packages_waiting_on_queue, control_packets_sent]
+            total_pkgs_sent_cum = (stats["df"]["control_packets_sent"].sum() + control_packets_sent + stats["df"]["packets_in_transmit"].sum() + packages_sent)
+
+            stats["df"].loc[t-1] = [
+                num_dead_nodes,
+                num_nodes_active,
+                packages_sent,
+                packages_waiting_on_queue,
+                control_packets_sent,
+                (control_packets_sent / packages_sent) if packages_sent > 0 else 0, # TODO: Fix later, find a better soln,,,
+                ((stats["df"]["control_packets_sent"].sum() + control_packets_sent) / total_pkgs_sent_cum) if total_pkgs_sent_cum > 0 else 0
+            ]
 
             # stats["dead_nodes"].append(num_dead_nodes)
             # stats["active_nodes"].append(num_nodes_active)
@@ -128,8 +140,18 @@ def run_dijkstra_scholten_simulation(args):
                 break
 
             # axes.scatter(x=t, y=num_nodes_active)
-            axes.cla()
-            sns.lineplot(data=stats["df"], ax=axes, color="red")
+            
+            axes[0][0].cla()
+            axes[0][1].cla()
+            axes[1][0].cla()
+            axes[1][1].cla()
+
+            sns.lineplot(data=stats["df"]["active_nodes"], ax=axes[0][0], color="orange")
+            sns.lineplot(data=stats["df"]["dead_nodes"], ax=axes[1][0], color="blue")
+            sns.lineplot(data=stats["df"]["packets_in_transmit"], ax=axes[0][1], color="purple")
+            sns.lineplot(data=stats["df"]["control_packets_sent"], ax=axes[0][1], color="green")
+            sns.lineplot(data=stats["df"]["control_basic_instant_ratio"], ax=axes[1][1], color="red")
+            sns.lineplot(data=stats["df"]["control_total_cumulative_ratio"], ax=axes[1][1], color="mediumslateblue")
             # sns.lineplot(data=stats["active_nodes"], ax=axes, color="red")
             # sns.lineplot(data=stats["dead_nodes"], ax=axes, color="mediumslateblue")
             # sns.lineplot(data=stats["packages_in_transmit"], ax=axes, color="green")

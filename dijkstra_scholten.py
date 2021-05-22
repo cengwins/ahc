@@ -158,7 +158,7 @@ class DijkstraScholtenApplicationLayerComponent(ComponentModel):
 
         if self.simulation_state == DSAHCNodeSimulationStatus.OUT_OF_TREE:
             next_state = DSAHCNodeSimulationStatus.OUT_OF_TREE
-            print(f"   ==> N-{self.componentinstancenumber}: OUT OF TREE")
+            # print(f"   ==> N-{self.componentinstancenumber}: OUT OF TREE")
         elif self.__tick_n >= self.simulation_ticks_total:
             self.exit_tree()
             next_state = DSAHCNodeSimulationStatus.OUT_OF_TREE
