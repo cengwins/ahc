@@ -1,5 +1,10 @@
-import matplotlib.pyplot as plt
+import os
+import sys
+
+sys.path.insert(0, os.getcwd())
+
 import networkx as nx
+import matplotlib.pyplot as plt
 
 def main():
   inf = float('inf')
