@@ -4,60 +4,16 @@ import time
 import pickle
 import random
 import pandas as pd
-import networkx as nx
-from enum import Enum
 import seaborn as sns
 import matplotlib.pyplot as plt
 from datetime import datetime as dt
-from argparse import ArgumentParser
 
+from Ahc import Topology
 from graph import ERG, Grid, Star
 from algorithms import AdHocNode, AHCNodeSimulationStatus
 from Channels import P2PFIFOPerfectChannel
-from LinkLayers.GenericLinkLayer import LinkLayer
-from NetworkLayers.AllSeeingEyeNetworkLayer import AllSeingEyeNetworkLayer
-from Ahc import (ComponentModel, Event, ConnectorTypes, Topology,
-                 ComponentRegistry, GenericMessagePayload, GenericMessageHeader,
-                 GenericMessage, EventTypes)
 
-parser = ArgumentParser()
-parser.add_argument("simulation_ticks", type=int)
-parser.add_argument("ms_per_tick", type=int)
-parser.add_argument("--node_min_activeness_after_receive", type=int, default=3) # paket aldiktan sonra min bu kadar aktif kal
-parser.add_argument("--node_max_activeness_after_receive", type=int, default=5) # paket aldiktan sonra max bu kadar aktif kal
-parser.add_argument("--node_activeness_communication_prob", type=float, default=0.5) # alive iken baska nodelara paket gonderme olasiligi
-parser.add_argument("--node_initial_activeness_prob", type=float, default=0.5)
-parser.add_argument("--node_package_process_per_tick", type=int, default=5)
-
-parser.add_argument("--run_until_termination", action="store_true", default=False)
-parser.add_argument("--exit_on_termination", action="store_true", default=False)
-
-parser.add_argument("--passiveness_death_thresh", type=int, default=20)
-parser.add_argument("--hard_stop_nodes", action="store_true", default=False)
-parser.add_argument("--hard_stop_min_tick", type=int, default=50)
-parser.add_argument("--hard_stop_max_tick", type=int, default=300)
-parser.add_argument("--hard_stop_prob", type=float, default=0.5)
-
-sp = parser.add_subparsers()
-
-erg_parser = sp.add_parser("erg")
-erg_parser.add_argument("node_count", type=int)
-erg_parser.add_argument("--node_connectivity", type=float, default=0.5)
-erg_parser.set_defaults(network_type="erg")
-
-grid_parser = sp.add_parser("grid")
-grid_parser.add_argument("node_count_on_edge", type=int)
-grid_parser.set_defaults(network_type="grid")
-
-star_parser = sp.add_parser("star")
-star_parser.add_argument("slave_count", type=int)
-star_parser.add_argument("--master_is_root", type=bool, default=True)
-star_parser.set_defaults(network_type="star")
-
-if __name__ == "__main__":
-    args = parser.parse_args()
-    print(f"[+] Network type: {args.network_type}")
-
+def run_dijkstra_scholten_simulation(args):
     if args.network_type == "erg":
         N = ERG(args.node_count, args.node_connectivity)
         total_nodes = args.node_count
@@ -185,7 +141,5 @@ if __name__ == "__main__":
 
     plt.show()
 
-    ## IMPORTANT
-    # possibe evaluation metrics
-    # num(control packages) / num(total packages) => 
-    # tick(algo done) - tick(termination) => ne kadar erken detect etti
+def run_shavit_francez_simulation(args):
+    raise NotImplementedError()
