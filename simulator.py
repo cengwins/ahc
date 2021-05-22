@@ -5,8 +5,10 @@ import pickle
 import random
 import pandas as pd
 import seaborn as sns
+import networkx as nx
 import matplotlib.pyplot as plt
 from datetime import datetime as dt
+from networkx.drawing.nx_pydot import graphviz_layout
 
 from Ahc import Topology
 from graph import ERG, Grid, Star
@@ -76,9 +78,9 @@ def run_dijkstra_scholten_simulation(args):
         "announced_on_tick": None
     }
 
-    fig, axes = plt.subplots(2, 2)
-    fig.set_figwidth(8)
-    fig.set_figheight(8)
+    fig, axes = plt.subplots(2, 3)
+    fig.set_figwidth(25)
+    fig.set_figheight(10)
     # fig.tight_layout()
 
     input("\n>>> Proceed ?")
@@ -94,8 +96,19 @@ def run_dijkstra_scholten_simulation(args):
             break_this_tick = False
             control_packets_sent = 0
 
+            T = nx.Graph()
+
             for index, node in topo.nodes.items():
                 new_state, pkg_sent_to_friend, cps = node.simulation_tick()
+
+                if index not in T.nodes():
+                    T.add_node(index)
+
+                if node.parent_node is not None:
+                    if node.parent_node not in T.nodes():
+                        T.add_node(node.parent_node)
+
+                    T.add_edge(index, node.parent_node)
 
                 if index == N.root and new_state is None:
                     break_this_tick = True
@@ -144,8 +157,10 @@ def run_dijkstra_scholten_simulation(args):
             
             axes[0][0].cla()
             axes[0][1].cla()
+            axes[0][2].cla()
             axes[1][0].cla()
             axes[1][1].cla()
+            axes[1][2].cla()
 
             sns.lineplot(data=stats["df"]["active_nodes"], ax=axes[0][0], color="orange")
             sns.lineplot(data=stats["df"]["dead_nodes"], ax=axes[0][0], color="blue")
@@ -156,6 +171,19 @@ def run_dijkstra_scholten_simulation(args):
             # sns.lineplot(data=stats["active_nodes"], ax=axes, color="red")
             # sns.lineplot(data=stats["dead_nodes"], ax=axes, color="mediumslateblue")
             # sns.lineplot(data=stats["packages_in_transmit"], ax=axes, color="green")
+
+            # pos = nx.spring_layout(T)
+            # nx.draw_networkx_nodes(T , pos, nodelist=[N.root], node_color='red', ax=axes[0][2])
+            # nx.draw_networkx_nodes(T , pos, nodelist=[i for i in T.nodes() if i != N.root], node_color='mediumslateblue', ax=axes[0][2])
+            # nx.draw_networkx_edges(T , pos, ax=axes[0][2])
+
+            # pos = graphviz_layout(T, prog="twopi")
+            # nx.draw(T, ax=axes[0][2], pos=pos)
+
+            node_color = ["red" if list(T.nodes)[i] == N.root else ("mediumslateblue" if list(T.nodes)[i] not in alive_nodes else "green") for i in range(total_nodes)]
+            nx.draw(T, ax=axes[0][2], with_labels=True, node_color=node_color)
+            nx.draw(N.G, ax=axes[1][2], with_labels=True, node_color=node_color)
+
             plt.pause(0.0005)
             time.sleep(args.ms_per_tick / 1000)
     except KeyboardInterrupt:

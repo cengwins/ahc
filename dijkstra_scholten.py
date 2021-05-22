@@ -305,3 +305,7 @@ class DijkstraScholtenAdHocNode(ComponentModel):
             return 0
 
         return self.appllayer.basic_message_queue.qsize()
+
+    @property
+    def parent_node(self):
+        return self.appllayer._parent_node
