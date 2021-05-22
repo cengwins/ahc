@@ -157,7 +157,7 @@ class ApplicationLayerComponent(ComponentModel):
         # P2P: packages to process
         # print(f"   ==> N-{self.componentinstancenumber}: ST: {self.simulation_state}, NS: {next_state}, GPF: {got_packages_from}, SPF: {to_friend}, ANT: {self.alive_for_next_ticks}, P2P: {self.basic_message_queue.qsize()}")
 
-        time.sleep(self.sleep_ms_per_tick / 1000)
+        # time.sleep(self.sleep_ms_per_tick / 1000)
         self.__tick_n += 1
         self.simulation_state = next_state
 
@@ -166,7 +166,7 @@ class ApplicationLayerComponent(ComponentModel):
         elif self.simulation_state == AHCNodeSimulationStatus.ACTIVE:
             self._passive_counter = 0
 
-        return next_state
+        return next_state, to_friend
 
 class AdHocNode(ComponentModel):
     def __init__(self, componentname, componentid, context):

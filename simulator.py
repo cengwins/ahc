@@ -3,8 +3,10 @@ import sys
 import time
 import pickle
 import random
+import pandas as pd
 import networkx as nx
 from enum import Enum
+import seaborn as sns
 import matplotlib.pyplot as plt
 from datetime import datetime as dt
 from argparse import ArgumentParser
@@ -27,6 +29,7 @@ parser.add_argument("--node_activeness_communication_prob", type=float, default=
 parser.add_argument("--node_initial_activeness_prob", type=float, default=0.5)
 parser.add_argument("--node_package_process_per_tick", type=int, default=5)
 parser.add_argument("--run_until_termination", action="store_true", default=False)
+parser.add_argument("--exit_on_termination", action="store_true", default=False)
 parser.add_argument("--passiveness_death_thresh", type=int, default=20)
 
 sp = parser.add_subparsers()
@@ -85,10 +88,18 @@ if __name__ == "__main__":
     topo.start()
 
     stats = {
-        "active_nodes": [],
-        "packages_in_transmit": [],
+        "df": pd.DataFrame(data={
+            "dead_nodes": [],
+            "active_nodes": [],
+            "packages_in_transmit": [],
+        }),
         "terminated_on_tick": None
     }
+
+    fig, axes = plt.subplots(1, 1)
+    fig.set_figwidth(20)
+    fig.set_figheight(5)
+    # fig.tight_layout()
 
     input("\n>>> Proceed ?")
 
@@ -96,32 +107,56 @@ if __name__ == "__main__":
         for t in range(1, args.simulation_ticks + 1):
             print(f"[S] Tick: {t}")
 
-            num_packages_queued = 0
+            packages_sent = 0
+            packages_waiting_on_queue = 0
             num_nodes_active = 0
+            num_dead_nodes = 0
 
             for node in topo.nodes.values():
-                new_state = node.simulation_tick()
+                new_state, pkg_sent_to_friend = node.simulation_tick()
 
                 if new_state == AHCNodeSimulationStatus.ACTIVE:
                     num_nodes_active += 1
+                elif new_state == AHCNodeSimulationStatus.OUT_OF_CLOCK:
+                    num_dead_nodes += 1
+
+                if pkg_sent_to_friend is not None:
+                    packages_sent += 1
                 
-                num_packages_queued += node.waiting_packages_on_queue
+                packages_waiting_on_queue += node.waiting_packages_on_queue
 
-            stats["active_nodes"].append(num_nodes_active)
-            stats["packages_in_transmit"].append(num_packages_queued)
+            stats["df"].loc[t-1] = [num_dead_nodes, num_nodes_active, packages_sent]
 
-            print(f"   (ACTIVE: {num_nodes_active}, PKGS: {num_packages_queued})")
+            # stats["dead_nodes"].append(num_dead_nodes)
+            # stats["active_nodes"].append(num_nodes_active)
+            # stats["packages_in_transmit"].append(packages_sent)
 
-            if (num_packages_queued == 0 and num_nodes_active == 0):
+            print(f"   (ACTIVE: {num_nodes_active}, PKGS-WAIT: {packages_waiting_on_queue}, PKGS-SENT: {packages_sent})")
+
+            if (packages_waiting_on_queue == 0 and num_nodes_active == 0 and packages_sent == 0):
                 stats["terminated_on_tick"] = t
                 print("!!! TERMINATED !!!")
-                break
+
+                if args.exit_on_termination:
+                    break
+
+            # axes.scatter(x=t, y=num_nodes_active)
+            axes.cla()
+            sns.lineplot(data=stats["df"], ax=axes, color="red")
+            # sns.lineplot(data=stats["active_nodes"], ax=axes, color="red")
+            # sns.lineplot(data=stats["dead_nodes"], ax=axes, color="mediumslateblue")
+            # sns.lineplot(data=stats["packages_in_transmit"], ax=axes, color="green")
+            plt.pause(0.0005)
+            time.sleep(args.ms_per_tick / 1000)
     except KeyboardInterrupt:
         pass
 
     ts = dt.now().timestamp()
 
-    plt.plot(stats["active_nodes"])
+    # axes.cla()
+    # sns.lineplot(data=stats["active_nodes"], ax=axes)
+    # sns.kdeplot(data=stats["active_nodes"], ax=axes)
+
     #plt.plot(stats["packages_in_transmit"])
 
     plt.savefig(f"simdump/stats_{args.network_type}_{total_nodes}_{ts}.png", dpi=200)
@@ -134,3 +169,8 @@ if __name__ == "__main__":
         }, fp)
 
     plt.show()
+
+    ## IMPORTANT
+    # possibe evaluation metrics
+    # num(control packages) / num(total packages) => 
+    # tick(algo done) - tick(termination) => ne kadar erken detect etti
