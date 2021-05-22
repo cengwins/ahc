@@ -85,6 +85,8 @@ def run_dijkstra_scholten_simulation(args):
 
     input("\n>>> Proceed ?")
 
+    term_wait_ctr = 0
+
     try:
         for t in range(1, args.simulation_ticks + 1):
             print(f"[S] Tick: {t}")
@@ -97,9 +99,19 @@ def run_dijkstra_scholten_simulation(args):
             control_packets_sent = 0
 
             T = nx.Graph()
+            node_color = []
 
             for index, node in topo.nodes.items():
                 new_state, pkg_sent_to_friend, cps = node.simulation_tick()
+
+                if N.root == index:
+                    node_color.append("red")
+                elif new_state == DSAHCNodeSimulationStatus.ACTIVE:
+                    node_color.append("green")
+                elif new_state == DSAHCNodeSimulationStatus.PASSIVE:
+                    node_color.append("mediumslateblue")
+                elif new_state == DSAHCNodeSimulationStatus.OUT_OF_TREE:
+                    node_color.append("gray")
 
                 if index not in T.nodes():
                     T.add_node(index)
@@ -144,8 +156,16 @@ def run_dijkstra_scholten_simulation(args):
             print(f"   (ACTIVE: {num_nodes_active}, PKGS-WAIT: {packages_waiting_on_queue}, PKGS-SENT: {packages_sent})")
 
             if (packages_waiting_on_queue == 0 and num_nodes_active == 0 and packages_sent == 0):
-                stats["terminated_on_tick"] = t
+                if stats["terminated_on_tick"] is None: 
+                    stats["terminated_on_tick"] = t
+
                 print("!!! TERMINATED !!!")
+
+                term_wait_ctr += 1
+
+                if args.wait_ticks_after_termination > 0 and term_wait_ctr > args.wait_ticks_after_termination:
+                    print("!!! FORCE TERMINATED !!!")
+                    break
 
                 if args.exit_on_termination:
                     break
@@ -180,9 +200,14 @@ def run_dijkstra_scholten_simulation(args):
             # pos = graphviz_layout(T, prog="twopi")
             # nx.draw(T, ax=axes[0][2], pos=pos)
 
-            node_color = ["red" if list(T.nodes)[i] == N.root else ("mediumslateblue" if list(T.nodes)[i] not in alive_nodes else "green") for i in range(total_nodes)]
+            # node_color = ["red" if list(T.nodes)[i] == N.root else ("mediumslateblue" if list(T.nodes)[i] not in alive_nodes else "green") for i in range(total_nodes)]
             nx.draw(T, ax=axes[0][2], with_labels=True, node_color=node_color)
-            nx.draw(N.G, ax=axes[1][2], with_labels=True, node_color=node_color)
+            
+            if args.network_type == "grid":   
+                pos = {i: (i // args.node_count_on_edge, i % args.node_count_on_edge) for i in range(total_nodes)}
+                nx.draw(N.G, ax=axes[1][2], with_labels=True, node_color=node_color, pos=pos)
+            else:
+                nx.draw(N.G, ax=axes[1][2], with_labels=True, node_color=node_color)
 
             plt.pause(0.0005)
             time.sleep(args.ms_per_tick / 1000)

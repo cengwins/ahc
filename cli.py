@@ -25,6 +25,7 @@ parser.add_argument("--only_root_alive_initially", action="store_true", default=
 
 parser.add_argument("--run_until_termination", action="store_true", default=False)
 parser.add_argument("--exit_on_termination", action="store_true", default=False)
+parser.add_argument("--wait_ticks_after_termination", type=int, default=0)
 
 parser.add_argument("--passiveness_death_thresh", type=int, default=20)
 parser.add_argument("--hard_stop_nodes", action="store_true", default=False)

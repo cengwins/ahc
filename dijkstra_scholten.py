@@ -165,10 +165,10 @@ class DijkstraScholtenApplicationLayerComponent(ComponentModel):
         elif self.__tick_n >= self.simulation_ticks_total:
             self.exit_tree()
             next_state = DSAHCNodeSimulationStatus.OUT_OF_TREE
-        elif self._passive_counter >= self.die_passiveness_threshold:
+        elif not self._i_am_root and self._passive_counter >= self.die_passiveness_threshold:
             self.exit_tree()
             next_state = DSAHCNodeSimulationStatus.OUT_OF_TREE
-        elif self.__tick_n >= self.hard_stop_on_tick:
+        elif not self._i_am_root and self.__tick_n >= self.hard_stop_on_tick:
             self.exit_tree()
             next_state = DSAHCNodeSimulationStatus.OUT_OF_TREE
             print(f"   ==> N-{self.componentinstancenumber}: HARD STOP")
@@ -248,6 +248,9 @@ class DijkstraScholtenApplicationLayerComponent(ComponentModel):
         # ANT: alive next ticks
         # P2P: packages to process
         # print(f"   {'ROOT' if self._i_am_root else '==>'} N-{self.componentinstancenumber}: P: {self._parent_node}, CC: ({self._child_counter}) {self._children}, ST: {self.simulation_state}, NS: {next_state}, GPF: {got_packages_from}, SPF: {to_friend}, ANT: {self.alive_for_next_ticks}, P2P: {self.basic_message_queue.qsize()}")
+
+        if self._i_am_root:
+            print(f"   {'ROOT' if self._i_am_root else '==>'} N-{self.componentinstancenumber}: P: {self._parent_node}, CC: ({self._child_counter}) {self._children}, ST: {self.simulation_state}, NS: {next_state}, GPF: {got_packages_from}, SPF: {to_friend}, ANT: {self.alive_for_next_ticks}, P2P: {self.basic_message_queue.qsize()}")
 
         # time.sleep(self.sleep_ms_per_tick / 1000)
         self.__tick_n += 1
