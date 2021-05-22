@@ -55,7 +55,7 @@ class DijkstraScholtenApplicationLayerComponent(ComponentModel):
 
         self.sleep_ms_per_tick = context["ms_per_tick"]
         self.simulation_ticks_total = context["simulation_ticks"]
-        # self.alive_for_next_ticks = context["initial_liveness"][componentinstancenumber]
+        self.alive_for_next_ticks = context["initial_liveness"][componentinstancenumber]
         self.communication_on_active_prob = context["communication_on_active_prob"]
         self.min_activeness_after_receive = context["min_activeness_after_receive"]
         self.max_activeness_after_receive = context["max_activeness_after_receive"]
@@ -79,11 +79,14 @@ class DijkstraScholtenApplicationLayerComponent(ComponentModel):
 
         self._i_am_root = context["network"].root == self.componentinstancenumber
 
-        if self._i_am_root:
-            self.alive_for_next_ticks = 5 # this may change though...
-            self._in_tree = True
-        else:
-            self.alive_for_next_ticks = 0
+        if context["only_root_alive_initially"]:
+            if self._i_am_root:
+                self.alive_for_next_ticks = 20 # this may change though...
+                self._in_tree = True
+            else:
+                self.alive_for_next_ticks = 0
+        elif self._i_am_root and self.alive_for_next_ticks == 0:
+            self.alive_for_next_ticks = 20 # this may change though...
 
         if self.alive_for_next_ticks > 0:
             self.simulation_state = DSAHCNodeSimulationStatus.ACTIVE

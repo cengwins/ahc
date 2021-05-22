@@ -21,6 +21,8 @@ parser.add_argument("--node_activeness_communication_prob", type=float, default=
 parser.add_argument("--node_initial_activeness_prob", type=float, default=0.5)
 parser.add_argument("--node_package_process_per_tick", type=int, default=5)
 
+parser.add_argument("--only_root_alive_initially", action="store_true", default=False)
+
 parser.add_argument("--run_until_termination", action="store_true", default=False)
 parser.add_argument("--exit_on_termination", action="store_true", default=False)
 

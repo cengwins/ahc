@@ -49,7 +49,8 @@ def run_dijkstra_scholten_simulation(args):
         "node_package_process_per_tick": args.node_package_process_per_tick,
         "passiveness_death_thresh": args.passiveness_death_thresh,
         "hard_stop_on_tick": hard_stop_on_tick,
-        "alive_nodes": alive_nodes
+        "alive_nodes": alive_nodes,
+        "only_root_alive_initially": args.only_root_alive_initially
     }
 
     print(topo_context)
