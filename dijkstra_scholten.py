@@ -126,6 +126,9 @@ class DijkstraScholtenApplicationLayerComponent(ComponentModel):
                 self._parent_node = hdr.messagefrom
                 self._in_tree = True
 
+                if self.componentinstancenumber not in self.context["alive_nodes"]:
+                    self.context["alive_nodes"].append(self.componentinstancenumber)
+
         elif hdr.messagetype == ApplicationLayerMessageType.CONTROL:
             # self.control_message_queue.put_nowait(applmessage)
 
@@ -139,11 +142,14 @@ class DijkstraScholtenApplicationLayerComponent(ComponentModel):
     def exit_tree(self):
         # Exit from the tree
         if self._in_tree:
-            self.send_ack_control_message(self._parent_node, True)
             self._in_tree = False
-            self._parent_node = None
+            if self._parent_node is not None:
+                self.send_ack_control_message(self._parent_node, True)
+        
+        self._parent_node = None
 
-        self.context["alive_nodes"].remove(self.componentinstancenumber)
+        if self.componentinstancenumber in self.context["alive_nodes"]:
+            self.context["alive_nodes"].remove(self.componentinstancenumber)
 
     def simulation_tick(self):
         next_state = None
@@ -161,17 +167,20 @@ class DijkstraScholtenApplicationLayerComponent(ComponentModel):
 
         if self.simulation_state == DSAHCNodeSimulationStatus.OUT_OF_TREE:
             next_state = DSAHCNodeSimulationStatus.OUT_OF_TREE
-            # print(f"   ==> N-{self.componentinstancenumber}: OUT OF TREE")
+            # print(f"   ==> N-{self.componentinstancenumber}: OOT")            #NOTE: DEV
+            # print(f"   ==> N-{self.componentinstancenumber}: OUT OF TREE")    
         elif self.__tick_n >= self.simulation_ticks_total:
             self.exit_tree()
             next_state = DSAHCNodeSimulationStatus.OUT_OF_TREE
+            # print(f"   ==> N-{self.componentinstancenumber}: OOC DEAD")       #NOTE: DEV
         elif not self._i_am_root and self._passive_counter >= self.die_passiveness_threshold:
             self.exit_tree()
             next_state = DSAHCNodeSimulationStatus.OUT_OF_TREE
+            # print(f"   ==> N-{self.componentinstancenumber}: PASSIVE DIE")    #NOTE: DEV
         elif not self._i_am_root and self.__tick_n >= self.hard_stop_on_tick:
             self.exit_tree()
             next_state = DSAHCNodeSimulationStatus.OUT_OF_TREE
-            print(f"   ==> N-{self.componentinstancenumber}: HARD STOP")
+            # print(f"   ==> N-{self.componentinstancenumber}: HARD STOP")      #NOTE: DEV
         else:
             if self.simulation_state == DSAHCNodeSimulationStatus.OUT_OF_CLOCK:
                 next_state = DSAHCNodeSimulationStatus.OUT_OF_CLOCK
@@ -185,8 +194,8 @@ class DijkstraScholtenApplicationLayerComponent(ComponentModel):
                             return None, None, __cms
                         else:
                             self.exit_tree()
-                            next_state = DSAHCNodeSimulationStatus.OUT_OF_TREE
-                            print(f"   ==> N-{self.componentinstancenumber}: OUT OF TREE")
+                            next_state = DSAHCNodeSimulationStatus.PASSIVE
+                            print(f"   ==> N-{self.componentinstancenumber}: OUT OF TREE / PASSIVE")
                     else:
                         # no incoming package, still passive.
                         next_state = DSAHCNodeSimulationStatus.PASSIVE
