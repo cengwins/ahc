@@ -17,6 +17,8 @@ from Ahc import (ComponentModel, Event, ConnectorTypes, Topology,
                  ComponentRegistry, GenericMessagePayload, GenericMessageHeader,
                  GenericMessage, EventTypes)
 
+WAVE_DEBUG = False
+
 registry = ComponentRegistry()
 
 # define your own message types
@@ -168,13 +170,15 @@ class ShavitFrancezApplicationLayerComponent(ComponentModel):
                 # print(f"\n\n\n{self.componentinstancenumber}: {e} {hdr.messagefrom} {self._children}\n\n\n")
                 pass
         elif hdr.messagetype == ApplicationLayerMessageType.WAVE:
-            if applmessage.payload.tag == self.componentinstancenumber:
-                self.my_wave_bucket.append(applmessage.payload.response)
+            if applmessage.payload.messagepayload.tag == self.componentinstancenumber:
+                self.my_wave_bucket.append(applmessage.payload.messagepayload.response)
 
-                print(f"  WAVE << N-{self.componentinstancenumber} << N-{hdr.messagefrom} ({applmessage.payload.response})")
+                if WAVE_DEBUG:
+                    print(f"  WAVE << N-{self.componentinstancenumber} << N-{hdr.messagefrom} ({applmessage.payload.messagepayload.response})")
 
-                if len(self.my_wave_bucket) == (self.context["network"].G.nodes() - 1):
-                    print(f"  ::: WAVE END >> N-{self.componentinstancenumber}: {self.my_wave_bucket}")
+                if len(self.my_wave_bucket) == (len(self.context["network"].G.nodes()) - 1):
+                    if WAVE_DEBUG:
+                        print(f"  ::: WAVE END >> N-{self.componentinstancenumber}: {' '.join(['A' if x == SFWaveResponse.ACTIVE else ('F' if x == SFWaveResponse.FINISHED else 'XXX') for x in self.my_wave_bucket])}")
 
                     if SFWaveResponse.ACTIVE not in self.my_wave_bucket:
                         print(f"  ::: WAVE END >> N-{self.componentinstancenumber}: ANNOUNCE!")
@@ -184,11 +188,13 @@ class ShavitFrancezApplicationLayerComponent(ComponentModel):
                         self.my_wave_bucket = []
             else:
                 if self.__exited_from_tree:
-                    self.send_down(Event(self, EventTypes.MFRT, self.prepare_application_layer_message(ApplicationLayerMessageType.WAVE, applmessage.payload.tag, SFWaveMessagePayload(applmessage.payload.tag, SFWaveMessageType.RESPONSE, SFWaveResponse.FINISHED))))
-                    print(f"  WAVE >> N-{self.componentinstancenumber} >> N-{applmessage.payload.tag} >> FINISHED")
+                    self.send_down(Event(self, EventTypes.MFRT, self.prepare_application_layer_message(ApplicationLayerMessageType.WAVE, applmessage.payload.messagepayload.tag, SFWaveMessagePayload(applmessage.payload.messagepayload.tag, SFWaveMessageType.RESPONSE, SFWaveResponse.FINISHED))))
+                    if WAVE_DEBUG:
+                        print(f"  WAVE >> N-{self.componentinstancenumber} >> N-{applmessage.payload.messagepayload.tag} >> FINISHED")
                 else:
-                    self.send_down(Event(self, EventTypes.MFRT, self.prepare_application_layer_message(ApplicationLayerMessageType.WAVE, applmessage.payload.tag, SFWaveMessagePayload(applmessage.payload.tag, SFWaveMessageType.RESPONSE, SFWaveResponse.ACTIVE))))
-                    print(f"  WAVE >> N-{self.componentinstancenumber} >> N-{applmessage.payload.tag} >> ACTIVE")
+                    self.send_down(Event(self, EventTypes.MFRT, self.prepare_application_layer_message(ApplicationLayerMessageType.WAVE, applmessage.payload.messagepayload.tag, SFWaveMessagePayload(applmessage.payload.messagepayload.tag, SFWaveMessageType.RESPONSE, SFWaveResponse.ACTIVE))))
+                    if WAVE_DEBUG:
+                        print(f"  WAVE >> N-{self.componentinstancenumber} >> N-{applmessage.payload.messagepayload.tag} >> ACTIVE")
 
                 self._wms += 1
         else:
@@ -198,7 +204,7 @@ class ShavitFrancezApplicationLayerComponent(ComponentModel):
     def call_wave(self):
         print(f"  > CALL WAVE @@ N-{self.componentinstancenumber}")
 
-        to_nodes = [i for i in range(self.context["network"].G.nodes()) if i != self.componentinstancenumber]
+        to_nodes = [i for i in range(len(self.context["network"].G.nodes())) if i != self.componentinstancenumber]
 
         for to in to_nodes:
             self.send_down(Event(self, EventTypes.MFRT, self.prepare_application_layer_message(ApplicationLayerMessageType.WAVE, to, SFWaveMessagePayload(self.componentinstancenumber, SFWaveMessageType.REQUEST))))
@@ -218,6 +224,7 @@ class ShavitFrancezApplicationLayerComponent(ComponentModel):
             if self.componentinstancenumber in self.context["alive_nodes"]:
                 self.context["alive_nodes"].remove(self.componentinstancenumber)
 
+            self.__exited_from_tree = True
             print(f"  > EXIT @@ N-{self.componentinstancenumber}")
 
             self.call_wave()

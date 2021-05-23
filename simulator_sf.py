@@ -77,12 +77,11 @@ def run_shavit_francez_simulation(args):
             "wave_packets_sent": [],
             "wave_basic_instant_ratio": [],
             "wave_total_cumulative_ratio": [],
+            "wave_control_cumulative_ratio": []
         }),
         "terminated_on_tick": None,
         "announced_on_tick": None
     }
-
-    graphs = []
 
     fig, axes = plt.subplots(2, 3)
     fig.set_figwidth(25)
@@ -93,6 +92,7 @@ def run_shavit_francez_simulation(args):
 
     term_wait_ctr = 0
     reason = None
+    wave_finisher = None
 
     try:
         for t in range(1, args.simulation_ticks + 1):
@@ -106,32 +106,28 @@ def run_shavit_francez_simulation(args):
             control_packets_sent = 0
             wave_packets_sent = 0
 
-            T = nx.Graph()
             node_color = []
 
             for index, node in topo.nodes.items():
                 new_state, pkg_sent_to_friend, cps, wps = node.simulation_tick()
 
-                if N.root == index:
+                if N.root == index and new_state != SFAHCNodeSimulationStatus.OUT_OF_TREE:
                     node_color.append("red")
+                elif N.root == index and new_state == SFAHCNodeSimulationStatus.OUT_OF_TREE:
+                    node_color.append("orange")
                 elif new_state == SFAHCNodeSimulationStatus.ACTIVE:
                     node_color.append("green")
                 elif new_state == SFAHCNodeSimulationStatus.PASSIVE:
                     node_color.append("mediumslateblue")
                 elif new_state == SFAHCNodeSimulationStatus.OUT_OF_TREE:
                     node_color.append("gray")
+                else: # is None...
+                    # It's the wave finisher!!!
+                    node_color.append("yellow")
+                    wave_finisher = index
 
-                if index not in T.nodes():
-                    T.add_node(index)
-
-                if node.parent_node is not None:
-                    if node.parent_node not in T.nodes():
-                        T.add_node(node.parent_node)
-
-                    T.add_edge(index, node.parent_node)
-
-                if index == N.root and new_state is None:
-                    reason = f"root terminated ({t})"
+                if new_state is None:
+                    reason = f"wave terminated ({t}) ({wave_finisher})"
                     break_this_tick = True
 
                 if new_state == SFAHCNodeSimulationStatus.ACTIVE:
@@ -149,9 +145,8 @@ def run_shavit_francez_simulation(args):
             print(f"   (ACTIVE: {num_nodes_active}, PKGS-WAIT: {packages_waiting_on_queue}, PKGS-SENT: {packages_sent})")
 
             if (packages_waiting_on_queue == 0 and num_nodes_active == 0 and packages_sent == 0):
-                if not args.no_realtime_plot:
-                    if stats["terminated_on_tick"] is None: 
-                        stats["terminated_on_tick"] = t
+                if stats["terminated_on_tick"] is None: 
+                    stats["terminated_on_tick"] = t
 
                 print("!!! TERMINATED !!!")
 
@@ -165,6 +160,7 @@ def run_shavit_francez_simulation(args):
                 if args.exit_on_termination:
                     break_this_tick = True
 
+            control_pkgs_sent_cum = stats["df"]["control_packets_sent"].sum() + control_packets_sent
             total_pkgs_sent_cum = (stats["df"]["control_packets_sent"].sum() + control_packets_sent + stats["df"]["packets_in_transmit"].sum() + packages_sent + stats["df"]["wave_packets_sent"].sum() + wave_packets_sent)
 
             stats["df"].loc[t-1] = [
@@ -178,15 +174,8 @@ def run_shavit_francez_simulation(args):
                 wave_packets_sent,
                 (wave_packets_sent / packages_sent) if packages_sent > 0 else 0, # TODO: Fix later, find a better soln,,,
                 (((stats["df"]["wave_packets_sent"].sum() + wave_packets_sent) / total_pkgs_sent_cum) if total_pkgs_sent_cum > 0 else 0) * 100,
+                (((stats["df"]["wave_packets_sent"].sum() + wave_packets_sent) / control_pkgs_sent_cum) if control_pkgs_sent_cum > 0 else 0) * 100,
             ]
-
-            # stats["dead_nodes"].append(num_dead_nodes)
-            # stats["active_nodes"].append(num_nodes_active)
-            # stats["packages_in_transmit"].append(packages_sent)
-            graphs.append({
-                "edges": T.edges(),
-                "nodes": T.nodes(),
-            })
 
             # axes.scatter(x=t, y=num_nodes_active)
             
@@ -207,20 +196,7 @@ def run_shavit_francez_simulation(args):
                 sns.lineplot(data=stats["df"]["wave_total_cumulative_ratio"], ax=axes[1][0], color="yellow")
                 sns.lineplot(data=stats["df"]["control_basic_instant_ratio"], ax=axes[1][1], color="red")
                 sns.lineplot(data=stats["df"]["wave_basic_instant_ratio"], ax=axes[1][1], color="orange")
-                # sns.lineplot(data=stats["active_nodes"], ax=axes, color="red")
-                # sns.lineplot(data=stats["dead_nodes"], ax=axes, color="mediumslateblue")
-                # sns.lineplot(data=stats["packages_in_transmit"], ax=axes, color="green")
-
-                # pos = nx.spring_layout(T)
-                # nx.draw_networkx_nodes(T , pos, nodelist=[N.root], node_color='red', ax=axes[0][2])
-                # nx.draw_networkx_nodes(T , pos, nodelist=[i for i in T.nodes() if i != N.root], node_color='mediumslateblue', ax=axes[0][2])
-                # nx.draw_networkx_edges(T , pos, ax=axes[0][2])
-
-                # pos = graphviz_layout(T, prog="twopi")
-                # nx.draw(T, ax=axes[0][2], pos=pos)
-
-                # node_color = ["red" if list(T.nodes)[i] == N.root else ("mediumslateblue" if list(T.nodes)[i] not in alive_nodes else "green") for i in range(total_nodes)]
-                nx.draw(T, ax=axes[0][2], with_labels=True, node_color=node_color)
+                sns.lineplot(data=stats["df"]["wave_control_cumulative_ratio"], ax=axes[0][2], color="mediumslateblue")
                 
                 if args.network_type == "grid":   
                     pos = {i: (i // args.node_count_on_edge, i % args.node_count_on_edge) for i in range(total_nodes)}
@@ -239,33 +215,32 @@ def run_shavit_francez_simulation(args):
 
     ts = dt.now().timestamp()
 
-    # axes.cla()
-    # sns.lineplot(data=stats["active_nodes"], ax=axes)
-    # sns.kdeplot(data=stats["active_nodes"], ax=axes)
+    if args.no_realtime_plot:
+        axes[0][0].cla()
+        axes[0][1].cla()
+        axes[0][2].cla()
+        axes[1][0].cla()
+        axes[1][1].cla()
+        axes[1][2].cla()
 
-    #plt.plot(stats["packages_in_transmit"])
+        sns.lineplot(data=stats["df"]["active_nodes"], ax=axes[0][0], color="orange")
+        sns.lineplot(data=stats["df"]["dead_nodes"], ax=axes[0][0], color="blue")
+        sns.lineplot(data=stats["df"]["packets_in_transmit"], ax=axes[0][1], color="purple")
+        sns.lineplot(data=stats["df"]["control_packets_sent"], ax=axes[0][1], color="green")
+        sns.lineplot(data=stats["df"]["wave_packets_sent"], ax=axes[0][1], color="blue")
+        sns.lineplot(data=stats["df"]["control_total_cumulative_ratio"], ax=axes[1][0], color="mediumslateblue")
+        sns.lineplot(data=stats["df"]["wave_total_cumulative_ratio"], ax=axes[1][0], color="yellow")
+        sns.lineplot(data=stats["df"]["control_basic_instant_ratio"], ax=axes[1][1], color="red")
+        sns.lineplot(data=stats["df"]["wave_basic_instant_ratio"], ax=axes[1][1], color="orange")
+        sns.lineplot(data=stats["df"]["wave_control_cumulative_ratio"], ax=axes[0][2], color="mediumslateblue")
+        
+        if args.network_type == "grid":   
+            pos = {i: (i // args.node_count_on_edge, i % args.node_count_on_edge) for i in range(total_nodes)}
+            nx.draw(N.G, ax=axes[1][2], with_labels=True, node_color=node_color, pos=pos)
+        else:
+            nx.draw(N.G, ax=axes[1][2], with_labels=True, node_color=node_color)
 
-    axes[0][0].cla()
-    axes[0][1].cla()
-    axes[0][2].cla()
-    axes[1][0].cla()
-    axes[1][1].cla()
-    axes[1][2].cla()
-
-    sns.lineplot(data=stats["df"]["active_nodes"], ax=axes[0][0], color="orange")
-    sns.lineplot(data=stats["df"]["dead_nodes"], ax=axes[0][0], color="blue")
-    sns.lineplot(data=stats["df"]["packets_in_transmit"], ax=axes[0][1], color="purple")
-    sns.lineplot(data=stats["df"]["control_packets_sent"], ax=axes[0][1], color="green")
-    sns.lineplot(data=stats["df"]["control_total_cumulative_ratio"], ax=axes[1][0], color="mediumslateblue")
-    sns.lineplot(data=stats["df"]["control_basic_instant_ratio"], ax=axes[1][1], color="red")
-    
-    nx.draw(T, ax=axes[0][2], with_labels=True, node_color=node_color)
-    
-    if args.network_type == "grid":   
-        pos = {i: (i // args.node_count_on_edge, i % args.node_count_on_edge) for i in range(total_nodes)}
-        nx.draw(N.G, ax=axes[1][2], with_labels=True, node_color=node_color, pos=pos)
-    else:
-        nx.draw(N.G, ax=axes[1][2], with_labels=True, node_color=node_color)
+        plt.pause(0.0005)
 
     plt.savefig(f"simdump/SF_stats_{args.network_type}_{total_nodes}_{ts}.png", dpi=200)
 
@@ -273,11 +248,10 @@ def run_shavit_francez_simulation(args):
         pickle.dump({
             "args": args,
             "context": topo_context,
-            "stats": stats,
-            "graphs": graphs
+            "stats": stats
         }, fp)
 
     if not args.no_realtime_plot:
         plt.show()
 
-    print(f"\n{reason}")
+    print(f"\n{reason} [{t - stats['terminated_on_tick'] if stats['terminated_on_tick'] is not None else None}]")

@@ -144,9 +144,8 @@ def run_dijkstra_scholten_simulation(args):
             print(f"   (ACTIVE: {num_nodes_active}, PKGS-WAIT: {packages_waiting_on_queue}, PKGS-SENT: {packages_sent})")
 
             if (packages_waiting_on_queue == 0 and num_nodes_active == 0 and packages_sent == 0):
-                if not args.no_realtime_plot:
-                    if stats["terminated_on_tick"] is None: 
-                        stats["terminated_on_tick"] = t
+                if stats["terminated_on_tick"] is None: 
+                    stats["terminated_on_tick"] = t
 
                 print("!!! TERMINATED !!!")
 
@@ -269,4 +268,4 @@ def run_dijkstra_scholten_simulation(args):
     if not args.no_realtime_plot:
         plt.show()
 
-    print(f"\n{reason}")
+    print(f"\n{reason} [{t - stats['terminated_on_tick'] if stats['terminated_on_tick'] is not None else None}]")
