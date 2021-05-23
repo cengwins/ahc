@@ -3,10 +3,12 @@
 set -e
 
 run_sim_ds() {
+    echo "++ DS ${1}(${2}) - run ${3}"
     python3 ../cli.py djikstra-scholten 100 100 --run_until_termination --passiveness_death_thresh 3000 --hard_stop_nodes --hard_stop_min_tick 50 --hard_stop_max_tick 300 --node_package_process_per_tick 3 --node_initial_activeness_prob .5 --node_activeness_communication_prob .5 --wait_ticks_after_termination 200 --only_root_alive_initially --no_realtime_plot "${1}" "${2}" > "DS_${1}_${2}_run-${3}.out" <<< "\n"
 }
 
 run_sim_sf() {
+    echo "++ SF ${1}(${2}) - run ${3}"
     python3 ../cli.py shavit-francez 100 100 --run_until_termination --passiveness_death_thresh 3000 --hard_stop_nodes --hard_stop_min_tick 50 --hard_stop_max_tick 300 --node_package_process_per_tick 3 --node_initial_activeness_prob .5 --node_activeness_communication_prob .5 --wait_ticks_after_termination 200 --only_root_alive_initially --no_realtime_plot "${1}" "${2}" > "SF_${1}_${2}_run-${3}.out" <<< "\n"
 }
 
