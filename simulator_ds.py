@@ -270,6 +270,3 @@ def run_dijkstra_scholten_simulation(args):
         plt.show()
 
     print(f"\n{reason}")
-
-def run_shavit_francez_simulation(args):
-    raise NotImplementedError()
