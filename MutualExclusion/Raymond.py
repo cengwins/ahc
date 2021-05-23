@@ -141,7 +141,6 @@ class RaymondNode(ComponentModel):
         self.pop()
 
     def token_received(self, eventobj: Event):
-        print(f"{self.componentinstancenumber} - token received from {self.parentNodeID}")
         self.receivedTokenCount += 1
         self.isRoot = True
         self.parentNodeID = None
@@ -153,13 +152,11 @@ class RaymondNode(ComponentModel):
             self.send_token(head)
 
     def request_received(self, eventobj: Event):
-        print(f"{self.componentinstancenumber} - request received from {eventobj.eventcontent.payload.nodeID}")
         self.receivedRequestCount += 1
         receivedRequestNodeID = eventobj.eventcontent.payload.nodeID
         self.put(receivedRequestNodeID)
 
     def send_token(self, nodeID):
-        print(f"{self.componentinstancenumber} - send token to {nodeID}")
         self.sentTokenCount += 1
         self.isRoot = False
         self.parentNodeID = nodeID
@@ -175,7 +172,6 @@ class RaymondNode(ComponentModel):
         self.pop()
 
     def send_request(self):
-        print(f"{self.componentinstancenumber} - send request to {self.parentNodeID}")
         self.sentRequestCount += 1
         nextHop = self.parentNodeID
         interfaceID = f"{self.componentinstancenumber}-{nextHop}"
