@@ -16,3 +16,5 @@
 - WPPN : wave packets per node = num(wave packages) / num(nodes)
 
 - ALSO, these metrics can be analyzed dependent on the network structure!!
+
+- DS/SF detection latency distribution and standard deviation
