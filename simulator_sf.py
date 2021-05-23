@@ -267,9 +267,9 @@ def run_shavit_francez_simulation(args):
     else:
         nx.draw(N.G, ax=axes[1][2], with_labels=True, node_color=node_color)
 
-    plt.savefig(f"simdump/stats_{args.network_type}_{total_nodes}_{ts}.png", dpi=200)
+    plt.savefig(f"simdump/SF_stats_{args.network_type}_{total_nodes}_{ts}.png", dpi=200)
 
-    with open(f"simdump/run_{args.network_type}_{total_nodes}_{ts}.pkl", "wb") as fp:
+    with open(f"simdump/SF_run_{args.network_type}_{total_nodes}_{ts}.pkl", "wb") as fp:
         pickle.dump({
             "args": args,
             "context": topo_context,
