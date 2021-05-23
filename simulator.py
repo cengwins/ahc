@@ -81,11 +81,10 @@ def run_dijkstra_scholten_simulation(args):
 
     graphs = []
 
-    if not args.no_realtime_plot:
-        fig, axes = plt.subplots(2, 3)
-        fig.set_figwidth(25)
-        fig.set_figheight(10)
-        # fig.tight_layout()
+    fig, axes = plt.subplots(2, 3)
+    fig.set_figwidth(25)
+    fig.set_figheight(10)
+    # fig.tight_layout()
 
     input("\n>>> Proceed ?")
 
