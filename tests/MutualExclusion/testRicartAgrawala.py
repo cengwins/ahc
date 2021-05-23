@@ -1,4 +1,5 @@
-import math
+import os
+import shutil
 import random
 from enum import Enum
 
@@ -7,11 +8,16 @@ import networkx as nx
 import threading
 from time import sleep
 from itertools import combinations, groupby
-from math import cos, sin, atan2, radians
+from math import cos, sin, atan2
 
 from MutualExclusion.RicartAgrawala import RicartAgrawalaNode
 from Ahc import Topology
 from Channels import P2PFIFOPerfectChannel
+
+
+SAVED_FILE_INDEX = 0
+SAVING_ENABLED = True
+SAVE_PATH = os.path.join(os.path.dirname(__file__), "ricartAgrawalaOut")
 
 FPS = 24.0
 
@@ -22,8 +28,9 @@ WAITING_NODE_COLOR = '#FFFF00'
 NODE_COLOR = '#00FF00'
 
 drawnGraphNodeColors = []
-drawnGraphNodeClockValues = []
+drawnGraphNodeLabels = []
 
+labelDistance = 0
 
 class COMMAND(Enum):
     DRAW = "draw"
@@ -36,12 +43,14 @@ class COMMAND(Enum):
 class ARGUMENT(Enum):
     ALL = "-all"
     TIME = "-time"
+    DISTANCE = "-distance"
     REQUEST = "-request"
     REPLY = "-reply"
     PRIVILEGE = "-privilege"
     FORWARDED = "-forwarded"
     MEAN = "-mean"
     TOTAL = "-total"
+
 
 def processUserCommand(userInput: str):
     try:
@@ -77,10 +86,12 @@ def helpCommand(cmd=COMMAND.HELP):
               f"\t\"{COMMAND.DRAW.value}\"")
     elif cmd is COMMAND.SET:
         print(f"Set:\n"
-              f"\t\"{COMMAND.SET.value} {ARGUMENT.TIME.value} t\"")
+              f"\t\"{COMMAND.SET.value} {ARGUMENT.TIME.value} t\"\n"
+              f"\t\"{COMMAND.SET.value} {ARGUMENT.DISTANCE.value} d\"")
     elif cmd is COMMAND.GET:
         print(f"Get:\n"
               f"\t\"{COMMAND.GET.value} {ARGUMENT.TIME.value}\"\n"
+              f"\t\"{COMMAND.GET.value} {ARGUMENT.DISTANCE.value}\"\n"
               f"\t\"{COMMAND.GET.value} {ARGUMENT.ALL.value}\"\n"
               f"\t\"{COMMAND.GET.value} {ARGUMENT.ALL.value} nodeId\"\n"
               f"\t\"{COMMAND.GET.value} {ARGUMENT.ALL.value} [{ARGUMENT.REQUEST.value}/{ARGUMENT.REPLY.value}/{ARGUMENT.PRIVILEGE.value}/{ARGUMENT.FORWARDED.value}]\"\n"
@@ -128,11 +139,14 @@ def drawCommand(args):
         helpCommand(COMMAND.DRAW)
 
 def setCommand(args):
-    if len(args) == 2:
-        setTime = ARGUMENT.TIME.value in args
+    global labelDistance
+    setTime = ARGUMENT.TIME.value in args
+    setDistance = ARGUMENT.DISTANCE.value in args
 
-        if setTime:
-            args.remove(ARGUMENT.TIME.value)
+    if setTime and not setDistance:
+        args.remove(ARGUMENT.TIME.value)
+
+        if len(args) == 1:
             try:
                 t = float(args[0])
                 if t > 0:
@@ -141,6 +155,19 @@ def setCommand(args):
                     print(f"Sleep time cannot be set to {t}, choose a value above 0!")
             except ValueError:
                 print(f"\'{args[0]}\' is not float.")
+        else:
+            helpCommand(COMMAND.SET)
+    elif setDistance and not setTime:
+        args.remove(ARGUMENT.DISTANCE.value)
+
+        if len(args) == 1:
+            try:
+                labelDistance = float(args[0])
+                drawGraph(True)
+            except ValueError:
+                print(f"\'{args[0]}\' is not float.")
+        else:
+            helpCommand(COMMAND.SET)
     else:
         helpCommand(COMMAND.SET)
 
@@ -161,7 +188,10 @@ def getNodeInformation(node: RicartAgrawalaNode, request=True, reply=True, privi
     return f"{node.componentinstancenumber} => " + " | ".join(information)
 
 def getCommand(args):
+    global labelDistance
+
     isTime = ARGUMENT.TIME.value in args
+    isDistance = ARGUMENT.DISTANCE.value in args
 
     isAll = ARGUMENT.ALL.value in args
     isMean = ARGUMENT.MEAN.value in args
@@ -175,6 +205,8 @@ def getCommand(args):
 
     if isTime:
         args.remove(ARGUMENT.TIME.value)
+    if isDistance:
+        args.remove(ARGUMENT.DISTANCE.value)
     if isAll:
         args.remove(ARGUMENT.ALL.value)
     if isMean:
@@ -190,12 +222,17 @@ def getCommand(args):
     if isForwarded:
         args.remove(ARGUMENT.FORWARDED.value)
 
-    if isTime and not isAll and not (isMean or isTotal):
+    if (isTime or isDistance) and not isAll and not (isMean or isTotal):
         if len(args) == 0 and not areAnyOtherArgumentsSet:
-            print(f"Sleep amount in critical section is {RicartAgrawalaNode.privilegeSleepAmount} seconds.")
+            if isTime and not isDistance:
+                print(f"Sleep amount in critical section is {RicartAgrawalaNode.privilegeSleepAmount} seconds.")
+            elif isDistance and not isTime:
+                print(f"Label drawing distance from the node is {labelDistance}.")
+            else:
+                helpCommand(COMMAND.GET)
         else:
             helpCommand(COMMAND.GET)
-    elif isAll and not isTime and not (isMean or isTotal):
+    elif isAll and not (isTime or isDistance) and not (isMean or isTotal):
         if not areAnyOtherArgumentsSet:
             isRequest = isReply = isPrivilege = isForwarded = True
 
@@ -205,7 +242,7 @@ def getCommand(args):
                 print(getNodeInformation(node, isRequest, isReply, isPrivilege, isForwarded))
         else:
             helpCommand(COMMAND.GET)
-    elif (isMean or isTotal) and not isTime and not isAll:
+    elif (isMean or isTotal) and not (isTime or isDistance) and not isAll:
         if not areAnyOtherArgumentsSet:
             isRequest = isReply = isPrivilege = isForwarded = True
 
@@ -236,7 +273,7 @@ def getCommand(args):
         else:
             helpCommand(COMMAND.GET)
     else:
-        if areAnyOtherArgumentsSet and not isTime and not isAll and not isMean:
+        if areAnyOtherArgumentsSet and not (isTime or isDistance) and not isAll and not isMean:
             if len(args) == 1:
                 try:
                     nodeID = int(args[0])
@@ -252,17 +289,18 @@ def getCommand(args):
             helpCommand(COMMAND.GET)
 
 def drawGraph(overwrite=False):
-    global drawnGraphNodeColors, drawnGraphNodeClockValues
+    global drawnGraphNodeColors, drawnGraphNodeLabels, labelDistance, SAVED_FILE_INDEX, SAVING_ENABLED
 
     G = Topology().G
-    pos = nx.circular_layout(G, center=(0, 0))
+    mstG = nx.minimum_spanning_tree(Topology().G)
+    pos = nx.drawing.nx_pydot.graphviz_layout(mstG, prog="neato", root=mstG.nodes[0])  # neato twopi sfdp
 
     nodeColors = []
-    clockValues = []
+    nodeLabels = []
     for nodeID in Topology().nodes:
         node = Topology().nodes[nodeID]
-        G.nodes[nodeID]['clock'] = node.clock
-        clockValues.append(node.clock)
+        G.nodes[nodeID]['label'] = node.clock
+        nodeLabels.append(node.clock)
 
         if node.isPrivileged:
             nodeColors.append(PRIVILEGED_NODE_COLOR)
@@ -271,23 +309,33 @@ def drawGraph(overwrite=False):
         else:
             nodeColors.append(NODE_COLOR)
 
-    if overwrite or nodeColors != drawnGraphNodeColors or clockValues != drawnGraphNodeClockValues:
+    if overwrite or nodeColors != drawnGraphNodeColors or nodeLabels != drawnGraphNodeLabels:
         drawnGraphNodeColors = list(nodeColors)
-        drawnGraphNodeClockValues = list(clockValues)
+        drawnGraphNodeLabels = list(nodeLabels)
 
-        clockLabelsPos = {}
+        labels = nx.get_node_attributes(G, 'label')
+        labelPos = {}
+        centerX, centerY = pos[0]
+        sumX, sumY = 0, 0
         for key in pos:
+            if key == 0:
+                pass
             x, y = pos[key]
-            r = math.sqrt(x**2 + y**2)
-            theta = atan2(y, x) + radians(75)
-            d = 0.1
-            clockLabelsPos[key] = (x + d * cos(theta), y + d * sin(theta))
+            sumX, sumY = sumX + x, sumY + y
+            theta = atan2(centerY - y, centerX - x)
+            labelPos[key] = (x + labelDistance * cos(theta), y + labelDistance * sin(theta))
+        meanX, meanY = sumX / len(pos), sumY / len(pos)
+        theta = atan2(meanY - centerY, meanX - centerX)
+        labelPos[0] = (centerX + labelDistance * cos(theta), centerY + labelDistance * sin(theta))
 
-        nodeClockLabels = nx.get_node_attributes(G, 'clock')
         nx.draw(G, pos, node_color=nodeColors, edge_color=EDGE_COLOR, with_labels=True, font_weight='bold')
-        nx.draw_networkx_labels(G, clockLabelsPos, nodeClockLabels)
+        nx.draw_networkx_labels(G, labelPos, labels)
 
         plt.draw()
+        if SAVING_ENABLED:
+            path = os.path.join(SAVE_PATH, f"ra_{SAVED_FILE_INDEX}.png")
+            plt.savefig(path, format="PNG")
+            SAVED_FILE_INDEX += 1
         plt.show()
 
 def graphDrawingDaemon():
@@ -321,11 +369,18 @@ def completeBinomialGraph(n, p, seed=None):
     return G
 
 def main():
-    G = completeBinomialGraph(20, 0.00000001, seed=5)
+    global labelDistance
+
+    G = completeBinomialGraph(5, 0.2, seed=15)
+    labelDistance = len(G.nodes)
 
     topology = Topology()
     topology.construct_from_graph(G, RicartAgrawalaNode, P2PFIFOPerfectChannel)
     topology.start()
+
+    if os.path.exists(SAVE_PATH):
+        shutil.rmtree(SAVE_PATH)
+    os.makedirs(SAVE_PATH)
 
     graphDaemon = threading.Thread(target=graphDrawingDaemon, daemon=True)
     graphDaemon.start()

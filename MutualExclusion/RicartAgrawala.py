@@ -48,7 +48,7 @@ class RicartAgrawalaMessagePayload(GenericMessagePayload):
 
 
 class RicartAgrawalaNode(ComponentModel):
-    privilegeSleepAmount = 0.1
+    privilegeSleepAmount = 1
 
     def __init__(self, componentName, componentID):
         super().__init__(componentName, componentID)
