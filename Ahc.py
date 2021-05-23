@@ -302,7 +302,7 @@ class Topology:
     N = len(self.G.nodes)
     self.compute_forwarding_table()
     self.nodecolors = ['b'] * N
-    self.nodepos = nx.drawing.spring_layout(self.G)
+    # self.nodepos = nx.drawing.spring_layout(self.G)
     self.lock = Lock()
     ComponentRegistry().init()
 
@@ -357,7 +357,7 @@ class Topology:
 
   def plot(self):
     #self.lock.acquire()
-    nx.draw(self.G, self.nodepos, node_color=self.nodecolors, with_labels=True, font_weight='bold')
-    plt.draw()
+    # nx.draw(self.G, self.nodepos, node_color=self.nodecolors, with_labels=True, font_weight='bold')
+    # plt.draw()
     print(self.nodecolors)
     #self.lock.release()
