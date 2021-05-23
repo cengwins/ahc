@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
-from simulator import run_dijkstra_scholten_simulation, run_shavit_francez_simulation
+from simulator_sf import run_shavit_francez_simulation
+from simulator_ds import run_dijkstra_scholten_simulation
 
 algorithm_handlers = {
     "djikstra-scholten": run_dijkstra_scholten_simulation,
