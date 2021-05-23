@@ -1,26 +1,18 @@
-import asyncio
 import logging
 import statistics
 import sys
 import threading
-from random import randrange
-from os.path import join
-from threading import Thread
-
-from Ahc import ComponentRegistry
 from Consensus.Raft.log import LogManager
+
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 logger = logging.getLogger(__name__)
 
 class State:
-    """Abstract state for subclassing."""
+    
 
     def __init__(self, old_state=None, server=None):
-        """State is initialized passing an orchestator instance when first
-        deployed. Subsequent state changes use the old_state parameter to
-        preserve the environment.
-        """
+
         if old_state:
             self.server = old_state.server
             self.votedFor = old_state.votedFor
@@ -35,8 +27,7 @@ class State:
             self.log = LogManager()
 
     def data_received_peer(self, peer, msg):
-        """Receive peer messages from orchestrator and pass them to the
-        appropriate method."""
+
         logger.debug('For component %s Received %s from %s', msg['type'], self.server.componentinstancenumber ,peer.componentinstancenumber)
 
         if self.currentTerm < msg['term']:
@@ -53,14 +44,13 @@ class State:
             logger.info('For component %s Unrecognized message from %s: %s', self.server.componentinstancenumber,peer.componentinstancenumber, msg)
 
     def data_received_client(self, client, msg):
-        """Receive client messages from orchestrator and pass them to the
-        appropriate method."""
+
         method = getattr(self, 'on_client_' + msg['type'], None)
         if method:
             method(client, msg)
 
     def on_client_append(self, client, msg):
-        """Redirect client to leader upon receiving a client_append message."""
+        
         msg = {'type': 'redirect',
                'leader': self.leaderId}
         client.send(msg)
@@ -68,29 +58,29 @@ class State:
                      self.leaderId)
 
     def on_client_get(self, client, msg):
-        """Return state machine to client."""
+        
         client.send(self.log)
 
 
 class Follower(State):
-    """Follower state."""
+    
 
     def __init__(self, old_state=None, server=None):
-        """Initialize parent and start election timer."""
+        
         super().__init__(old_state, server)
         self.votedFor = None
         self.restart_election_timer()
 
     def teardown(self):
-        """Stop timers before changing state."""
+        
         self.election_timer.cancel()
 
     def restart_election_timer(self):
-        """Delays transition to the Candidate state by timer."""
+        
         if hasattr(self, 'election_timer'):
             self.election_timer.cancel()
 
-        timeout = randrange(1, 4)
+        timeout = ord(self.server.componentinstancenumber) - ord('A') + 1
         #loop = get_or_create_eventloop()
         #self.election_timer = loop. \
         #    call_later(timeout, self.server.change_state, Candidate)
@@ -99,7 +89,7 @@ class Follower(State):
         logger.debug(' For component %s Election timer restarted: %s s', self.server.componentinstancenumber,timeout)
 
     def on_peer_request_vote(self, peer, msg):
-        """Grant this node's vote to Candidates."""
+        
         term_is_current = msg['term'] >= self.currentTerm
         can_vote = self.votedFor is None
         index_is_current = (msg['lastLogTerm'] > self.log.term() or
@@ -144,10 +134,10 @@ class Follower(State):
 
 
 class Candidate(Follower):
-    """Candidate state. Notice that this state subclasses Follower."""
+    
 
     def __init__(self, old_state=None, server=None):
-        """Initialize parent, increase term, vote for self, ask for votes."""
+        
         super().__init__(old_state, server)
         self.currentTerm += 1
         self.votes_count = 0
@@ -164,7 +154,7 @@ class Candidate(Follower):
 
 
     def send_vote_requests(self):
-        """Ask peers for votes."""
+        
         logger.info(' For component %s Broadcasting request_vote', self.server.componentinstancenumber)
         msg = {'type': 'request_vote', 'term': self.currentTerm,
                'candidateId': self.votedFor,
@@ -173,13 +163,13 @@ class Candidate(Follower):
         self.server.broadcast_peers(msg)
 
     def on_peer_append_entries(self, peer, msg):
-        """Transition back to Follower upon receiving an append_entries."""
+        
         logger.debug('For component %s Converting to Follower', self.server.componentinstancenumber)
         self.server.change_state(Follower)
         self.server.state.on_peer_append_entries(peer, msg)
 
     def on_peer_response_vote(self, peer, msg):
-        """Register peers votes, transition to Leader upon majority vote."""
+        
         self.votes_count += msg['voteGranted']
         logger.info(' For component %s Vote count: %s', self.server.componentinstancenumber, self.votes_count)
         if self.votes_count > len(self.server.registry.get_non_channel_components()) / 2:
@@ -187,11 +177,10 @@ class Candidate(Follower):
 
 
 class Leader(State):
-    """Leader state."""
+    
 
     def __init__(self, old_state=None, server=None):
-        """Initialize parent, sets leader variables, start periodic
-        append_entries"""
+
         super().__init__(old_state, server)
         logger.info('For component %s Leader of term: %s', self.server.componentinstancenumber,self.currentTerm)
         self.leaderId = self.server.componentinstancenumber
@@ -211,7 +200,7 @@ class Leader(State):
         self.log.commit(self.log.index)
 
     def teardown(self):
-        """Stop timers before changing state."""
+        
         self.append_timer.cancel()
 
         for clients in self.waiting_clients.values():
@@ -220,11 +209,7 @@ class Leader(State):
                 logger.error('Sent unsuccessful response to client')
 
     def send_append_entries(self):
-        """Send append_entries to the cluster, containing:
-        - nothing: if remote node is up to date.
-        - compacted log: if remote node has to catch up.
-        - log entries: if available.
-        Finally schedules itself for later esecution."""
+
         cluster = self.server.registry.get_non_channel_components()
         for peer in cluster:
             if peer.componentinstancenumber == self.server.componentinstancenumber:
@@ -242,15 +227,14 @@ class Leader(State):
                          len(msg['entries']), peer.componentinstancenumber, self.nextIndex[peer.componentinstancenumber])
             self.server.send_to_component(peer, msg)
 
-        timeout = randrange(1, 4) * 10 ** -1
+        timeout = 1
         #loop = get_or_create_eventloop()
         #self.append_timer = loop.call_later(timeout, self.send_append_entries)
         self.append_timer = threading.Timer(timeout, self.send_append_entries)
         self.append_timer.start()
+
     def on_peer_response_append(self, peer, msg):
-        """Handle peer response to append_entries.
-        If successful RPC, try to commit new entries.
-        If RPC unsuccessful, backtrack."""
+
         if msg['success']:
             self.matchIndex[peer] = msg['matchIndex']
             self.nextIndex[peer] = msg['matchIndex'] + 1
@@ -264,7 +248,7 @@ class Leader(State):
             self.nextIndex[peer.componentinstancenumber] = max(0, self.nextIndex[peer.componentinstancenumber] - 1)
 
     def on_client_append(self, client, msg):
-        """Append new entries to Leader log."""
+        
         entry = {'term': self.currentTerm, 'data': msg['data']}
 
         self.log.append_entries([entry], self.log.index)
@@ -277,7 +261,7 @@ class Leader(State):
                                        'matchIndex': self.log.commitIndex})
 
     def send_client_append_response(self):
-        """Respond to client upon commitment of log entries."""
+        
         to_delete = []
         for client_index, clients in self.waiting_clients.items():
             if client_index <= self.log.commitIndex:

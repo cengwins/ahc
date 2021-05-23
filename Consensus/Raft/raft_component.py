@@ -48,34 +48,3 @@ class RaftConsensusComponent(ComponentModel):
 
     def on_init(self, eventobj: Event):
         self.state = Follower(server=self)
-
-
-class ConsensusComponent(ComponentModel):
-
-    def __init__(self, component_name, component_id):
-        super().__init__(component_name, component_id, 1)
-        self._commitIndex = 0
-        self._currentTerm = 0
-        self._lastApplied = 0
-        self._lastLogIndex = 0
-        self._lastLogTerm = None
-        self._state = Follower()
-        self._log = []
-
-    def set_log(self, log):
-        self._log = log
-
-    def on_message(self, message):
-        state, response = self._state.on_message(message)
-        self._state = state
-
-    def on_message_from_bottom(self, eventobj: Event):
-        print(f"{EventTypes.MFRT} {self.componentname}.{self.componentinstancenumber}")
-        self.on_message(eventobj)
-
-    def send_message(self, message):
-        self.send_down(Event(self, EventTypes.MFRT, message))
-
-    # also means start election
-    def on_init(self, eventobj: Event):
-        self._state.set_server(self)
