@@ -56,6 +56,19 @@ lnr_distr = {
     }
 }
 
+snr_distrib = {
+    "DS": {
+        "erg": {},
+        "star": {},
+        "grid": {}
+    },
+    "SF": {
+        "erg": {},
+        "star": {},
+        "grid": {}
+    }
+}
+
 
 for fpath in os.listdir("bench_dump/simdump/"):
     if fpath.endswith(".pkl"):
@@ -119,6 +132,11 @@ for fpath in os.listdir("bench_dump/"):
 
             if reason == "forced":
                 latency["SF"][topo].append((False, ))
+
+                if nodes not in snr_distrib["SF"][topo]:
+                    snr_distrib["SF"][topo][nodes] = []
+
+                snr_distrib["SF"][topo][nodes].append(0)
             else:
                 reason, _, _, _, diff = lines[-1].split()
 
@@ -130,6 +148,11 @@ for fpath in os.listdir("bench_dump/"):
                     dif = 0
 
                 latency["SF"][topo].append((True, dif, dif/nodes))
+
+                if nodes not in snr_distrib["SF"][topo]:
+                    snr_distrib["SF"][topo][nodes] = []
+
+                snr_distrib["SF"][topo][nodes].append(1)
         elif algo == "DS":
             reason = lines[-1].split(" ")[0]
 
@@ -138,6 +161,11 @@ for fpath in os.listdir("bench_dump/"):
 
             if reason == "forced":
                 latency["DS"][topo].append((False, ))
+
+                if nodes not in snr_distrib["DS"][topo]:
+                    snr_distrib["DS"][topo][nodes] = []
+
+                snr_distrib["DS"][topo][nodes].append(0)
             else:
                 reason, _, _, diff = lines[-1].split()
 
@@ -149,6 +177,11 @@ for fpath in os.listdir("bench_dump/"):
                     dif = 0
 
                 latency["DS"][topo].append((True, dif, dif/nodes))
+
+                if nodes not in snr_distrib["DS"][topo]:
+                    snr_distrib["DS"][topo][nodes] = []
+
+                snr_distrib["DS"][topo][nodes].append(1)
         else:
             raise RuntimeError(algo)
 
@@ -162,42 +195,65 @@ for algo in lnr_distr:
 #     "lnr": lnr_distr
 # }, indent=4))
 
-plot_all = False
+fig, axes = plt.subplots(2, 3)
+fig.set_figheight(5)
+fig.set_figwidth(25)
 
-if plot_all:
-    fig, axes = plt.subplots(2, 3)
-    fig.set_figheight(10)
-    fig.set_figwidth(30)
-    # fig.tight_layout()
+axes[0][0].set_title("DS/SF Grid LNR Distribution")
+axes[0][1].set_title("DS/SF Star LNR Distribution")
+axes[0][2].set_title("DS/SF ERG LNR Distribution")
+axes[0][0].set_xlabel("Latency/Node Ratio (ticks/node)")
+axes[0][1].set_xlabel("Latency/Node Ratio (ticks/node)")
+axes[0][2].set_xlabel("Latency/Node Ratio (ticks/node)")
 
-    axes[0][0].set_title("Dijkstra-Scholten Grid LNR Distribution")
-    axes[0][1].set_title("Dijkstra-Scholten Star LNR Distribution")
-    axes[0][2].set_title("Dijkstra-Scholten ERG LNR Distribution")
-    axes[1][0].set_title("Shavit-Francez Grid LNR Distribution")
-    axes[1][1].set_title("Shavit-Francez Star LNR Distribution")
-    axes[1][2].set_title("Shavit-Francez ERG LNR Distribution")
+axes[0][0].set_title("Dijkstra-Scholten SNR Plot")
+axes[0][1].set_title("Shavit-Francez SNR Plot")
+axes[0][0].set_xlabel("Node Count")
+axes[0][1].set_xlabel("Node Count")
+axes[0][0].set_ylabel("Successive Simulations")
+axes[0][1].set_ylabel("Successive Simulations")
 
-    sns.histplot(data=lnr_distr["DS"]["grid"], kde=True, ax=axes[0][0])
-    sns.histplot(data=lnr_distr["DS"]["star"], kde=True, ax=axes[0][1])
-    sns.histplot(data=lnr_distr["DS"]["erg"], kde=True, ax=axes[0][2])
-    sns.histplot(data=lnr_distr["SF"]["grid"], kde=True, ax=axes[1][0])
-    sns.histplot(data=lnr_distr["SF"]["star"], kde=True, ax=axes[1][1])
-    sns.histplot(data=lnr_distr["SF"]["erg"], kde=True, ax=axes[1][2])
-else:
-    fig, axes = plt.subplots(1, 3)
-    fig.set_figheight(5)
-    fig.set_figwidth(25)
+sns.histplot(data={"Dijkstra-Scholten": lnr_distr["DS"]["grid"], "Shavit-Francez": lnr_distr["SF"]["grid"]}, kde=True, ax=axes[0], log_scale=True)
+sns.histplot(data={"Dijkstra-Scholten": lnr_distr["DS"]["star"], "Shavit-Francez": lnr_distr["SF"]["star"]}, kde=True, ax=axes[1], log_scale=True)
+sns.histplot(data={"Dijkstra-Scholten": lnr_distr["DS"]["erg"], "Shavit-Francez": lnr_distr["SF"]["erg"]}, kde=True, ax=axes[2], log_scale=True)
 
-    axes[0].set_title("DS/SF Grid LNR Distribution")
-    axes[1].set_title("DS/SF Star LNR Distribution")
-    axes[2].set_title("DS/SF ERG LNR Distribution")
-    axes[0].set_xlabel("Latency/Node Ratio (ticks/node)")
-    axes[1].set_xlabel("Latency/Node Ratio (ticks/node)")
-    axes[2].set_xlabel("Latency/Node Ratio (ticks/node)")
+ds_grid_df = pd.DataFrame({
+    "succ": [sum(snr_distrib["DS"]["grid"][node_count]) for node_count in snr_distrib["DS"]["grid"]],
+    "nodes": [node_count for node_count in snr_distrib["DS"]["grid"]]
+})
 
-    sns.histplot(data={"Dijkstra-Scholten": lnr_distr["DS"]["grid"], "Shavit-Francez": lnr_distr["SF"]["grid"]}, kde=True, ax=axes[0], log_scale=True)
-    sns.histplot(data={"Dijkstra-Scholten": lnr_distr["DS"]["star"], "Shavit-Francez": lnr_distr["SF"]["star"]}, kde=True, ax=axes[1], log_scale=True)
-    sns.histplot(data={"Dijkstra-Scholten": lnr_distr["DS"]["erg"], "Shavit-Francez": lnr_distr["SF"]["erg"]}, kde=True, ax=axes[2], log_scale=True)
+ds_star_df = pd.DataFrame({
+    "succ": [sum(snr_distrib["DS"]["star"][node_count]) for node_count in snr_distrib["DS"]["star"]],
+    "nodes": [node_count for node_count in snr_distrib["DS"]["star"]]
+})
+
+ds_erg_df = pd.DataFrame({
+    "succ": [sum(snr_distrib["DS"]["erg"][node_count]) for node_count in snr_distrib["DS"]["erg"]],
+    "nodes": [node_count for node_count in snr_distrib["DS"]["erg"]]
+})
+
+sf_grid_df = pd.DataFrame({
+    "succ": [sum(snr_distrib["SF"]["grid"][node_count]) for node_count in snr_distrib["SF"]["grid"]],
+    "nodes": [node_count for node_count in snr_distrib["SF"]["grid"]]
+})
+
+sf_star_df = pd.DataFrame({
+    "succ": [sum(snr_distrib["SF"]["star"][node_count]) for node_count in snr_distrib["SF"]["star"]],
+    "nodes": [node_count for node_count in snr_distrib["SF"]["star"]]
+})
+
+sf_erg_df = pd.DataFrame({
+    "succ": [sum(snr_distrib["SF"]["erg"][node_count]) for node_count in snr_distrib["SF"]["erg"]],
+    "nodes": [node_count for node_count in snr_distrib["SF"]["erg"]]
+})
+
+sns.lineplot(data=ds_grid_df, x="nodes", y="succ", ax=axes[1][0])
+sns.lineplot(data=ds_star_df, x="nodes", y="succ", ax=axes[1][0])
+sns.lineplot(data=ds_erg_df, x="nodes", y="succ", ax=axes[1][0])
+
+sns.lineplot(data=ds_grid_df, x="nodes", y="succ", ax=axes[1][0])
+sns.lineplot(data=ds_star_df, x="nodes", y="succ", ax=axes[1][0])
+sns.lineplot(data=ds_erg_df, x="nodes", y="succ", ax=axes[1][0])
 
 sns.despine()
 plt.show()
