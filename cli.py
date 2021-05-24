@@ -35,6 +35,9 @@ parser.add_argument("--hard_stop_max_tick", type=int, default=300)
 parser.add_argument("--hard_stop_prob", type=float, default=0.5)
 
 parser.add_argument("--no_realtime_plot", action="store_true", default=False)
+parser.add_argument("--save_tick_plots", action="store_true", default=False)
+parser.add_argument("--tick_plots_save_dir", type=str, default="simdump")
+parser.add_argument("--generate_gif", action="store_true", default=False)
 
 sp = parser.add_subparsers()
 
@@ -55,5 +58,8 @@ star_parser.set_defaults(network_type="star")
 if __name__ == "__main__":
     args = parser.parse_args()
     print(f"[+] Network type: {args.network_type}")
+
+    if args.generate_gif:
+        args.save_tick_plots = True
 
     algorithm_handlers[args.algorithm](args)

@@ -16,7 +16,24 @@ from graph import ERG, Grid, Star
 from dijkstra_scholten import DijkstraScholtenAdHocNode, DSAHCNodeSimulationStatus
 from Channels import P2PFIFOPerfectChannel
 
+import glob
+from PIL import Image
+
+# # filepaths
+# fp_in = "/path/to/image_*.png"
+# fp_out = "/path/to/image.gif"
+
+def make_gif(from_path: str, to_path: str, out_file: str, duration: int) -> None:
+    # https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html#gif
+    _images = sorted(glob.glob(from_path))
+    print(_images)
+    img, *imgs = [Image.open(f) for f in _images]
+    img.save(fp=f"{to_path}/{out_file}", format='GIF', append_images=imgs,
+            save_all=True, duration=duration, loop=0)
+
 def run_dijkstra_scholten_simulation(args):
+    ts = dt.now().timestamp()
+
     if args.network_type == "erg":
         N = ERG(args.node_count, args.node_connectivity)
         total_nodes = args.node_count
@@ -26,6 +43,12 @@ def run_dijkstra_scholten_simulation(args):
     elif args.network_type == "star":
         N = Star(args.slave_count, master_is_root=args.master_is_root)
         total_nodes = args.slave_count + 1
+
+    if args.save_tick_plots:
+        tick_plots_save_path = f"{args.tick_plots_save_dir}/DS_{args.network_type}_{total_nodes}_{ts}/"
+        os.mkdir(tick_plots_save_path)
+
+        print(f"++ Tick plots will be saved to: {tick_plots_save_path}")
 
     if args.run_until_termination:
         args.simulation_ticks = 10**10
@@ -57,8 +80,6 @@ def run_dijkstra_scholten_simulation(args):
     }
 
     print(topo_context)
-    # N.plot()
-    # plt.show()
 
     topo = Topology()
     topo.construct_from_graph(N.G, DijkstraScholtenAdHocNode, P2PFIFOPerfectChannel, context=topo_context)
@@ -171,17 +192,12 @@ def run_dijkstra_scholten_simulation(args):
                 (((stats["df"]["control_packets_sent"].sum() + control_packets_sent) / total_pkgs_sent_cum) if total_pkgs_sent_cum > 0 else 0) * 100
             ]
 
-            # stats["dead_nodes"].append(num_dead_nodes)
-            # stats["active_nodes"].append(num_nodes_active)
-            # stats["packages_in_transmit"].append(packages_sent)
             graphs.append({
                 "edges": T.edges(),
                 "nodes": T.nodes(),
             })
-
-            # axes.scatter(x=t, y=num_nodes_active)
             
-            if not args.no_realtime_plot:
+            if not args.no_realtime_plot or args.save_tick_plots:
                 axes[0][0].cla()
                 axes[0][1].cla()
                 axes[0][2].cla()
@@ -189,25 +205,29 @@ def run_dijkstra_scholten_simulation(args):
                 axes[1][1].cla()
                 axes[1][2].cla()
 
-                sns.lineplot(data=stats["df"]["active_nodes"], ax=axes[0][0], color="orange")
-                sns.lineplot(data=stats["df"]["dead_nodes"], ax=axes[0][0], color="blue")
-                sns.lineplot(data=stats["df"]["packets_in_transmit"], ax=axes[0][1], color="purple")
-                sns.lineplot(data=stats["df"]["control_packets_sent"], ax=axes[0][1], color="green")
+                axes[0][0].set_title("Active/Dead Nodes")
+                axes[0][0].set_xlabel(f"Simulation Ticks ({args.ms_per_tick}ms/tick)")
+                axes[0][0].set_ylabel(f"Node Count")
+
+                axes[0][1].set_title("Packets in Transmit")
+                axes[0][1].set_xlabel(f"Simulation Ticks ({args.ms_per_tick}ms/tick)")
+                axes[0][1].set_ylabel(f"Packet Count")
+
+                axes[1][0].set_title("Control Packet Ratio")
+                axes[1][0].set_xlabel(f"CPR ({args.ms_per_tick}ms/tick)")
+                axes[1][0].set_ylabel(f"CPR (control packets/total packets)")
+
+                axes[1][1].set_title("Instant Control Packet Ratio")
+                axes[1][1].set_xlabel(f"Simulation Ticks ({args.ms_per_tick}ms/tick)")
+                axes[1][1].set_ylabel(f"CPR (control packets/total packets)")
+
+                sns.lineplot(data=stats["df"]["active_nodes"], ax=axes[0][0], color="orange", legend='brief', label="Active nodes")
+                sns.lineplot(data=stats["df"]["dead_nodes"], ax=axes[0][0], color="blue", legend='brief', label="Dead nodes")
+                sns.lineplot(data=stats["df"]["packets_in_transmit"], ax=axes[0][1], color="purple", legend='brief', label="Basic packets")
+                sns.lineplot(data=stats["df"]["control_packets_sent"], ax=axes[0][1], color="green", legend='brief', label="Control packets")
                 sns.lineplot(data=stats["df"]["control_total_cumulative_ratio"], ax=axes[1][0], color="mediumslateblue")
                 sns.lineplot(data=stats["df"]["control_basic_instant_ratio"], ax=axes[1][1], color="red")
-                # sns.lineplot(data=stats["active_nodes"], ax=axes, color="red")
-                # sns.lineplot(data=stats["dead_nodes"], ax=axes, color="mediumslateblue")
-                # sns.lineplot(data=stats["packages_in_transmit"], ax=axes, color="green")
 
-                # pos = nx.spring_layout(T)
-                # nx.draw_networkx_nodes(T , pos, nodelist=[N.root], node_color='red', ax=axes[0][2])
-                # nx.draw_networkx_nodes(T , pos, nodelist=[i for i in T.nodes() if i != N.root], node_color='mediumslateblue', ax=axes[0][2])
-                # nx.draw_networkx_edges(T , pos, ax=axes[0][2])
-
-                # pos = graphviz_layout(T, prog="twopi")
-                # nx.draw(T, ax=axes[0][2], pos=pos)
-
-                # node_color = ["red" if list(T.nodes)[i] == N.root else ("mediumslateblue" if list(T.nodes)[i] not in alive_nodes else "green") for i in range(total_nodes)]
                 nx.draw(T, ax=axes[0][2], with_labels=True, node_color=node_color)
                 
                 if args.network_type == "grid":   
@@ -218,20 +238,15 @@ def run_dijkstra_scholten_simulation(args):
 
                 plt.pause(0.0005)
 
+                if args.save_tick_plots:
+                    plt.savefig(tick_plots_save_path + f"{str(t).zfill(3)}.png", dpi=160)
+
             if break_this_tick:
                 break
 
             time.sleep(args.ms_per_tick / 1000)
     except KeyboardInterrupt:
         pass
-
-    ts = dt.now().timestamp()
-
-    # axes.cla()
-    # sns.lineplot(data=stats["active_nodes"], ax=axes)
-    # sns.kdeplot(data=stats["active_nodes"], ax=axes)
-
-    #plt.plot(stats["packages_in_transmit"])
 
     axes[0][0].cla()
     axes[0][1].cla()
@@ -269,3 +284,6 @@ def run_dijkstra_scholten_simulation(args):
         plt.show()
 
     print(f"\n{reason} [{t - stats['terminated_on_tick'] if stats['terminated_on_tick'] is not None else None}]")
+
+    if args.generate_gif:
+        make_gif(f"{tick_plots_save_path}/*.png", tick_plots_save_path, "animation.gif", t * 20)
