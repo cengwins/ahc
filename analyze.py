@@ -196,64 +196,42 @@ for algo in lnr_distr:
 # }, indent=4))
 
 fig, axes = plt.subplots(2, 3)
-fig.set_figheight(5)
+fig.set_figheight(10)
 fig.set_figwidth(25)
 
-axes[0][0].set_title("DS/SF Grid LNR Distribution")
-axes[0][1].set_title("DS/SF Star LNR Distribution")
-axes[0][2].set_title("DS/SF ERG LNR Distribution")
+axes[0][0].set_title("DS/SF Grid Topology LNR Distribution")
+axes[0][1].set_title("DS/SF Star Topology LNR Distribution")
+axes[0][2].set_title("DS/SF ERG Topology LNR Distribution")
+
 axes[0][0].set_xlabel("Latency/Node Ratio (ticks/node)")
 axes[0][1].set_xlabel("Latency/Node Ratio (ticks/node)")
 axes[0][2].set_xlabel("Latency/Node Ratio (ticks/node)")
 
-axes[0][0].set_title("Dijkstra-Scholten SNR Plot")
-axes[0][1].set_title("Shavit-Francez SNR Plot")
-axes[0][0].set_xlabel("Node Count")
-axes[0][1].set_xlabel("Node Count")
-axes[0][0].set_ylabel("Successive Simulations")
-axes[0][1].set_ylabel("Successive Simulations")
+sns.histplot(data={"Dijkstra-Scholten": lnr_distr["DS"]["grid"], "Shavit-Francez": lnr_distr["SF"]["grid"]}, kde=True, ax=axes[0][0], log_scale=True)
+sns.histplot(data={"Dijkstra-Scholten": lnr_distr["DS"]["star"], "Shavit-Francez": lnr_distr["SF"]["star"]}, kde=True, ax=axes[0][1], log_scale=True)
+sns.histplot(data={"Dijkstra-Scholten": lnr_distr["DS"]["erg"], "Shavit-Francez": lnr_distr["SF"]["erg"]}, kde=True, ax=axes[0][2], log_scale=True)
 
-sns.histplot(data={"Dijkstra-Scholten": lnr_distr["DS"]["grid"], "Shavit-Francez": lnr_distr["SF"]["grid"]}, kde=True, ax=axes[0], log_scale=True)
-sns.histplot(data={"Dijkstra-Scholten": lnr_distr["DS"]["star"], "Shavit-Francez": lnr_distr["SF"]["star"]}, kde=True, ax=axes[1], log_scale=True)
-sns.histplot(data={"Dijkstra-Scholten": lnr_distr["DS"]["erg"], "Shavit-Francez": lnr_distr["SF"]["erg"]}, kde=True, ax=axes[2], log_scale=True)
+axes[1][0].set_title("DS/SF Grid SNR Topology Plot")
+axes[1][1].set_title("DS/SF Star SNR Topology Plot")
+axes[1][2].set_title("DS/SF ERG SNR Topology Plot")
 
-ds_grid_df = pd.DataFrame({
-    "succ": [sum(snr_distrib["DS"]["grid"][node_count]) for node_count in snr_distrib["DS"]["grid"]],
-    "nodes": [node_count for node_count in snr_distrib["DS"]["grid"]]
-})
+axes[1][0].set_xlabel("Node Count")
+axes[1][1].set_xlabel("Node Count")
+axes[1][2].set_xlabel("Node Count")
 
-ds_star_df = pd.DataFrame({
-    "succ": [sum(snr_distrib["DS"]["star"][node_count]) for node_count in snr_distrib["DS"]["star"]],
-    "nodes": [node_count for node_count in snr_distrib["DS"]["star"]]
-})
+axes[1][0].set_ylabel("Successive Simulations (%)")
+axes[1][1].set_ylabel("Successive Simulations (%)")
+axes[1][2].set_ylabel("Successive Simulations (%)")
 
-ds_erg_df = pd.DataFrame({
-    "succ": [sum(snr_distrib["DS"]["erg"][node_count]) for node_count in snr_distrib["DS"]["erg"]],
-    "nodes": [node_count for node_count in snr_distrib["DS"]["erg"]]
-})
+topos = [
+    "grid",
+    "star",
+    "erg"
+]
 
-sf_grid_df = pd.DataFrame({
-    "succ": [sum(snr_distrib["SF"]["grid"][node_count]) for node_count in snr_distrib["SF"]["grid"]],
-    "nodes": [node_count for node_count in snr_distrib["SF"]["grid"]]
-})
-
-sf_star_df = pd.DataFrame({
-    "succ": [sum(snr_distrib["SF"]["star"][node_count]) for node_count in snr_distrib["SF"]["star"]],
-    "nodes": [node_count for node_count in snr_distrib["SF"]["star"]]
-})
-
-sf_erg_df = pd.DataFrame({
-    "succ": [sum(snr_distrib["SF"]["erg"][node_count]) for node_count in snr_distrib["SF"]["erg"]],
-    "nodes": [node_count for node_count in snr_distrib["SF"]["erg"]]
-})
-
-sns.lineplot(data=ds_grid_df, x="nodes", y="succ", ax=axes[1][0])
-sns.lineplot(data=ds_star_df, x="nodes", y="succ", ax=axes[1][0])
-sns.lineplot(data=ds_erg_df, x="nodes", y="succ", ax=axes[1][0])
-
-sns.lineplot(data=ds_grid_df, x="nodes", y="succ", ax=axes[1][0])
-sns.lineplot(data=ds_star_df, x="nodes", y="succ", ax=axes[1][0])
-sns.lineplot(data=ds_erg_df, x="nodes", y="succ", ax=axes[1][0])
+for i in range(3):
+    sns.lineplot(y=[100 * sum(snr_distrib["DS"][topos[i]][node_count]) / len(snr_distrib["DS"][topos[i]][node_count]) for node_count in snr_distrib["DS"][topos[i]]], x=[node_count for node_count in snr_distrib["DS"][topos[i]]], ax=axes[1][i], legend='brief', label="Dijkstra-Scholten")  
+    sns.lineplot(y=[100 * sum(snr_distrib["SF"][topos[i]][node_count]) / len(snr_distrib["SF"][topos[i]][node_count]) for node_count in snr_distrib["SF"][topos[i]]], x=[node_count for node_count in snr_distrib["SF"][topos[i]]], ax=axes[1][i], legend='brief', label="Shavit-Francez")  
 
 sns.despine()
 plt.show()
