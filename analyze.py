@@ -231,8 +231,8 @@ topos = [
 ]
 
 for i in range(3):
-    sns.lineplot(y=[100 * sum(snr_distrib["DS"][topos[i]][node_count]) / len(snr_distrib["DS"][topos[i]][node_count]) for node_count in snr_distrib["DS"][topos[i]]], x=[node_count for node_count in snr_distrib["DS"][topos[i]]], ax=axes[1][i], legend='brief', label="Dijkstra-Scholten")  
-    sns.lineplot(y=[100 * sum(snr_distrib["SF"][topos[i]][node_count]) / len(snr_distrib["SF"][topos[i]][node_count]) for node_count in snr_distrib["SF"][topos[i]]], x=[node_count for node_count in snr_distrib["SF"][topos[i]]], ax=axes[1][i], legend='brief', label="Shavit-Francez")  
+    sns.lineplot(y=[100 * sum(snr_distrib["DS"][topos[i]][node_count]) / len(snr_distrib["DS"][topos[i]][node_count]) for node_count in snr_distrib["DS"][topos[i]]], x=[node_count for node_count in snr_distrib["DS"][topos[i]]], ax=axes[1][i], legend='brief', label="Dijkstra-Scholten", alpha=0.7)  
+    sns.lineplot(y=[100 * sum(snr_distrib["SF"][topos[i]][node_count]) / len(snr_distrib["SF"][topos[i]][node_count]) for node_count in snr_distrib["SF"][topos[i]]], x=[node_count for node_count in snr_distrib["SF"][topos[i]]], ax=axes[1][i], legend='brief', label="Shavit-Francez", alpha=0.7)  
 
 sns.despine()
 plt.savefig("lnr_snr.png", dpi=200)
@@ -249,14 +249,19 @@ axes[0][0].set_xlabel("Node Count")
 axes[0][1].set_xlabel("Node Count")
 axes[0][2].set_xlabel("Node Count")
 
-axes[0][0].set_ylabel("Average CPR")
-axes[0][1].set_ylabel("Average CPR")
-axes[0][2].set_ylabel("Average CPR")
+axes[0][0].set_ylabel("Average CPR (%)")
+axes[0][1].set_ylabel("Average CPR (%)")
+axes[0][2].set_ylabel("Average CPR (%)")
+
+# axes[0][0].set_yscale("log")
+# axes[0][1].set_yscale("log")
+# axes[0][2].set_yscale("log")
 
 for i in range(3):
     _top = topos[i]
     cprs = {}
     c_wprs = {}
+    c_prs = {}
 
     for x in metrics["DS"][_top]:
         node_count = x[0]
@@ -269,14 +274,88 @@ for i in range(3):
 
     for x in metrics["SF"][_top]:
         node_count = x[0]
+
         cw_pr = x[1]["cwpr"]
+        c_pr = x[1]["cpr"]
 
         if node_count not in c_wprs:
             c_wprs[node_count] = []
 
+        if node_count not in c_prs:
+            c_prs[node_count] = []
+
         c_wprs[node_count].append(cw_pr)
+        c_prs[node_count].append(c_pr)
 
-    sns.lineplot(y=[100 * sum(cprs[node_count]) / len(cprs[node_count]) for node_count in cprs], x=[node_count for node_count in cprs], ax=axes[0][i], legend='brief', label="Dijkstra-Scholten")  
-    sns.lineplot(y=[100 * sum(c_wprs[node_count]) / len(c_wprs[node_count]) for node_count in c_wprs], x=[node_count for node_count in c_wprs], ax=axes[0][i], legend='brief', label="Shavit-Francez")  
+    sns.lineplot(y=[sum(cprs[node_count]) / len(cprs[node_count]) for node_count in cprs], x=[node_count for node_count in cprs], ax=axes[0][i], legend='brief', label="Dijkstra-Scholten (CPR)")  
+    sns.lineplot(y=[sum(c_prs[node_count]) / len(c_prs[node_count]) for node_count in c_prs], x=[node_count for node_count in c_prs], ax=axes[0][i], legend='brief', label="Shavit-Francez (CPR)")  
+    sns.lineplot(y=[sum(c_wprs[node_count]) / len(c_wprs[node_count]) for node_count in c_wprs], x=[node_count for node_count in c_wprs], ax=axes[0][i], legend='brief', label="Shavit-Francez (CWPR)")  
 
-plt.plot()
+axes[1][0].set_title("Dijkstra-Scholten Average CPPN Ratio Plot")
+axes[1][1].set_title("Shavit-Francez Average CPPN Ratio Plot")
+axes[1][2].set_title("Shavit-Francez Average WPPN Ratio Plot")
+
+axes[1][0].set_xlabel("Node Count")
+axes[1][1].set_xlabel("Node Count")
+axes[1][2].set_xlabel("Node Count")
+
+axes[1][0].set_ylabel("Average CPPN (control packets/node)")
+axes[1][1].set_ylabel("Average CPPN (control packets/node)")
+axes[1][2].set_ylabel("Average WPPN (wave packets/node)")
+
+def get_average_cppn(algo, topo):
+    cppns = {}
+
+    for x in metrics[algo][topo]:
+        node_count = x[0]
+        cppn = x[1]["cppn"]
+
+        if node_count not in cppns:
+            cppns[node_count] = []
+
+        cppns[node_count].append(cppn)
+
+    return ([sum(cppns[node_count]) / len(cppns[node_count]) for node_count in cppns], [node_count for node_count in cppns])
+
+def get_average_wppn(topo):
+    wppns = {}
+
+    for x in metrics["SF"][topo]:
+        node_count = x[0]
+        wppn = x[1]["wppn"]
+
+        if node_count not in wppns:
+            wppns[node_count] = []
+
+        wppns[node_count].append(wppn)
+
+    return ([sum(wppns[node_count]) / len(wppns[node_count]) for node_count in wppns], [node_count for node_count in wppns])
+
+ds_grid_cppns = get_average_cppn("DS", "grid")
+ds_star_cppns = get_average_cppn("DS", "star")
+ds_erg_cppns = get_average_cppn("DS", "erg")
+
+sf_grid_cppns = get_average_cppn("SF", "grid")
+sf_star_cppns = get_average_cppn("SF", "star")
+sf_erg_cppns = get_average_cppn("SF", "erg")
+
+sf_grid_wppns = get_average_wppn("grid")
+sf_star_wppns = get_average_wppn("star")
+sf_erg_wppns = get_average_wppn("erg")
+
+sns.lineplot(y=ds_grid_cppns[0], x=ds_grid_cppns[1], ax=axes[1][0], legend='brief', label="Grid")  
+sns.lineplot(y=ds_star_cppns[0], x=ds_star_cppns[1], ax=axes[1][0], legend='brief', label="Star")  
+sns.lineplot(y=ds_erg_cppns[0], x=ds_erg_cppns[1], ax=axes[1][0], legend='brief', label="ERG")  
+
+sns.lineplot(y=sf_grid_cppns[0], x=sf_grid_cppns[1], ax=axes[1][1], legend='brief', label="Grid")  
+sns.lineplot(y=sf_star_cppns[0], x=sf_star_cppns[1], ax=axes[1][1], legend='brief', label="Star")  
+sns.lineplot(y=sf_erg_cppns[0], x=sf_erg_cppns[1], ax=axes[1][1], legend='brief', label="ERG")  
+
+sns.lineplot(y=sf_grid_wppns[0], x=sf_grid_wppns[1], ax=axes[1][2], legend='brief', label="Grid")  
+sns.lineplot(y=sf_star_wppns[0], x=sf_star_wppns[1], ax=axes[1][2], legend='brief', label="Star")  
+sns.lineplot(y=sf_erg_wppns[0], x=sf_erg_wppns[1], ax=axes[1][2], legend='brief', label="ERG")  
+
+sns.despine()
+
+plt.savefig("cpr_cppn_wpr_wppn.png", dpi=200)
+# plt.show()
