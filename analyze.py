@@ -91,7 +91,8 @@ for fpath in os.listdir("bench_dump/simdump/"):
                 "cpr": cpr,
                 "wpr": wpr,
                 "cppn": cppn,
-                "wppn": wppn
+                "wppn": wppn,
+                "cwpr": cpr + wpr
             }))
         elif algo == "DS":
             metrics["DS"][topo].append((nodes, {
@@ -236,3 +237,46 @@ for i in range(3):
 sns.despine()
 plt.savefig("lnr_snr.png", dpi=200)
 
+fig, axes = plt.subplots(2, 3)
+fig.set_figheight(10)
+fig.set_figwidth(25)
+
+axes[0][0].set_title("DS/SF Grid Control Package Ratio Plot")
+axes[0][1].set_title("DS/SF Star Control Package Ratio Plot")
+axes[0][2].set_title("DS/SF ERG Control Package Ratio Plot")
+
+axes[0][0].set_xlabel("Node Count")
+axes[0][1].set_xlabel("Node Count")
+axes[0][2].set_xlabel("Node Count")
+
+axes[0][0].set_ylabel("Average CPR")
+axes[0][1].set_ylabel("Average CPR")
+axes[0][2].set_ylabel("Average CPR")
+
+for i in range(3):
+    _top = topos[i]
+    cprs = {}
+    c_wprs = {}
+
+    for x in metrics["DS"][_top]:
+        node_count = x[0]
+        cpr = x[1]["cpr"]
+
+        if node_count not in cprs:
+            cprs[node_count] = []
+
+        cprs[node_count].append(cpr)
+
+    for x in metrics["SF"][_top]:
+        node_count = x[0]
+        cw_pr = x[1]["cwpr"]
+
+        if node_count not in c_wprs:
+            c_wprs[node_count] = []
+
+        c_wprs[node_count].append(cw_pr)
+
+    sns.lineplot(y=[100 * sum(cprs[node_count]) / len(cprs[node_count]) for node_count in cprs], x=[node_count for node_count in cprs], ax=axes[0][i], legend='brief', label="Dijkstra-Scholten")  
+    sns.lineplot(y=[100 * sum(c_wprs[node_count]) / len(c_wprs[node_count]) for node_count in c_wprs], x=[node_count for node_count in c_wprs], ax=axes[0][i], legend='brief', label="Shavit-Francez")  
+
+plt.plot()
