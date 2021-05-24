@@ -234,4 +234,5 @@ for i in range(3):
     sns.lineplot(y=[100 * sum(snr_distrib["SF"][topos[i]][node_count]) / len(snr_distrib["SF"][topos[i]][node_count]) for node_count in snr_distrib["SF"][topos[i]]], x=[node_count for node_count in snr_distrib["SF"][topos[i]]], ax=axes[1][i], legend='brief', label="Shavit-Francez")  
 
 sns.despine()
-plt.show()
+plt.savefig("lnr_snr.png", dpi=200)
+
