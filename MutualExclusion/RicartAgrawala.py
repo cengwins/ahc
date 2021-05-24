@@ -150,6 +150,7 @@ class RicartAgrawalaNode(ComponentModel):
         self.sentRequestCount += 1
         self.havePendingRequest = True
         self.pendingRequestClock = self.clock
+        self.clock += 1
 
         for nodeID in self.otherNodeIDs:
             nextHop = Topology().get_next_hop(self.componentinstancenumber, nodeID)
