@@ -4,13 +4,11 @@ import time
 import json
 import pickle
 import random
-from typing import Text
 import pandas as pd
 import seaborn as sns
 import networkx as nx
 import matplotlib.pyplot as plt
 from datetime import datetime as dt
-from networkx.drawing.nx_pydot import graphviz_layout
 
 from Ahc import Topology
 from graph import ERG, Grid, Star
@@ -262,6 +260,7 @@ for i in range(3):
     cprs = {}
     c_wprs = {}
     c_prs = {}
+    wprs = {}
 
     for x in metrics["DS"][_top]:
         node_count = x[0]
@@ -277,6 +276,7 @@ for i in range(3):
 
         cw_pr = x[1]["cwpr"]
         c_pr = x[1]["cpr"]
+        wpr = x[1]["wpr"]
 
         if node_count not in c_wprs:
             c_wprs[node_count] = []
@@ -284,11 +284,16 @@ for i in range(3):
         if node_count not in c_prs:
             c_prs[node_count] = []
 
+        if node_count not in wprs:
+            wprs[node_count] = []
+
         c_wprs[node_count].append(cw_pr)
         c_prs[node_count].append(c_pr)
+        wprs[node_count].append(wpr)
 
     sns.lineplot(y=[sum(cprs[node_count]) / len(cprs[node_count]) for node_count in cprs], x=[node_count for node_count in cprs], ax=axes[0][i], legend='brief', label="Dijkstra-Scholten (CPR)")  
     sns.lineplot(y=[sum(c_prs[node_count]) / len(c_prs[node_count]) for node_count in c_prs], x=[node_count for node_count in c_prs], ax=axes[0][i], legend='brief', label="Shavit-Francez (CPR)")  
+    sns.lineplot(y=[sum(wprs[node_count]) / len(wprs[node_count]) for node_count in wprs], x=[node_count for node_count in wprs], ax=axes[0][i], legend='brief', label="Shavit-Francez (WPR)")  
     sns.lineplot(y=[sum(c_wprs[node_count]) / len(c_wprs[node_count]) for node_count in c_wprs], x=[node_count for node_count in c_wprs], ax=axes[0][i], legend='brief', label="Shavit-Francez (CWPR)")  
 
 axes[1][0].set_title("Dijkstra-Scholten Average CPPN Ratio Plot")
