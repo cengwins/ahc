@@ -32,7 +32,6 @@ class DfsTraverse(ComponentModel):
     super().__init__(componentname, componentinstancenumber)
     self.token_neighbor_mapping = {}
     self.token_parent_mapping = {}
-    self.is_parent = False
 
   def on_message_from_bottom(self, eventobj: Event):
     msg = eventobj.eventcontent
@@ -84,7 +83,6 @@ class DfsTraverse(ComponentModel):
       payload.append(str(self.componentinstancenumber))
       message = self.prepare_message(DfsMessageTypes.FORWARD, next_target, token, payload)
       self.send_down(Event(self, EventTypes.MFRT, message))
-      self.is_parent = True
 
   def start_traverse(self):
     token = self.create_token()
