@@ -189,6 +189,8 @@ class ItaiRodehNode(ComponentModel):
                 )
 
                 self.state = State.passive
+                # we clear the id_p here to have them *not* show up in the
+                # animation
                 self.id_p = " "
                 payload.hop_count += 1
 
@@ -262,8 +264,6 @@ class ItaiRodehNode(ComponentModel):
                         print(
                             f"🤖 {self.componentinstancenumber}: I'M THE ELECTED LEADER"
                         )
-                        # TODO: can we indicate this with a colour on the graph?
-                        # <25-05-21, yigit> #
         self.callback.set()
         self.draw_delay.wait()
         self.draw_delay.clear()
