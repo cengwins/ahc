@@ -22,9 +22,8 @@ __version__ = "0.0.1"
 from enum import Enum
 from random import randint
 
-from Ahc import (ComponentModel, ComponentRegistry, Event, EventTypes,
-                 GenericMessage, GenericMessageHeader, GenericMessagePayload,
-                 Topology)
+from Ahc import (ComponentModel, Event, EventTypes, GenericMessage,
+                 GenericMessageHeader, GenericMessagePayload, Topology)
 
 
 class State(Enum):
@@ -85,7 +84,7 @@ class ItaiRodehNode(ComponentModel):
     """
     Node in a system that uses Itai-Rodeh algorithm
     Each process has three parameters:
-    - id_: 1 <= i <= N where N is the ring size
+    - id_p: 1 <= i <= N where N is the ring size
     - state: from the State enum, active nodes participate in the election,
       passive nodes pass messages around, leader is selected at the end of the
       election cycle
@@ -98,7 +97,7 @@ class ItaiRodehNode(ComponentModel):
         super().__init__(component_name, component_id)
 
         """ The anonymous id the node will select for the round """
-        self.id_ = 0
+        self.id_p = 0
 
         """ Initially, all processes are active """
         self.state = State.active
@@ -115,7 +114,7 @@ class ItaiRodehNode(ComponentModel):
             messagetype="ItaiRodeh Message",
             interfaceid=self.next_hop_interface_id,
         )
-        payload = ItaiRodehMessagePayload(self.election_round, self.id_)
+        payload = ItaiRodehMessagePayload(self.election_round, self.id_p)
 
         message = GenericMessage(header, payload)
         self.send_down(Event(self, EventTypes.MFRT, message))
@@ -131,18 +130,18 @@ class ItaiRodehNode(ComponentModel):
 
     def on_init(self, eventobj: Event):
         # Select an id for round 1
-        self.id_ = randint(1, self.ring_size)
-        print(f"{self.componentinstancenumber} selected {self.id_} as their ID")
+        self.id_p = randint(1, self.ring_size)
+        print(
+            f"🤖 {self.componentinstancenumber} selected {self.id_p} as their"
+            f" ID for round {self.election_round}"
+        )
 
         # Calculate the neighbour, we're on a directed ring
         self.neighbour_id = (int(self.componentinstancenumber) + 1) % self.ring_size
-        # print(f"The neighbour of {self.componentinstancenumber} is {self.neighbour_id}")
 
         self.next_hop = Topology().get_next_hop(
             self.componentinstancenumber, self.neighbour_id
         )
-
-        # print(f"{self.componentinstancenumber} calculated next hop as {self.next_hop}")
 
         self.next_hop_interface_id = f"{self.componentinstancenumber}-{self.next_hop}"
 
@@ -152,16 +151,16 @@ class ItaiRodehNode(ComponentModel):
         """ New message from the link layer """
         payload: ItaiRodehMessagePayload = eventobj.eventcontent.payload
         header: ItaiRodehMessageHeader = eventobj.eventcontent.header
-        print(
-            f"New message from bottom on {self.componentinstancenumber}: {payload.id_p} it's coming from {header.messagefrom}"
-        )
 
-        given_round_id = str(payload.election_round) + str(payload.id_p)
-        our_round_id = str(self.election_round) + str(self.id_)
+        message_election_round = payload.election_round
+        message_assumed_id = payload.id_p
+
+        # For the active node, we are going to follow the if/else chain given
+        # in the textbook
 
         if self.state == State.passive:
             # passive node, pass the message on to the next hop, increase the
-            # 'hop_count' of packet by one
+            # 'hop_count' of packet by one, no other responsibility
             payload.hop_count += 1
             header.messageto = self.next_hop
             header.next_hop = self.next_hop
@@ -170,43 +169,22 @@ class ItaiRodehNode(ComponentModel):
             message = GenericMessage(header, payload)
             self.send_down(Event(self, EventTypes.MFRT, message))
         elif self.state == State.active:
-            print(f"🤖 {self.componentinstancenumber} is ACTIVE: doing my part 👷")
-            # active participant, has stuff to do
-            if payload.hop_count == self.ring_size:
-                print(
-                    f"🤖 {self.componentinstancenumber}'s message traversed all the way around"
-                )
-                # the message that we sent traversed all the way around the ring
-                if payload.dirty_bit:
-                    # Bit has been dirtied, next round
-                    self.id_ = randint(1, self.ring_size)
-                    self.election_round += 1
-                    self.send_election_packet()
-                else:
-                    # The bit is still false, this node is the leader
-                    self.state = State.leader
-                    print(f"🤖 {self.componentinstancenumber}: I'M THE ELECTED LEADER")
-                    # TODO: can we indicate this with a colour on the graph?
-                    # <25-05-21, yigit> #
-            elif given_round_id == our_round_id:
-                print(
-                    f"🤖 {self.componentinstancenumber}: this round/ID is the same as mine"
-                )
-                # another node has picked our id, dirty their bit and pass it along
-                payload.dirty_bit = True
-                payload.hop_count += 1
 
-                header.messageto = self.next_hop
-                header.next_hop = self.next_hop
-                header.interfaceid = self.next_hop_interface_id
+            if message_election_round > self.election_round or (
+                message_election_round == self.election_round
+                and message_assumed_id > self.id_p
+            ):
+                # Another node has picked a higher id than this node for the
+                # current round or this node has received a message from a
+                # future round, going passive
 
                 print(
-                    f"🤖 {self.componentinstancenumber} dirtied the bit, passing it along"
+                    f"🤖 {self.componentinstancenumber} is PASSIVE: "
+                    f"{message_assumed_id} for round {message_election_round} "
+                    f"encountered, this node is at {self.election_round} with "
+                    f"{self.id_p}"
                 )
-                message = GenericMessage(header, payload)
-                self.send_down(Event(self, EventTypes.MFRT, message))
-            elif given_round_id > our_round_id:
-                # Another node has picked a higher id then us, going passive
+
                 self.state = State.passive
 
                 payload.hop_count += 1
@@ -217,6 +195,68 @@ class ItaiRodehNode(ComponentModel):
 
                 message = GenericMessage(header, payload)
                 self.send_down(Event(self, EventTypes.MFRT, message))
-            else:  # given_round_id < our_round_id
-                # dismiss the message
-                pass
+
+            elif message_election_round < self.election_round or (
+                message_election_round == self.election_round
+                and message_assumed_id < self.id_p
+            ):
+                # This node has received a message from a previous round or
+                # from the current round but with a lower assumed id, so this
+                # node can dismiss the election attempt of the sender node
+                print(
+                    f"🤖 {self.componentinstancenumber} is dismissing "
+                    f"{message_assumed_id} for round {message_election_round} "
+                    f"this node is at {self.election_round} with {self.id_p}"
+                )
+                return
+            elif (
+                message_election_round == self.election_round
+                and message_assumed_id == self.id_p
+            ):
+
+                if payload.hop_count < self.ring_size:
+                    # receiver node is not the initial sender node
+                    # another node has picked our id, dirty their bit and pass it along
+                    payload.dirty_bit = True
+                    payload.hop_count += 1
+
+                    header.messageto = self.next_hop
+                    header.next_hop = self.next_hop
+                    header.interfaceid = self.next_hop_interface_id
+
+                    print(
+                        f"🤖 {self.componentinstancenumber} dirtied the bit "
+                        f"for {message_assumed_id}, passing it along"
+                    )
+                    message = GenericMessage(header, payload)
+                    self.send_down(Event(self, EventTypes.MFRT, message))
+
+                elif payload.hop_count == self.ring_size:
+                    # the message that this node has sent traversed all the way
+                    # around the ring
+                    print(
+                        f"🤖 {self.componentinstancenumber}'s message "
+                        f"traversed all the way around"
+                    )
+                    if payload.dirty_bit:
+                        # Bit has been dirtied, next round
+                        self.id_p = randint(1, self.ring_size)
+                        self.election_round += 1
+                        print(
+                            f"🤖 {self.componentinstancenumber} is moving "
+                            f"onto round {self.election_round}"
+                        )
+                        print(
+                            f"{self.componentinstancenumber} selected "
+                            f"{self.id_p} as their ID for round "
+                            f"{self.election_round}"
+                        )
+                        self.send_election_packet()
+                    else:
+                        # The bit is still false, this node is the leader
+                        self.state = State.leader
+                        print(
+                            f"🤖 {self.componentinstancenumber}: I'M THE ELECTED LEADER"
+                        )
+                        # TODO: can we indicate this with a colour on the graph?
+                        # <25-05-21, yigit> #
