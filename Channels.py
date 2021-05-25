@@ -158,3 +158,8 @@ class P2PFIFOFairLossChannel(P2PFIFOPerfectChannel):
 
 class FIFOBroadcastPerfectChannel(Channel):
   pass
+
+class TagToTagFIFOPerfectChannel(P2PFIFOPerfectChannel):
+  def __init__(self, componentname, componentinstancenumber, edgeweight):
+    self.edgeweight = edgeweight
+    super().__init__(componentname, componentinstancenumber)

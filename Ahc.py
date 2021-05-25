@@ -255,6 +255,20 @@ class Topology:
   nodes = {}
   channels = {}
 
+  # Only available with TagToTagFIFOPerfectChannel
+  def construct_from_weighted_graph(self, G: nx.Graph, nodetype, channeltype):
+    self.G = G
+    nodes = list(G.nodes)
+    edges = list(G.edges)
+    for i in nodes:
+      cc = nodetype(nodetype.__name__, i)
+      self.nodes[i] = cc
+    for k in edges:
+      ch = channeltype(channeltype.__name__, str(k[0]) + "-" + str(k[1]), G[k[0]][k[1]]['weight'])
+      self.channels[k] = ch
+      self.nodes[k[0]].connect_me_to_channel(ConnectorTypes.DOWN, ch)
+      self.nodes[k[1]].connect_me_to_channel(ConnectorTypes.DOWN, ch)
+
   def construct_from_graph(self, G: nx.Graph, nodetype, channeltype):
     self.G = G
     nodes = list(G.nodes)
@@ -315,7 +329,7 @@ class Topology:
           #mypath = path[i][j]
           # print(f"{i}to{j} path = {path[i][j]} nexthop = {path[i][j][1]}")
           #self.ForwardingTable[i][j] = path[i][j][1]
-        
+
           # print(f"{i}to{j}path = NONE")
           #self.ForwardingTable[i][j] = inf  # No paths
         #except IndexError:
