@@ -92,6 +92,9 @@ class ItaiRodehNode(ComponentModel):
     """
 
     ring_size = 0
+    callback = None
+    draw_delay = None
+    global_round = 1
 
     def __init__(self, component_name, component_id):
         super().__init__(component_name, component_id)
@@ -103,7 +106,7 @@ class ItaiRodehNode(ComponentModel):
         self.state = State.active
 
         """ Initialized at round 0 """
-        self.election_round = 0
+        self.election_round = 1
 
     def send_election_packet(self):
 
@@ -186,7 +189,7 @@ class ItaiRodehNode(ComponentModel):
                 )
 
                 self.state = State.passive
-
+                self.id_p = " "
                 payload.hop_count += 1
 
                 header.messageto = self.next_hop
@@ -208,7 +211,7 @@ class ItaiRodehNode(ComponentModel):
                     f"{message_assumed_id} for round {message_election_round} "
                     f"this node is at {self.election_round} with {self.id_p}"
                 )
-                return
+
             elif (
                 message_election_round == self.election_round
                 and message_assumed_id == self.id_p
@@ -242,12 +245,13 @@ class ItaiRodehNode(ComponentModel):
                         # Bit has been dirtied, next round
                         self.id_p = randint(1, self.ring_size)
                         self.election_round += 1
+                        ItaiRodehNode.global_round = self.election_round
                         print(
                             f"🤖 {self.componentinstancenumber} is moving "
                             f"onto round {self.election_round}"
                         )
                         print(
-                            f"{self.componentinstancenumber} selected "
+                            f"🤖 {self.componentinstancenumber} selected "
                             f"{self.id_p} as their ID for round "
                             f"{self.election_round}"
                         )
@@ -260,3 +264,6 @@ class ItaiRodehNode(ComponentModel):
                         )
                         # TODO: can we indicate this with a colour on the graph?
                         # <25-05-21, yigit> #
+        self.callback.set()
+        self.draw_delay.wait()
+        self.draw_delay.clear()
