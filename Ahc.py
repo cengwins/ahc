@@ -82,10 +82,21 @@ class ConnectorTypes(Enum):
   UP = "UP"
   PEER = "PEER"
 
+def auto_str(cls):
+    def __str__(self):
+        return '%s(%s)' % (
+            type(self).__name__,
+            ', '.join('%s=%s' % item for item in vars(self).items())
+        )
+    cls.__str__ = __str__
+    return cls
+
+@auto_str
 class GenericMessagePayload:
   def __init__(self, messagepayload):
     self.messagepayload = messagepayload
 
+@auto_str
 class GenericMessageHeader:
   def __init__(self, messagetype, messagefrom, messageto, nexthop=float('inf'), interfaceid=float('inf'), sequencenumber=-1):
     self.messagetype = messagetype
@@ -95,19 +106,37 @@ class GenericMessageHeader:
     self.interfaceid = interfaceid
     self.sequencenumber = sequencenumber
 
+@auto_str
 class GenericMessage:
   def __init__(self, header, payload):
     self.header = header
     self.payload = payload
     self.uniqueid = str(header.messagefrom) + "-" + str(header.sequencenumber)
 
+@auto_str
 class Event:
-  def __init__(self, eventsource, event, eventcontent, fromchannel=None):
+  curr_event_id = 0
+
+  def __init__(self, eventsource, event, eventcontent, fromchannel=None,
+               eventid=-1):
     self.eventsource = eventsource
     self.event = event
     self.time = datetime.datetime.now()
     self.eventcontent = eventcontent
     self.fromchannel = fromchannel
+    self.eventid = eventid
+    if self.eventid == -1:
+      self.eventid = self.curr_event_id
+      self.curr_event_id += 1
+
+  def __eq__(self, other) -> bool:
+    if type(other) is not Event:
+      return False
+
+    return self.eventid == other.eventid
+
+  def __hash__(self) -> int:
+    return self.eventid
 
 def singleton(cls):
   instance = [None]
@@ -214,6 +243,9 @@ class ComponentModel:
   def on_connected_to_channel(self, name, channel):
     print(f"Connected to channel: {name}:{channel.componentinstancenumber}")
 
+  def on_pre_event(self, event):
+    pass
+
   def unique_name(self):
     return f"{self.componentname}.{self.componentinstancenumber}"
 
@@ -249,6 +281,7 @@ class ComponentModel:
     while not self.terminated:
       workitem = myqueue.get()
       if workitem.event in self.eventhandlers:
+        self.on_pre_event(workitem)
         self.eventhandlers[workitem.event](eventobj=workitem)  # call the handler
       else:
         print(f"Event Handler: {workitem.event} is not implemented")

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
 from Channels import Channel
-from Snapshot import ChandyLamportComponentModel
-from Ahc import Topology
+from Snapshot import ChandyLamportComponentModel, LaiYangComponentModel
+from Snapshot import SnapshotEventTypes
+from Ahc import Event, Topology
 import matplotlib.pyplot as plt
 import networkx as nx
 
@@ -14,7 +15,15 @@ def main():
     nx.draw(topo.G, with_labels=True, font_weight='bold')
     plt.draw()
     topo.start()
-    topo.sender.report_snapshot()
+    topo.sender.send_self(Event(topo.sender, SnapshotEventTypes.TS, None))
+    plt.show()
+
+    topo.construct_sender_receiver(LaiYangComponentModel,
+                                   LaiYangComponentModel, Channel)
+    nx.draw(topo.G, with_labels=True, font_weight='bold')
+    plt.draw()
+    topo.start()
+    topo.sender.send_self(Event(topo.sender, SnapshotEventTypes.TS, None))
     plt.show()
 
 
