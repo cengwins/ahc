@@ -15,13 +15,11 @@ __maintainer__ = "developer"
 __status__ = "Production"
 __version__ = "0.0.1"
 
-import random
 from enum import Enum
 from time import sleep
 import networkx as nx
 
-from Ahc import ComponentModel, Event, EventTypes, GenericMessage, GenericMessagePayload, GenericMessageHeader, inf, \
-    Topology
+from Ahc import ComponentModel, Event, EventTypes, GenericMessage, GenericMessagePayload, GenericMessageHeader, Topology
 
 
 class RaymondEventTypes(Enum):

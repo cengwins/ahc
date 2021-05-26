@@ -16,7 +16,7 @@ from Channels import P2PFIFOPerfectChannel
 
 
 SAVED_FILE_INDEX = 0
-SAVING_ENABLED = True
+SAVING_ENABLED = False
 SAVE_PATH = os.path.join(os.path.dirname(__file__), "ricartAgrawalaOut")
 
 FPS = 24.0
@@ -257,10 +257,11 @@ def getCommand(args):
                 node.receivedRequestCount += Topology().nodes[nodeID].receivedRequestCount
                 node.receivedReplyCount += Topology().nodes[nodeID].receivedReplyCount
                 node.forwardedMessageCount += Topology().nodes[nodeID].forwardedMessageCount
+            totalMessageCount = node.receivedRequestCount + node.receivedReplyCount + node.forwardedMessageCount
 
             if isTotal:
                 node.componentinstancenumber = f"Total of {N} Nodes"
-                print(getNodeInformation(node, isRequest, isReply, isPrivilege, isForwarded))
+                print(getNodeInformation(node, isRequest, isReply, isPrivilege, isForwarded), f"=> Total Message Count: {totalMessageCount}")
             if isMean:
                 node.componentinstancenumber = f"Mean of {N} Nodes"
                 node.privilegeCount /= N
@@ -343,7 +344,7 @@ def graphDrawingDaemon():
         drawGraph()
         sleep(1.0/FPS)
 
-def completeBinomialGraph(n, p, seed=None):
+def connectedBinomialGraph(n, p, seed=None):
     if seed is not None:
         random.seed(seed)
 
@@ -371,7 +372,7 @@ def completeBinomialGraph(n, p, seed=None):
 def main():
     global labelDistance
 
-    G = completeBinomialGraph(5, 0.2, seed=15)
+    G = connectedBinomialGraph(5, 0.2, seed=5)
     labelDistance = len(G.nodes)
 
     topology = Topology()
