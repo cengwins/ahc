@@ -19,9 +19,9 @@ __maintainer__ = "developer"
 __status__ = "Production"
 __version__ = "0.0.1"
 
+import datetime
 import random
 from enum import Enum
-from random import randint
 from time import sleep
 
 from Ahc import (ComponentModel, Event, EventTypes, GenericMessage,
@@ -35,6 +35,10 @@ class FireWirePacketType(Enum):
 
     PARENT_REQ = "PARENT_REQ"
     ACKNOWLEDGEMENT = "ACKNOWLEDGEMENT"
+    START_TIMER = "START_TIMER"
+    CHECK_TIMER = "CHECK_TIMER"
+    TIMEOUT = "TIMEOUT"
+    ROOT_CONTENTION = "ROOT_CONTENTION"
 
 
 class FireWireMessageHeader(GenericMessageHeader):
@@ -58,11 +62,12 @@ class FireWireMessagePayload(GenericMessagePayload):
 
 
 class FireWireNode(ComponentModel):
-
-    holders = 0
-
     def __init__(self, component_name, component_id):
         super().__init__(component_name, component_id)
+        self.eventhandlers[FireWirePacketType.START_TIMER] = self.on_timer_initialize
+        self.eventhandlers[FireWirePacketType.CHECK_TIMER] = self.check_timer
+        self.eventhandlers[FireWirePacketType.TIMEOUT] = self.timeout
+        self.eventhandlers[FireWirePacketType.ROOT_CONTENTION] = self.root_contention
 
         self.parent = None
         self.received = list()
@@ -71,6 +76,9 @@ class FireWireNode(ComponentModel):
         self.in_root_contention = True
         self.is_waiting = False
         self.is_terminated = False
+
+        self.waiting_since = None
+        self.timeout_duration = 2
 
     def on_init(self, eventobj: Event):
         self.neighbours = set(Topology().get_neighbors(self.componentinstancenumber))
@@ -112,7 +120,9 @@ class FireWireNode(ComponentModel):
             # Cannot send a parent request, more than one possible parent
             return
 
-    def root_contention(self):
+    def root_contention(self, eventobj: Event):
+        if self.is_leader:
+            return
         print(f"🤖 {self.componentinstancenumber} is in ROOT CONTENTION")
         decision = random.choice([True, False])
 
@@ -121,20 +131,28 @@ class FireWireNode(ComponentModel):
             self.in_root_contention = True
             self.send_parent_req()
             self.is_waiting = False
+            self.waiting_since = None
         else:
-            FireWireNode.holders += 1
-            print(
-                f"🤖 {self.componentinstancenumber} decides to HOLD "
-                f" ({FireWireNode.holders} holders)"
-            )
+            print(f"🤖 {self.componentinstancenumber} decides to HOLD")
             self.is_waiting = True
+            self.send_self(Event(self, FireWirePacketType.START_TIMER, "..."))
 
-            # can only save one of them currently
-            # we need a proper timeout mechanism then we're done
-            if FireWireNode.holders == 2:
-                FireWireNode.holders = 0
-                # timeout!
-                self.root_contention()
+    def on_timer_initialize(self, eventobj: Event):
+        start_time = eventobj.time
+        self.waiting_since = start_time
+        self.send_self(Event(self, FireWirePacketType.CHECK_TIMER, "..."))
+
+    def check_timer(self, eventobj: Event):
+        current_time = datetime.datetime.now()
+        delta = current_time - self.waiting_since
+        if delta.seconds > self.timeout_duration:
+            self.send_self(Event(self, FireWirePacketType.TIMEOUT, "..."))
+        else:
+            sleep(0.2)
+            self.send_self(Event(self, FireWirePacketType.CHECK_TIMER, "..."))
+
+    def timeout(self, eventobj: Event):
+        self.send_self(Event(self, FireWirePacketType.ROOT_CONTENTION, "..."))
 
     def on_message_from_bottom(self, eventobj: Event):
         """ New message from the link layer """
@@ -163,7 +181,7 @@ class FireWireNode(ComponentModel):
 
                 self.send_parent_req()
             elif not self.is_waiting:
-                self.root_contention()
+                self.send_self(Event(self, FireWirePacketType.ROOT_CONTENTION, "..."))
             else:
                 print(f" 👑 {self.componentinstancenumber} is elected as the leader")
                 self.is_leader = True
