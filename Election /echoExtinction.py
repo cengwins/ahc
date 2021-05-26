@@ -221,7 +221,7 @@ def main():
   # nx.draw(G, with_labels=True, font_weight='bold')
   # plt.draw()
   global message_count
-  fig, axes = plt.subplots(1, 2)
+  fig, axes = plt.subplots(1, 7)
   fig.set_figheight(5)
   fig.set_figwidth(10)
   fig.tight_layout()
@@ -232,7 +232,7 @@ def main():
 
     start_time = time.time()
 
-    g = Grid(i, ax= axes[0])
+    g = Grid(i, ax= axes[i-4])
     topo.construct_from_graph(g.G, AdHocNode, P2PFIFOPerfectChannel)
     topo.start()
     for i in range(0,10):
@@ -244,17 +244,17 @@ def main():
     message_count_arr.append(message_count)
     message_count = 0 
 
-    # g.plot()
+    g.plot()
 
 
-  axes[0].plot(np.array([n**2 for n in range(4,9)]), np.array(message_count_arr))  
-  axes[1].plot(np.array([n**2 for n in range(4,9)]), np.array(time_arr))
-  axes[0].set_ylabel('Messeage Count')
-  axes[0].set_xlabel('Node Count')
-  axes[1].set_ylabel('Time Passes in Seconds')
-  axes[1].set_xlabel('Node Count')
-  axes[0].set_title("Message Count by Node Count")
-  axes[1].set_title("Time")
+  axes[5].plot(np.array([n**2 for n in range(4,9)]), np.array(message_count_arr))  
+  axes[6].plot(np.array([n**2 for n in range(4,9)]), np.array(time_arr))
+  axes[5].set_ylabel('Messeage Count')
+  axes[5].set_xlabel('Node Count')
+  axes[6].set_ylabel('Time Passes in Seconds')
+  axes[6].set_xlabel('Node Count')
+  axes[5].set_title("Message Count by Node Count")
+  axes[5].set_title("Time")
   plt.show()
   # plt.show()  # while (True): pass
 
