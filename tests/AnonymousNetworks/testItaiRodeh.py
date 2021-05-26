@@ -20,7 +20,6 @@ PASSIVE_NODE_COLOUR = "#e0e0e0"
 LEADER_NODE_COLOUR = "#ff00ff"
 EDGE_COLOUR = "#1a1c20"
 
-
 FPS = 1
 
 
@@ -46,7 +45,6 @@ def main():
         update.wait()
         assumed_ids = list()
         node_colours = list()
-        font_colours = list()
 
         G = Topology().G
         pos = nx.circular_layout(G, center=(0, 0))
@@ -58,13 +56,10 @@ def main():
 
             if node.state == State.active:
                 node_colours.append(ACTIVE_NODE_COLOUR)
-                font_colours.append(ACTIVE_NODE_COLOUR)
             elif node.state == State.passive:
                 node_colours.append(PASSIVE_NODE_COLOUR)
-                font_colours.append(PASSIVE_NODE_COLOUR)
             elif node.state == State.leader:
                 node_colours.append(LEADER_NODE_COLOUR)
-                font_colours.append(LEADER_NODE_COLOUR)
 
         node_id_label_pos = {}
         for key in pos:
