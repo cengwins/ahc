@@ -135,10 +135,12 @@ class ChandyLamportComponentModel(SnapshotComponentModel):
         self.send_down(event)
 
     def mark_send(self):
+        # Record the state
         self.state = []
         for re in self.recv_events:
             self.state.append(re)
 
+        # Broadcast the mark message
         mark_msg = GenericMessage(
             GenericMessageHeader(ChandyLamportMessageTypes.MARK, None, None),
             None)
@@ -151,15 +153,17 @@ class ChandyLamportComponentModel(SnapshotComponentModel):
 
     def mark_recv(self, from_chnl):
         if self.state is None:
+            # First mark message, save component and channel state
             self.mark_send()
             self.in_chnl_states[from_chnl] = []
         else:
+            # Consequent mark messages, save channel states
             for e in self.in_chnl_events[from_chnl]:
                 self.in_chnl_states[e].append(e)
 
         self.mark_recv_chnls.add(from_chnl)
         if self.mark_recv_chnls == self.chnls:
-            # Local snapshot completed, broadcast and reset the local state
+            # Local snapshot completed, broadcast the local state
             local_state = ChandyLamportState(self.componentinstancenumber,
                                              self.state, self.in_chnl_states)
             gsu_msg = GenericMessage(
@@ -285,6 +289,7 @@ class LaiYangComponentModel(SnapshotComponentModel):
         act_cntnt, post_snapshot = content
         event.eventcontent = act_cntnt
 
+        # We are white and the message is post-snapshot
         if self.state is None and post_snapshot:
             self.handle_snapshot()
 
