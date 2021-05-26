@@ -62,6 +62,11 @@ class FireWireMessagePayload(GenericMessagePayload):
 
 
 class FireWireNode(ComponentModel):
+
+    # For animation/plotting
+    callback = None
+    draw_delay = None
+
     def __init__(self, component_name, component_id):
         super().__init__(component_name, component_id)
         self.eventhandlers[FireWirePacketType.START_TIMER] = self.on_timer_initialize
@@ -73,7 +78,7 @@ class FireWireNode(ComponentModel):
         self.received = list()
         self.neighbours = set()
         self.is_leader = False
-        self.in_root_contention = True
+        self.in_root_contention = False
         self.is_waiting = False
         self.is_terminated = False
 
@@ -81,6 +86,7 @@ class FireWireNode(ComponentModel):
         self.timeout_duration = 2
 
     def on_init(self, eventobj: Event):
+        sleep(1)
         self.neighbours = set(Topology().get_neighbors(self.componentinstancenumber))
         print(f"the neighbours of {self.componentinstancenumber} is {self.neighbours}")
 
@@ -135,7 +141,12 @@ class FireWireNode(ComponentModel):
         else:
             print(f"🤖 {self.componentinstancenumber} decides to HOLD")
             self.is_waiting = True
+            self.in_root_contention = False
             self.send_self(Event(self, FireWirePacketType.START_TIMER, "..."))
+
+        # self.callback.set()
+        # self.draw_delay.wait()
+        # self.draw_delay.clear()
 
     def on_timer_initialize(self, eventobj: Event):
         start_time = eventobj.time
@@ -198,4 +209,8 @@ class FireWireNode(ComponentModel):
                 f" from {header.messagefrom}, terminating"
             )
             self.is_terminated = True
-            return
+            self.in_root_contention = False
+
+        self.callback.set()
+        self.draw_delay.wait()
+        self.draw_delay.clear()
