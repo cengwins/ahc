@@ -158,3 +158,25 @@ class P2PFIFOFairLossChannel(P2PFIFOPerfectChannel):
 
 class FIFOBroadcastPerfectChannel(Channel):
   pass
+
+class FIFOBroadcastFairLossChannel(Channel):
+  prob = 0.5
+  duplicationprobability = 0.5
+  # Overwrite onSendToChannel
+
+  def on_process_in_channel(self, eventobj: Event):
+    if random.random() < self.prob:
+      myevent = Event(eventobj.eventsource,
+                      ChannelEventTypes.DLVR, eventobj.eventcontent)
+      self.outputqueue.put_nowait(myevent)
+    if random.random() < self.duplicationprobability:
+      self.channelqueue.put_nowait(eventobj)
+
+  def setPacketLossProbability(self, prob):
+    self.prob = prob
+
+  def setAverageNumberOfDuplicates(self, d):
+    if d > 0:
+      self.duplicationprobability = (d - 1) / d
+    else:
+      self.duplicationprobability = 0

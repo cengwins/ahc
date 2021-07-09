@@ -255,6 +255,19 @@ class Topology:
   nodes = {}
   channels = {}
 
+  def construct_from_graph_with_node_info(self, G: nx.Graph, nodetype, channeltype, node_info):
+    self.G = G
+    nodes = list(G.nodes)
+    edges = list(G.edges)
+    for i in nodes:
+      cc = nodetype(nodetype.__name__, i, node_info[i])
+      self.nodes[i] = cc
+    for k in edges:
+      ch = channeltype(channeltype.__name__, str(k[0]) + "-" + str(k[1]))
+      self.channels[k] = ch
+      self.nodes[k[0]].connect_me_to_channel(ConnectorTypes.DOWN, ch)
+      self.nodes[k[1]].connect_me_to_channel(ConnectorTypes.DOWN, ch)
+
   def construct_from_graph(self, G: nx.Graph, nodetype, channeltype):
     self.G = G
     nodes = list(G.nodes)
