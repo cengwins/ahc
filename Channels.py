@@ -34,14 +34,18 @@ class Channel(ComponentModel):
   # Overwrite onSendToChannel if you want to do something in the first pipeline stage
   def on_message_from_top(self, eventobj: Event):
     # channel receives the input message and will process the message by the process event in the next pipeline stage
-    myevent = Event(eventobj.eventsource, ChannelEventTypes.INCH, eventobj.eventcontent)
+    # Preserve the event id through the pipeline
+    myevent = Event(eventobj.eventsource, ChannelEventTypes.INCH,
+                    eventobj.eventcontent, eventid=eventobj.eventid)
     self.channelqueue.put_nowait(myevent)
 
   # Overwrite onProcessInChannel if you want to do something in interim pipeline stage
   def on_process_in_channel(self, eventobj: Event):
     # Add delay, drop, change order whatever....
     # Finally put the message in outputqueue with event deliver
-    myevent = Event(eventobj.eventsource, ChannelEventTypes.DLVR, eventobj.eventcontent)
+    # Preserve the event id through the pipeline
+    myevent = Event(eventobj.eventsource, ChannelEventTypes.DLVR,
+                    eventobj.eventcontent, eventid=eventobj.eventid)
     self.outputqueue.put_nowait(myevent)
 
   # Overwrite onDeliverToComponent if you want to do something in the last pipeline stage
@@ -56,7 +60,10 @@ class Channel(ComponentModel):
         if calleename == callername:
           pass
         else:
-          myevent = Event(eventobj.eventsource, EventTypes.MFRB, eventobj.eventcontent, self.componentinstancenumber)
+          # Preserve the event id through the pipeline
+          myevent = Event(eventobj.eventsource, EventTypes.MFRB,
+                          eventobj.eventcontent, self.componentinstancenumber,
+                          eventid=eventobj.eventid)
           callee.trigger_event(myevent)
 
   def __init__(self, componentname, componentinstancenumber):
