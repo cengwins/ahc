@@ -82,6 +82,30 @@ class Channel(ComponentModel):
       t.start()
       t1.start()
 
+
+class BasicLossyChannel(Channel):
+  def __init__(self, componentname, componentinstancenum, loss_percentage=0):
+    super().__init__(componentname, componentinstancenum,)
+    self.loss_percentage = loss_percentage
+  # Overwrite onDeliverToComponent if you want to do something in the last pipeline stage
+  # onDeliver will deliver the message from the channel to the receiver component using messagefromchannel event
+  def on_deliver_to_component(self, eventobj: Event):
+    callername = eventobj.eventsource.componentinstancenumber
+    for item in self.connectors:
+      callees = self.connectors[item]
+      for callee in callees:
+        calleename = callee.componentinstancenumber
+        # print(f"I am connected to {calleename}. Will check if I have to distribute it to {item}")
+        if calleename == callername:
+          pass
+        else:
+          randomnum = random.uniform(0, 1)
+          # print("random number here is " , randomnum, " for ", self.componentinstancenumber)
+          if randomnum >= self.loss_percentage:
+            myevent = Event(eventobj.eventsource, EventTypes.MFRB, eventobj.eventcontent, self.componentinstancenumber)
+            callee.trigger_event(myevent)
+
+
 class AHCChannelError(Exception):
   pass
 
