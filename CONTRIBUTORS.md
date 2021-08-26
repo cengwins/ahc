@@ -9,3 +9,4 @@
 - [İbrahim Koç]
 - [Ege Uçak](https://github.com/egeucak)
 - [Mahmoud Alasmar](https://github.com/e212602)
+- [Yigit Sever](https://github.com/yigitsever)
