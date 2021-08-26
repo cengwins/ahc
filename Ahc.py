@@ -307,12 +307,12 @@ class Topology:
   nodes = {}
   channels = {}
 
-  def construct_from_graph(self, G: nx.Graph, nodetype, channeltype, context):
+  def construct_from_graph(self, G: nx.Graph, nodetype, channeltype, context=None):
     self.G = G
     nodes = list(G.nodes)
     edges = list(G.edges)
     for i in nodes:
-      cc = nodetype(nodetype.__name__, i, context)
+      cc = nodetype(nodetype.__name__, i)
       self.nodes[i] = cc
     for k in edges:
       ch = channeltype(channeltype.__name__, str(k[0]) + "-" + str(k[1]))

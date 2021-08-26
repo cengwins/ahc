@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 from Channels import Channel
-from Snapshot import ChandyLamportComponentModel, LaiYangComponentModel
-from Snapshot import SnapshotEventTypes
+from Snapshot.Snapshot import ChandyLamportComponentModel, LaiYangComponentModel
+from Snapshot.Snapshot import SnapshotEventTypes
 from Ahc import Event, Topology
 import matplotlib.pyplot as plt
 import networkx as nx
