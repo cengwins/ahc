@@ -48,7 +48,7 @@ class RicartAgrawalaMessagePayload(GenericMessagePayload):
 
 
 class RicartAgrawalaNode(ComponentModel):
-    privilegeSleepAmount = 0.1
+    privilegeSleepAmount = 1
 
     def __init__(self, componentName, componentID):
         super().__init__(componentName, componentID)
@@ -150,6 +150,7 @@ class RicartAgrawalaNode(ComponentModel):
         self.sentRequestCount += 1
         self.havePendingRequest = True
         self.pendingRequestClock = self.clock
+        self.clock += 1
 
         for nodeID in self.otherNodeIDs:
             nextHop = Topology().get_next_hop(self.componentinstancenumber, nodeID)

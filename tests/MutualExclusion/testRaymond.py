@@ -8,20 +8,22 @@ import networkx as nx
 import threading
 from time import sleep
 from itertools import combinations, groupby
-from math import cos, sin, atan2
+from math import cos, atan2
 
-from MutualExclusion.RicartAgrawala import RicartAgrawalaNode
+from MutualExclusion.Raymond import RaymondNode
 from Ahc import Topology
 from Channels import P2PFIFOPerfectChannel
 
 
 SAVED_FILE_INDEX = 0
 SAVING_ENABLED = False
-SAVE_PATH = os.path.join(os.path.dirname(__file__), "ricartAgrawalaOut")
+SAVE_PATH = os.path.join(os.path.dirname(__file__), "raymondOut")
 
 FPS = 24.0
 
-EDGE_COLOR = '#7F7F7F'
+EDGE_COLOR = '#BABABA'
+MST_EDGE_COLOR = '#7F7F7F'
+ROOT_NODE_EDGE_COLOR = '#000000'
 
 PRIVILEGED_NODE_COLOR = '#FF0000'
 WAITING_NODE_COLOR = '#FFFF00'
@@ -29,6 +31,8 @@ NODE_COLOR = '#00FF00'
 
 drawnGraphNodeColors = []
 drawnGraphNodeLabels = []
+drawnGraphNodeLineWidths = []
+drawnGraphNodeEdgeColors = []
 
 labelDistance = 0
 
@@ -45,7 +49,7 @@ class ARGUMENT(Enum):
     TIME = "-time"
     DISTANCE = "-distance"
     REQUEST = "-request"
-    REPLY = "-reply"
+    TOKEN = "-token"
     PRIVILEGE = "-privilege"
     FORWARDED = "-forwarded"
     MEAN = "-mean"
@@ -94,10 +98,10 @@ def helpCommand(cmd=COMMAND.HELP):
               f"\t\"{COMMAND.GET.value} {ARGUMENT.DISTANCE.value}\"\n"
               f"\t\"{COMMAND.GET.value} {ARGUMENT.ALL.value}\"\n"
               f"\t\"{COMMAND.GET.value} {ARGUMENT.ALL.value} nodeId\"\n"
-              f"\t\"{COMMAND.GET.value} {ARGUMENT.ALL.value} [{ARGUMENT.REQUEST.value}/{ARGUMENT.REPLY.value}/{ARGUMENT.PRIVILEGE.value}/{ARGUMENT.FORWARDED.value}]\"\n"
-              f"\t\"{COMMAND.GET.value} [{ARGUMENT.REQUEST.value}/{ARGUMENT.REPLY.value}/{ARGUMENT.PRIVILEGE.value}/{ARGUMENT.FORWARDED.value}] nodeId\"\n"
+              f"\t\"{COMMAND.GET.value} {ARGUMENT.ALL.value} [{ARGUMENT.REQUEST.value}/{ARGUMENT.TOKEN.value}/{ARGUMENT.PRIVILEGE.value}/{ARGUMENT.FORWARDED.value}]\"\n"
+              f"\t\"{COMMAND.GET.value} [{ARGUMENT.REQUEST.value}/{ARGUMENT.TOKEN.value}/{ARGUMENT.PRIVILEGE.value}/{ARGUMENT.FORWARDED.value}] nodeId\"\n"
               f"\t\"{COMMAND.GET.value} [{ARGUMENT.MEAN.value}/{ARGUMENT.TOTAL.value}]\"\n"
-              f"\t\"{COMMAND.GET.value} [{ARGUMENT.MEAN.value}/{ARGUMENT.TOTAL.value}] [{ARGUMENT.REQUEST.value}/{ARGUMENT.REPLY.value}/{ARGUMENT.PRIVILEGE.value}/{ARGUMENT.FORWARDED.value}]\"")
+              f"\t\"{COMMAND.GET.value} [{ARGUMENT.MEAN.value}/{ARGUMENT.TOTAL.value}] [{ARGUMENT.REQUEST.value}/{ARGUMENT.TOKEN.value}/{ARGUMENT.PRIVILEGE.value}/{ARGUMENT.FORWARDED.value}]\"")
     else:
         helpCommand(COMMAND.REQUEST)
         helpCommand(COMMAND.DRAW)
@@ -111,7 +115,7 @@ def requestCommand(args):
 
         if len(args) == 0:
             for nodeID in Topology().nodes:
-                Topology().nodes[nodeID].send_request()
+                Topology().nodes[nodeID].put()
         else:
             helpCommand(COMMAND.REQUEST)
     else:
@@ -128,7 +132,7 @@ def requestCommand(args):
 
         if nodes:
             for node in nodes:
-                node.send_request()
+                node.put()
         else:
             helpCommand(COMMAND.REQUEST)
 
@@ -140,6 +144,7 @@ def drawCommand(args):
 
 def setCommand(args):
     global labelDistance
+
     setTime = ARGUMENT.TIME.value in args
     setDistance = ARGUMENT.DISTANCE.value in args
 
@@ -150,7 +155,7 @@ def setCommand(args):
             try:
                 t = float(args[0])
                 if t > 0:
-                    RicartAgrawalaNode.privilegeSleepAmount = t
+                    RaymondNode.privilegeSleepAmount = t
                 else:
                     print(f"Sleep time cannot be set to {t}, choose a value above 0!")
             except ValueError:
@@ -171,15 +176,15 @@ def setCommand(args):
     else:
         helpCommand(COMMAND.SET)
 
-def getNodeInformation(node: RicartAgrawalaNode, request=True, reply=True, privilege=True, forwarded=True):
+def getNodeInformation(node: RaymondNode, request=True, token=True, privilege=True, forwarded=True):
     information = []
 
     if request:
         information.append(f"ReceivedRequests: {node.receivedRequestCount}")
         information.append(f"SentRequests: {node.sentRequestCount}")
-    if reply:
-        information.append(f"ReceivedReplies: {node.receivedReplyCount}")
-        information.append(f"SentReplies: {node.sentReplyCount}")
+    if token:
+        information.append(f"ReceivedTokens: {node.receivedTokenCount}")
+        information.append(f"SentTokens: {node.sentTokenCount}")
     if privilege:
         information.append(f"Privileged: {node.privilegeCount}")
     if forwarded:
@@ -198,10 +203,10 @@ def getCommand(args):
     isTotal = ARGUMENT.TOTAL.value in args
 
     isRequest = ARGUMENT.REQUEST.value in args
-    isReply = ARGUMENT.REPLY.value in args
+    isToken = ARGUMENT.TOKEN.value in args
     isPrivilege = ARGUMENT.PRIVILEGE.value in args
     isForwarded = ARGUMENT.FORWARDED.value in args
-    areAnyOtherArgumentsSet = isRequest or isReply or isPrivilege or isForwarded
+    areAnyOtherArgumentsSet = isRequest or isToken or isPrivilege or isForwarded
 
     if isTime:
         args.remove(ARGUMENT.TIME.value)
@@ -215,8 +220,8 @@ def getCommand(args):
         args.remove(ARGUMENT.TOTAL.value)
     if isRequest:
         args.remove(ARGUMENT.REQUEST.value)
-    if isReply:
-        args.remove(ARGUMENT.REPLY.value)
+    if isToken:
+        args.remove(ARGUMENT.TOKEN.value)
     if isPrivilege:
         args.remove(ARGUMENT.PRIVILEGE.value)
     if isForwarded:
@@ -225,7 +230,7 @@ def getCommand(args):
     if (isTime or isDistance) and not isAll and not (isMean or isTotal):
         if len(args) == 0 and not areAnyOtherArgumentsSet:
             if isTime and not isDistance:
-                print(f"Sleep amount in critical section is {RicartAgrawalaNode.privilegeSleepAmount} seconds.")
+                print(f"Sleep amount in critical section is {RaymondNode.privilegeSleepAmount} seconds.")
             elif isDistance and not isTime:
                 print(f"Label drawing distance from the node is {labelDistance}.")
             else:
@@ -234,43 +239,43 @@ def getCommand(args):
             helpCommand(COMMAND.GET)
     elif isAll and not (isTime or isDistance) and not (isMean or isTotal):
         if not areAnyOtherArgumentsSet:
-            isRequest = isReply = isPrivilege = isForwarded = True
+            isRequest = isToken = isPrivilege = isForwarded = True
 
         if len(args) == 0:
             for nodeID in Topology().nodes:
                 node = Topology().nodes[nodeID]
-                print(getNodeInformation(node, isRequest, isReply, isPrivilege, isForwarded))
+                print(getNodeInformation(node, isRequest, isToken, isPrivilege, isForwarded))
         else:
             helpCommand(COMMAND.GET)
     elif (isMean or isTotal) and not (isTime or isDistance) and not isAll:
         if not areAnyOtherArgumentsSet:
-            isRequest = isReply = isPrivilege = isForwarded = True
+            isRequest = isToken = isPrivilege = isForwarded = True
 
         if len(args) == 0:
             N = len(Topology().nodes)
-            node = RicartAgrawalaNode("node", -1)
+            node = RaymondNode("node", -1)
 
             for nodeID in Topology().nodes:
                 node.privilegeCount += Topology().nodes[nodeID].privilegeCount
                 node.sentRequestCount += Topology().nodes[nodeID].sentRequestCount
-                node.sentReplyCount += Topology().nodes[nodeID].sentReplyCount
+                node.sentTokenCount += Topology().nodes[nodeID].sentTokenCount
                 node.receivedRequestCount += Topology().nodes[nodeID].receivedRequestCount
-                node.receivedReplyCount += Topology().nodes[nodeID].receivedReplyCount
+                node.receivedTokenCount += Topology().nodes[nodeID].receivedTokenCount
                 node.forwardedMessageCount += Topology().nodes[nodeID].forwardedMessageCount
-            totalMessageCount = node.receivedRequestCount + node.receivedReplyCount + node.forwardedMessageCount
+            totalMessageCount = node.receivedRequestCount + node.receivedTokenCount
 
             if isTotal:
                 node.componentinstancenumber = f"Total of {N} Nodes"
-                print(getNodeInformation(node, isRequest, isReply, isPrivilege, isForwarded), f"=> Total Message Count: {totalMessageCount}")
+                print(getNodeInformation(node, isRequest, isToken, isPrivilege, isForwarded), f"=> Total Message Count: {totalMessageCount}")
             if isMean:
                 node.componentinstancenumber = f"Mean of {N} Nodes"
                 node.privilegeCount /= N
                 node.sentRequestCount /= N
-                node.sentReplyCount /= N
+                node.sentTokenCount /= N
                 node.receivedRequestCount /= N
-                node.receivedReplyCount /= N
+                node.receivedTokenCount /= N
                 node.forwardedMessageCount /= N
-                print(getNodeInformation(node, isRequest, isReply, isPrivilege, isForwarded))
+                print(getNodeInformation(node, isRequest, isToken, isPrivilege, isForwarded))
         else:
             helpCommand(COMMAND.GET)
     else:
@@ -279,7 +284,7 @@ def getCommand(args):
                 try:
                     nodeID = int(args[0])
                     node = Topology().nodes[nodeID]
-                    print(getNodeInformation(node, isRequest, isReply, isPrivilege, isForwarded))
+                    print(getNodeInformation(node, isRequest, isToken, isPrivilege, isForwarded))
                 except KeyError:
                     print(f"Node {nodeID} does not exist in the topology.")
                 except ValueError:
@@ -290,7 +295,8 @@ def getCommand(args):
             helpCommand(COMMAND.GET)
 
 def drawGraph(overwrite=False):
-    global drawnGraphNodeColors, drawnGraphNodeLabels, labelDistance, SAVED_FILE_INDEX, SAVING_ENABLED
+    global drawnGraphNodeColors, drawnGraphNodeLabels, drawnGraphNodeLineWidths, drawnGraphNodeEdgeColors, \
+        labelDistance, SAVED_FILE_INDEX, SAVING_ENABLED
 
     G = Topology().G
     mstG = nx.minimum_spanning_tree(Topology().G)
@@ -298,23 +304,37 @@ def drawGraph(overwrite=False):
 
     nodeColors = []
     nodeLabels = []
+    nodeLineWidths = []
+    nodeEdgeColors = []
     for nodeID in Topology().nodes:
         node = Topology().nodes[nodeID]
-        G.nodes[nodeID]['label'] = node.clock
-        nodeLabels.append(node.clock)
+        label = f"[{','.join([str(i) for i in node.queue])}]"
+        mstG.nodes[nodeID]['label'] = label
+        nodeLabels.append(label)
 
         if node.isPrivileged:
-            nodeColors.append(PRIVILEGED_NODE_COLOR)
+            nodeColor = PRIVILEGED_NODE_COLOR
         elif node.havePendingRequest:
-            nodeColors.append(WAITING_NODE_COLOR)
+            nodeColor = WAITING_NODE_COLOR
         else:
-            nodeColors.append(NODE_COLOR)
+            nodeColor = NODE_COLOR
+        nodeColors.append(nodeColor)
 
-    if overwrite or nodeColors != drawnGraphNodeColors or nodeLabels != drawnGraphNodeLabels:
+        if node.isRoot:
+            nodeLineWidths.append(2)
+            nodeEdgeColors.append(ROOT_NODE_EDGE_COLOR)
+        else:
+            nodeLineWidths.append(0)
+            nodeEdgeColors.append(nodeColor)
+
+    if overwrite or nodeColors != drawnGraphNodeColors or nodeLabels != drawnGraphNodeLabels \
+            or nodeLineWidths != drawnGraphNodeLineWidths or nodeEdgeColors != drawnGraphNodeEdgeColors:
         drawnGraphNodeColors = list(nodeColors)
         drawnGraphNodeLabels = list(nodeLabels)
+        drawnGraphNodeLineWidths = list(nodeLineWidths)
+        drawnGraphNodeEdgeColors = list(nodeEdgeColors)
 
-        labels = nx.get_node_attributes(G, 'label')
+        labels = nx.get_node_attributes(mstG, 'label')
         labelPos = {}
         centerX, centerY = pos[0]
         sumX, sumY = 0, 0
@@ -324,17 +344,25 @@ def drawGraph(overwrite=False):
             x, y = pos[key]
             sumX, sumY = sumX + x, sumY + y
             theta = atan2(centerY - y, centerX - x)
-            labelPos[key] = (x + labelDistance * cos(theta), y + labelDistance * sin(theta))
+            if theta >= 0:
+                labelPos[key] = (x + labelDistance * cos(theta), y + labelDistance)
+            else:
+                labelPos[key] = (x + labelDistance * cos(theta), y - labelDistance)
         meanX, meanY = sumX / len(pos), sumY / len(pos)
         theta = atan2(meanY - centerY, meanX - centerX)
-        labelPos[0] = (centerX + labelDistance * cos(theta), centerY + labelDistance * sin(theta))
+        if theta >= 0:
+            labelPos[0] = (centerX + labelDistance * cos(theta), centerY + labelDistance)
+        else:
+            labelPos[0] = (centerX + labelDistance * cos(theta), centerY - labelDistance)
 
-        nx.draw(G, pos, node_color=nodeColors, edge_color=EDGE_COLOR, with_labels=True, font_weight='bold')
-        nx.draw_networkx_labels(G, labelPos, labels)
+        nx.draw(mstG, pos, node_color=nodeColors, edge_color=MST_EDGE_COLOR, linewidths=nodeLineWidths,
+                edgecolors=nodeEdgeColors, with_labels=True, font_weight='bold')
+        nx.draw_networkx_edges(mstG, pos, edgelist=G.edges-mstG.edges, edge_color=EDGE_COLOR, style='dashed')
+        nx.draw_networkx_labels(mstG, labelPos, labels)
 
         plt.draw()
         if SAVING_ENABLED:
-            path = os.path.join(SAVE_PATH, f"ra_{SAVED_FILE_INDEX}.png")
+            path = os.path.join(SAVE_PATH, f"r_{SAVED_FILE_INDEX}.png")
             plt.savefig(path, format="PNG")
             SAVED_FILE_INDEX += 1
         plt.show()
@@ -342,7 +370,7 @@ def drawGraph(overwrite=False):
 def graphDrawingDaemon():
     while True:
         drawGraph()
-        sleep(1.0/FPS)
+        sleep(1.0 / FPS)
 
 def connectedBinomialGraph(n, p, seed=None):
     if seed is not None:
@@ -376,7 +404,7 @@ def main():
     labelDistance = len(G.nodes)
 
     topology = Topology()
-    topology.construct_from_graph(G, RicartAgrawalaNode, P2PFIFOPerfectChannel)
+    topology.construct_from_graph(G, RaymondNode, P2PFIFOPerfectChannel)
     topology.start()
 
     if os.path.exists(SAVE_PATH):
