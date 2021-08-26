@@ -183,6 +183,16 @@ class ComponentRegistry:
         for p in connectedcmp:
           print(f"\t{i} {p.componentname}.{p.componentinstancenumber}")
 
+
+  def get_non_channel_components(self):
+    res = []
+    for itemkey in self.components:
+      cmp = self.components[itemkey]
+      if cmp.componentname.find("Channel") != -1:
+        continue
+      res.append(cmp)
+    return res
+
 registry = ComponentRegistry()
 
 class ComponentModel:
