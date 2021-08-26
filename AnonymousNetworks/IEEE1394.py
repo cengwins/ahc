@@ -116,7 +116,7 @@ class FireWireNode(ComponentModel):
                 messageto=self.parent,
                 nexthop=self.parent,
                 messagetype=FireWirePacketType.PARENT_REQ,
-                interfaceid=next_hop_interface_id,
+                interfaceid=next_hop_interface_id
             )
             payload = FireWireMessagePayload()
 
@@ -183,7 +183,7 @@ class FireWireNode(ComponentModel):
                     messageto=new_child,
                     nexthop=new_child,
                     messagetype=FireWirePacketType.ACKNOWLEDGEMENT,
-                    interfaceid=next_hop_interface_id,
+                    interfaceid=next_hop_interface_id
                 )
                 payload = FireWireMessagePayload()
 

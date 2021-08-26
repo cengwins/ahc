@@ -71,7 +71,8 @@ class ItaiRodehMessagePayload(GenericMessagePayload):
       will still be active next round
     """
 
-    def __init__(self, election_round, id_p):
+    def __init__(self, election_round, id_p, messagepayload):
+        super().__init__(messagepayload)
         self.election_round = election_round
         self.id_p = id_p
         self.hop_count = 1
@@ -115,7 +116,7 @@ class ItaiRodehNode(ComponentModel):
             messageto=self.next_hop,
             nexthop=self.next_hop,
             messagetype="ItaiRodeh Message",
-            interfaceid=self.next_hop_interface_id,
+            interfaceid=self.next_hop_interface_id
         )
         payload = ItaiRodehMessagePayload(self.election_round, self.id_p)
 
