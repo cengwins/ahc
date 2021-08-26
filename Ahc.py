@@ -302,6 +302,7 @@ class ComponentModel:
   def trigger_event(self, eventobj: Event):
     self.inputqueue.put_nowait(eventobj)
 
+
 @singleton
 class Topology:
   nodes = {}
