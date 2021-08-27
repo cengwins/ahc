@@ -9,9 +9,6 @@ __status__ = "Production"
 __version__ = "0.0.1"
 
 
-import random
-import time
-from enum import Enum
 
 import matplotlib.pyplot as plt
 import networkx as nx
