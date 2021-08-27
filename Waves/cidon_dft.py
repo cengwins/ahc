@@ -14,6 +14,8 @@ __version__ = "0.0.1"
 from enum import Enum
 from Ahc import ComponentModel, Event
 from Ahc import GenericMessagePayload, GenericMessageHeader, GenericMessage, EventTypes
+from Ahc import Topology
+
 
 source = 0
 
@@ -32,6 +34,7 @@ class NodeMark(Enum):
   father = "father"
   son = "son"
 
+topo = Topology()
 
 # define your own message header structure
 class ApplicationLayerMessageHeader(GenericMessageHeader):
@@ -47,6 +50,12 @@ class ApplicationLayerComponent_Cidon(ComponentModel):
 
   def on_init(self, eventobj: Event):
     print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
+    self.NeighbourList = topo.get_neighbors(self.componentinstancenumber)
+    self.state = NodeState.IDLE
+    self.mark = {}
+    for i in self.NeighbourList:
+      self.mark[i] = NodeMark.unvisited
+    self.numMesg  = 0
 
     if self.componentinstancenumber == source:
       destination = self.componentinstancenumber
@@ -150,16 +159,10 @@ class ApplicationLayerComponent_Cidon(ComponentModel):
           print(f"I am Node-{self.componentinstancenumber} local number messages sent is {self.numMesg}")
           return
 
-  def __init__(self, componentname, componentinstancenumber,neighbour_list):
+  def __init__(self, componentname, componentinstancenumber):
     super().__init__(componentname, componentinstancenumber)
     self.eventhandlers["start"] = self.on_start
     self.eventhandlers["token"] = self.on_token
     self.eventhandlers["visited"] = self.on_visited
-    self.NeighbourList = neighbour_list
-    self.state = NodeState.IDLE
-    self.mark = {}
-    for i in self.NeighbourList:
-      self.mark[i] = NodeMark.unvisited
-    self.numMesg  = 0
 
 

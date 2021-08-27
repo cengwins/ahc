@@ -39,8 +39,7 @@ class AdHocNode(ComponentModel):
 
     def __init__(self, componentname, componentid):
       # SUBCOMPONENTS
-      self.neighbour_list = topo.get_neighbors(componentid)
-      self.appllayer = ApplicationLayerComponent_Cidon("ApplicationLayer", componentid,self.neighbour_list)
+      self.appllayer = ApplicationLayerComponent_Cidon("ApplicationLayer", componentid)
       self.netlayer = AllSeingEyeNetworkLayer("NetworkLayer", componentid)
       self.linklayer = LinkLayer("LinkLayer", componentid)
 
