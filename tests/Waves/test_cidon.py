@@ -18,7 +18,7 @@ from Ahc import EventTypes
 from Channels import P2PFIFOPerfectChannel
 from LinkLayers.GenericLinkLayer import LinkLayer
 from NetworkLayers.AllSeeingEyeNetworkLayer import AllSeingEyeNetworkLayer
-from Waves.cidon_dft import ApplicationLayerComponent_Cidon
+from Waves.CidonDFS import ApplicationLayerComponent_Cidon
 
 
 number_mesg = 0

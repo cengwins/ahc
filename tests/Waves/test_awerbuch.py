@@ -18,7 +18,7 @@ from Ahc import EventTypes
 from Channels import P2PFIFOPerfectChannel
 from LinkLayers.GenericLinkLayer import LinkLayer
 from NetworkLayers.AllSeeingEyeNetworkLayer import AllSeingEyeNetworkLayer
-from Waves.awerbuch_dft import WaveAwerbuchComponent
+from Waves.AwerbuchDFS import WaveAwerbuchComponent
 
 
 number_mesg = 0
