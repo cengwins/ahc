@@ -1,9 +1,6 @@
 import os
 import sys
 from enum import Enum
-
-sys.path.insert(0, os.getcwd())
-
 from Ahc import ComponentModel, Event
 from Ahc import ComponentRegistry
 from Ahc import GenericMessagePayload, GenericMessageHeader, GenericMessage, EventTypes
