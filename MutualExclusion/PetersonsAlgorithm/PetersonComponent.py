@@ -1,3 +1,4 @@
+#TODO: Component type and hardwired instance numbers are to be corrected
 from enum import Enum
 import time
 from Ahc import ComponentModel, Event, GenericMessageHeader, GenericMessagePayload, GenericMessage, EventTypes

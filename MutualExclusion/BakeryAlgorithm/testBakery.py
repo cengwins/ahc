@@ -40,6 +40,7 @@ nx.draw(G, with_labels=True, font_weight='bold')
 plt.draw()
 
 topo = Topology()
+#TODO: NodeTypes are not defined in AHC! Correct this implementation for implementing different NodeModels instead of types
 topo.construct_from_graph_bakery(G, AdHocNode, FIFOBroadcastPerfectChannel)
 topo.start()
 
