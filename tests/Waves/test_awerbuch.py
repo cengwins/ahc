@@ -9,9 +9,6 @@ __status__ = "Production"
 __version__ = "0.0.1"
 
 
-import random
-import time
-from enum import Enum
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -21,7 +18,7 @@ from Ahc import EventTypes
 from Channels import P2PFIFOPerfectChannel
 from LinkLayers.GenericLinkLayer import LinkLayer
 from NetworkLayers.AllSeeingEyeNetworkLayer import AllSeingEyeNetworkLayer
-from Waves.awerbuch_dft import ApplicationLayerComponent_Awerbuch
+from Waves.awerbuch_dft import WaveAwerbuchComponent
 
 
 number_mesg = 0
@@ -42,8 +39,7 @@ class AdHocNode(ComponentModel):
 
     def __init__(self, componentname, componentid):
       # SUBCOMPONENTS
-      self.neighbour_list = topo.get_neighbors(componentid)
-      self.appllayer = ApplicationLayerComponent_Awerbuch("ApplicationLayer", componentid,self.neighbour_list)
+      self.appllayer = WaveAwerbuchComponent("ApplicationLayer", componentid)
       self.netlayer = AllSeingEyeNetworkLayer("NetworkLayer", componentid)
       self.linklayer = LinkLayer("LinkLayer", componentid)
 

@@ -13,8 +13,8 @@ __version__ = "0.0.1"
 import random
 from enum import Enum
 from Ahc import ComponentModel, Event, GenericMessagePayload, GenericMessageHeader, GenericMessage, EventTypes
-
-
+from Ahc import Topology
+topo = Topology()
 
 class ApplicationLayerMessageTypes(Enum):
   DISCOVER = "DISCOVER"
@@ -30,9 +30,18 @@ class ApplicationLayerMessageHeader(GenericMessageHeader):
 class ApplicationLayerMessagePayload(GenericMessagePayload):
   pass
 
-class ApplicationLayerComponent_Awerbuch(ComponentModel):
+class WaveAwerbuchComponent(ComponentModel):
   def on_init(self, eventobj: Event):
     print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
+    neighbour_list = topo.get_neighbors(self.componentinstancenumber)
+    self.NeighbourList = neighbour_list
+    self.Unvisited = neighbour_list.copy()
+    self.father = self.componentinstancenumber
+    self.flag = {}
+    for i in self.NeighbourList:
+      self.flag[i] = 0
+
+    self.numMesg = 0
 
     if self.componentinstancenumber == 0:
       destination = self.componentinstancenumber
@@ -143,20 +152,13 @@ class ApplicationLayerComponent_Awerbuch(ComponentModel):
 
 
 
-  def __init__(self, componentname, componentinstancenumber,neighbour_list):
+  def __init__(self, componentname, componentinstancenumber):
     super().__init__(componentname, componentinstancenumber)
     self.eventhandlers["discover"] = self.on_discover
     self.eventhandlers["return"] = self.on_return
     self.eventhandlers["visited"] = self.on_visited
     self.eventhandlers["ack"] = self.on_ack
-    self.NeighbourList = neighbour_list
-    self.Unvisited = neighbour_list.copy()
-    self.father = componentinstancenumber
-    self.flag = {}
-    for i in self.NeighbourList:
-      self.flag[i] = 0
 
-    self.numMesg = 0
 
 
 
