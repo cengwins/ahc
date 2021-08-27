@@ -1,13 +1,11 @@
 import os
 import sys
 import time
-import random
 from enum import Enum
-from graph import *
+from tests.Election.graph import *
 import numpy  as np
 sys.path.insert(0, os.getcwd())
 
-import networkx as nx
 import matplotlib.pyplot as plt
 
 from Ahc import ComponentModel, Event, ConnectorTypes, Topology
