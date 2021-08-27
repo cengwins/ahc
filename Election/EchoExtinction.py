@@ -2,7 +2,7 @@ from enum import Enum
 from Ahc import ComponentModel, Event
 from Ahc import ComponentRegistry
 from Ahc import GenericMessagePayload, GenericMessageHeader, GenericMessage, EventTypes
-
+from Ahc import Topology
 registry = ComponentRegistry()
 
 # define your own message types
@@ -12,8 +12,9 @@ class ApplicationLayerMessageTypes(Enum):
   WAVE = "WAVE"
   ACCEPT_WAVE = "ACCEPT_WAVE"
   FINISH_WAVE = "FINISH_WAVE"
-  
 
+#TODO: message_count can be member variable...
+message_count = 0
 # define your own message header structure
 class ApplicationLayerMessageHeader(GenericMessageHeader):
   pass
@@ -26,10 +27,12 @@ class WaveMessagePayload:
   def __init__(self, tag):
     self.tag = tag
 
+topo = Topology()
+
 class ElectionEchoExtinctionComponent(ComponentModel):
   def on_init(self, eventobj: Event):
     # print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
-    pass
+    self.neighbors = topo.G.neighbors(self.componentinstancenumber)
     
     # destination = random.randint(len(Topology.G.nodes))
     # destination = 1
@@ -81,11 +84,12 @@ class ElectionEchoExtinctionComponent(ComponentModel):
   def on_timer_expired(self, eventobj: Event):
     pass
 
+#TODO: If you call this before all on_inits, then things will go wrong...
   def initiate_process(self):
+    self.neighbors = topo.G.neighbors(self.componentinstancenumber)
     print(f"Process initiated {self.componentinstancenumber}")
     self.initiated = True
     for i in self.neighbors:
-
       destination = i
       hdr = ApplicationLayerMessageHeader(ApplicationLayerMessageTypes.WAVE, self.componentinstancenumber, destination)
       payload = WaveMessagePayload(self.componentinstancenumber)
@@ -146,11 +150,12 @@ class ElectionEchoExtinctionComponent(ComponentModel):
 
   def __init__(self, componentname, componentinstancenumber):
     super().__init__(componentname, componentinstancenumber)
+
     self.eventhandlers["propose"] = self.on_propose
     self.eventhandlers["agree"] = self.on_agree
     self.eventhandlers["timerexpired"] = self.on_timer_expired
     self.parent = componentinstancenumber
     self.initiated = False
     self.isWaiting = False 
-    self.neighbors = topo.G.neighbors(componentinstancenumber)
+
     self.waitingAccepts = []

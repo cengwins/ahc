@@ -9,7 +9,7 @@ from Ahc import EventTypes
 from Channels import P2PFIFOPerfectChannel
 from LinkLayers.GenericLinkLayer import LinkLayer
 from NetworkLayers.AllSeeingEyeNetworkLayer import AllSeingEyeNetworkLayer
-from EchoExtinction import ElectionEchoExtinctionComponent
+from Election.EchoExtinction import ElectionEchoExtinctionComponent
 
 registry = ComponentRegistry()
 
@@ -75,6 +75,7 @@ def main():
     g = Grid(i, ax= axes[i-4])
     topo.construct_from_graph(g.G, AdHocNode, P2PFIFOPerfectChannel)
     topo.start()
+
     for i in range(0,10):
       topo.nodes[i].initiate_process()
 
