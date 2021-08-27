@@ -1,7 +1,6 @@
 import os
 import sys
 from enum import Enum
-from tests.Election.graph import *
 
 sys.path.insert(0, os.getcwd())
 
