@@ -11,6 +11,7 @@ from LinkLayers.GenericLinkLayer import LinkLayer
 from NetworkLayers.AllSeeingEyeNetworkLayer import AllSeingEyeNetworkLayer
 from Election.echoExtinction import ElectionEchoExtinctionComponent
 
+
 registry = ComponentRegistry()
 
 topo = Topology()
