@@ -46,7 +46,7 @@ class RaymondMessagePayload(GenericMessagePayload):
         self.nodeID = nodeID
 
 
-class RaymondNode(ComponentModel):
+class MutualExclusionRaymondComponent(ComponentModel):
     privilegeSleepAmount = 1
 
     def __init__(self, componentName, componentID):

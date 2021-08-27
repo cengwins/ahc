@@ -10,7 +10,7 @@ from time import sleep
 from itertools import combinations, groupby
 from math import cos, sin, atan2
 
-from MutualExclusion.RicartAgrawala import RicartAgrawalaNode
+from MutualExclusion.RicartAgrawala import MutualExclusionAgrawalaComponent
 from Ahc import Topology
 from Channels import P2PFIFOPerfectChannel
 
@@ -150,7 +150,7 @@ def setCommand(args):
             try:
                 t = float(args[0])
                 if t > 0:
-                    RicartAgrawalaNode.privilegeSleepAmount = t
+                    MutualExclusionAgrawalaComponent.privilegeSleepAmount = t
                 else:
                     print(f"Sleep time cannot be set to {t}, choose a value above 0!")
             except ValueError:
@@ -171,7 +171,7 @@ def setCommand(args):
     else:
         helpCommand(COMMAND.SET)
 
-def getNodeInformation(node: RicartAgrawalaNode, request=True, reply=True, privilege=True, forwarded=True):
+def getNodeInformation(node: MutualExclusionAgrawalaComponent, request=True, reply=True, privilege=True, forwarded=True):
     information = []
 
     if request:
@@ -225,7 +225,7 @@ def getCommand(args):
     if (isTime or isDistance) and not isAll and not (isMean or isTotal):
         if len(args) == 0 and not areAnyOtherArgumentsSet:
             if isTime and not isDistance:
-                print(f"Sleep amount in critical section is {RicartAgrawalaNode.privilegeSleepAmount} seconds.")
+                print(f"Sleep amount in critical section is {MutualExclusionAgrawalaComponent.privilegeSleepAmount} seconds.")
             elif isDistance and not isTime:
                 print(f"Label drawing distance from the node is {labelDistance}.")
             else:
@@ -248,7 +248,7 @@ def getCommand(args):
 
         if len(args) == 0:
             N = len(Topology().nodes)
-            node = RicartAgrawalaNode("node", -1)
+            node = MutualExclusionAgrawalaComponent("node", -1)
 
             for nodeID in Topology().nodes:
                 node.privilegeCount += Topology().nodes[nodeID].privilegeCount
@@ -378,7 +378,7 @@ def main():
     labelDistance = len(G.nodes)
 
     topology = Topology()
-    topology.construct_from_graph(G, RicartAgrawalaNode, P2PFIFOPerfectChannel)
+    topology.construct_from_graph(G, MutualExclusionAgrawalaComponent, P2PFIFOPerfectChannel)
     topology.start()
 
     if os.path.exists(SAVE_PATH):

@@ -10,7 +10,7 @@ from time import sleep
 from itertools import combinations, groupby
 from math import cos, atan2
 
-from MutualExclusion.Raymond import RaymondNode
+from MutualExclusion.Raymond import MutualExclusionRaymondComponent
 from Ahc import Topology
 from Channels import P2PFIFOPerfectChannel
 
@@ -155,7 +155,7 @@ def setCommand(args):
             try:
                 t = float(args[0])
                 if t > 0:
-                    RaymondNode.privilegeSleepAmount = t
+                    MutualExclusionRaymondComponent.privilegeSleepAmount = t
                 else:
                     print(f"Sleep time cannot be set to {t}, choose a value above 0!")
             except ValueError:
@@ -176,7 +176,7 @@ def setCommand(args):
     else:
         helpCommand(COMMAND.SET)
 
-def getNodeInformation(node: RaymondNode, request=True, token=True, privilege=True, forwarded=True):
+def getNodeInformation(node: MutualExclusionRaymondComponent, request=True, token=True, privilege=True, forwarded=True):
     information = []
 
     if request:
@@ -230,7 +230,7 @@ def getCommand(args):
     if (isTime or isDistance) and not isAll and not (isMean or isTotal):
         if len(args) == 0 and not areAnyOtherArgumentsSet:
             if isTime and not isDistance:
-                print(f"Sleep amount in critical section is {RaymondNode.privilegeSleepAmount} seconds.")
+                print(f"Sleep amount in critical section is {MutualExclusionRaymondComponent.privilegeSleepAmount} seconds.")
             elif isDistance and not isTime:
                 print(f"Label drawing distance from the node is {labelDistance}.")
             else:
@@ -253,7 +253,7 @@ def getCommand(args):
 
         if len(args) == 0:
             N = len(Topology().nodes)
-            node = RaymondNode("node", -1)
+            node = MutualExclusionRaymondComponent("node", -1)
 
             for nodeID in Topology().nodes:
                 node.privilegeCount += Topology().nodes[nodeID].privilegeCount
@@ -367,10 +367,7 @@ def drawGraph(overwrite=False):
             SAVED_FILE_INDEX += 1
         plt.show()
 
-def graphDrawingDaemon():
-    while True:
-        drawGraph()
-        sleep(1.0 / FPS)
+
 
 def connectedBinomialGraph(n, p, seed=None):
     if seed is not None:
@@ -397,6 +394,12 @@ def connectedBinomialGraph(n, p, seed=None):
 
     return G
 
+
+def getUserInput():
+    while True:
+        userInput = input("User Command: \n")
+        processUserCommand(userInput)
+
 def main():
     global labelDistance
 
@@ -404,20 +407,19 @@ def main():
     labelDistance = len(G.nodes)
 
     topology = Topology()
-    topology.construct_from_graph(G, RaymondNode, P2PFIFOPerfectChannel)
+    topology.construct_from_graph(G, MutualExclusionRaymondComponent, P2PFIFOPerfectChannel)
     topology.start()
 
     if os.path.exists(SAVE_PATH):
         shutil.rmtree(SAVE_PATH)
     os.makedirs(SAVE_PATH)
 
-    graphDaemon = threading.Thread(target=graphDrawingDaemon, daemon=True)
-    graphDaemon.start()
+    userinputDaemon = threading.Thread(target=getUserInput(), daemon=True)
+    userinputDaemon.start()
 
     while True:
-        userInput = input("User Command: \n")
-        processUserCommand(userInput)
-
+        drawGraph()
+        sleep(1.0/FPS)
 
 if __name__ == "__main__":
     main()

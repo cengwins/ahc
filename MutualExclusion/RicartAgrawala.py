@@ -47,7 +47,7 @@ class RicartAgrawalaMessagePayload(GenericMessagePayload):
         self.nodeID = nodeID
 
 
-class RicartAgrawalaNode(ComponentModel):
+class MutualExclusionAgrawalaComponent(ComponentModel):
     privilegeSleepAmount = 1
 
     def __init__(self, componentName, componentID):
