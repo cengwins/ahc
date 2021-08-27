@@ -10,23 +10,10 @@ __status__ = "Production"
 __version__ = "0.0.1"
 
 
-import random
-import time
 from enum import Enum
-
-import matplotlib.pyplot as plt
-import networkx as nx
-
-from Ahc import ComponentModel, Event, ConnectorTypes, Topology
-from Ahc import ComponentRegistry
+from Ahc import ComponentModel, Event
 from Ahc import GenericMessagePayload, GenericMessageHeader, GenericMessage, EventTypes
-from Channels import P2PFIFOPerfectChannel
-from LinkLayers.GenericLinkLayer import LinkLayer
-from NetworkLayers.AllSeeingEyeNetworkLayer import AllSeingEyeNetworkLayer
 
-
-registry = ComponentRegistry()
-topo = Topology()
 source = 0
 
 class ApplicationLayerMessageTypes(Enum):
@@ -175,68 +162,3 @@ class ApplicationLayerComponent_Cidon(ComponentModel):
     self.numMesg  = 0
 
 
-
-class AdHocNode(ComponentModel):
-
-    def on_init(self, eventobj: Event):
-      print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
-
-    def on_message_from_top(self, eventobj: Event):
-      self.send_down(Event(self, EventTypes.MFRT, eventobj.eventcontent))
-
-    def on_message_from_bottom(self, eventobj: Event):
-      self.send_up(Event(self, EventTypes.MFRB, eventobj.eventcontent))
-
-    def __init__(self, componentname, componentid):
-      # SUBCOMPONENTS
-      self.neighbour_list = topo.get_neighbors(componentid)
-      self.appllayer = ApplicationLayerComponent_Cidon("ApplicationLayer", componentid,self.neighbour_list)
-      self.netlayer = AllSeingEyeNetworkLayer("NetworkLayer", componentid)
-      self.linklayer = LinkLayer("LinkLayer", componentid)
-
-      # CONNECTIONS AMONG SUBCOMPONENTS
-      self.appllayer.connect_me_to_component(ConnectorTypes.DOWN, self.netlayer)
-      self.netlayer.connect_me_to_component(ConnectorTypes.UP, self.appllayer)
-      self.netlayer.connect_me_to_component(ConnectorTypes.DOWN, self.linklayer)
-      self.linklayer.connect_me_to_component(ConnectorTypes.UP, self.netlayer)
-
-      # Connect the bottom component to the composite component....
-      self.linklayer.connect_me_to_component(ConnectorTypes.DOWN, self)
-      self.connect_me_to_component(ConnectorTypes.UP, self.linklayer)
-
-      super().__init__(componentname, componentid)
-
-
-
-def main():
-  G = nx.Graph()
-  """
-  for i in range(5):
-    G.add_node(i)
-
-  G.add_edge(0, 1)
-  G.add_edge(0, 3)
-  G.add_edge(0, 4)
-  G.add_edge(1, 2)
-  G.add_edge(1, 3)
-  G.add_edge(1, 4)
-  G.add_edge(2, 1)
-  G.add_edge(2, 4)
-  G.add_edge(2, 3)
-  G.add_edge(3, 1)
-  G.add_edge(3, 0)
-  G.add_edge(3, 2)
-"""
-  G = nx.random_geometric_graph(6, 0.5)
-  nx.draw(G, with_labels=True, font_weight='bold')
-  plt.draw()
-
-  topo.construct_from_graph(G, AdHocNode, P2PFIFOPerfectChannel)
-
-  # topo is defined as a global variable
-  topo.start()
-
-  plt.show()  # while (True): pass
-
-if __name__ == "__main__":
-  main()
