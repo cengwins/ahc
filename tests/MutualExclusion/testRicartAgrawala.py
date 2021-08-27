@@ -339,10 +339,12 @@ def drawGraph(overwrite=False):
             SAVED_FILE_INDEX += 1
         plt.show()
 
-def graphDrawingDaemon():
+
+
+def getUserInput():
     while True:
-        drawGraph()
-        sleep(1.0/FPS)
+        userInput = input("User Command: \n")
+        processUserCommand(userInput)
 
 def connectedBinomialGraph(n, p, seed=None):
     if seed is not None:
@@ -383,12 +385,12 @@ def main():
         shutil.rmtree(SAVE_PATH)
     os.makedirs(SAVE_PATH)
 
-    graphDaemon = threading.Thread(target=graphDrawingDaemon, daemon=True)
-    graphDaemon.start()
+    userinputDaemon = threading.Thread(target=getUserInput(), daemon=True)
+    userinputDaemon.start()
 
     while True:
-        userInput = input("User Command: \n")
-        processUserCommand(userInput)
+        drawGraph()
+        sleep(1.0/FPS)
 
 
 if __name__ == "__main__":
