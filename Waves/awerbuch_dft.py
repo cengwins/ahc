@@ -12,15 +12,9 @@ __version__ = "0.0.1"
 
 import random
 from enum import Enum
-from Ahc import ComponentModel, Event, Topology
-from Ahc import ComponentRegistry
-from Ahc import GenericMessagePayload, GenericMessageHeader, GenericMessage, EventTypes
+from Ahc import ComponentModel, Event, GenericMessagePayload, GenericMessageHeader, GenericMessage, EventTypes
 
 
-
-registry = ComponentRegistry()
-topo = Topology()
-number_mesg = 0
 
 class ApplicationLayerMessageTypes(Enum):
   DISCOVER = "DISCOVER"
@@ -37,7 +31,6 @@ class ApplicationLayerMessagePayload(GenericMessagePayload):
   pass
 
 class ApplicationLayerComponent_Awerbuch(ComponentModel):
-  #number_mesg = 0
   def on_init(self, eventobj: Event):
     print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
 

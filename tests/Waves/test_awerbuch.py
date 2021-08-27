@@ -15,12 +15,19 @@ from enum import Enum
 
 import matplotlib.pyplot as plt
 import networkx as nx
-
-from Ahc import ComponentModel, Event, ConnectorTypes
+from Ahc import Topology
+from Ahc import ComponentModel, Event, ConnectorTypes, ComponentRegistry
 from Ahc import EventTypes
 from Channels import P2PFIFOPerfectChannel
 from LinkLayers.GenericLinkLayer import LinkLayer
 from NetworkLayers.AllSeeingEyeNetworkLayer import AllSeingEyeNetworkLayer
+from Waves.awerbuch_dft import ApplicationLayerComponent_Awerbuch
+
+
+number_mesg = 0
+topo = Topology()
+registry = ComponentRegistry()
+
 
 class AdHocNode(ComponentModel):
 
