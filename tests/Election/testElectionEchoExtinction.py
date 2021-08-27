@@ -1,19 +1,11 @@
-
-import os
-import sys
 import time
-import random
-from enum import Enum
 from graph import *
 import numpy as np
-sys.path.insert(0, os.getcwd())
-
-import networkx as nx
 import matplotlib.pyplot as plt
 
 from Ahc import ComponentModel, Event, ConnectorTypes, Topology
 from Ahc import ComponentRegistry
-from Ahc import GenericMessagePayload, GenericMessageHeader, GenericMessage, EventTypes
+from Ahc import EventTypes
 from Channels import P2PFIFOPerfectChannel
 from LinkLayers.GenericLinkLayer import LinkLayer
 from NetworkLayers.AllSeeingEyeNetworkLayer import AllSeingEyeNetworkLayer
@@ -39,7 +31,7 @@ class AdHocNode(ComponentModel):
 
   def __init__(self, componentname, componentid):
     # SUBCOMPONENTS
-    self.appllayer = ApplicationLayerComponent("ApplicationLayer", componentid)
+    self.appllayer = ElectionEchoExtinctionComponent("ElectionEchoExtinctionComponent", componentid)
     self.netlayer = AllSeingEyeNetworkLayer("NetworkLayer", componentid)
     self.linklayer = LinkLayer("LinkLayer", componentid)
     # self.failuredetect = GenericFailureDetector("FailureDetector", componentid)

@@ -5,11 +5,9 @@ from tests.Election.graph import *
 
 sys.path.insert(0, os.getcwd())
 
-from Ahc import ComponentModel, Event, ConnectorTypes
+from Ahc import ComponentModel, Event
 from Ahc import ComponentRegistry
 from Ahc import GenericMessagePayload, GenericMessageHeader, GenericMessage, EventTypes
-from LinkLayers.GenericLinkLayer import LinkLayer
-from NetworkLayers.AllSeeingEyeNetworkLayer import AllSeingEyeNetworkLayer
 
 registry = ComponentRegistry()
 
@@ -151,9 +149,6 @@ class ElectionEchoExtinctionComponent(ComponentModel):
         wave_msg = GenericMessage(hdr1, payload)
         self.send_down(Event(self, EventTypes.MFRT, wave_msg))
           
-
-      
-
 
   def __init__(self, componentname, componentinstancenumber):
     super().__init__(componentname, componentinstancenumber)
