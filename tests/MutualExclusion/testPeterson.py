@@ -1,12 +1,8 @@
-import random
-import time
-from enum import Enum
-
 import matplotlib.pyplot as plt
 import networkx as nx
 
-from PetersonComponent import *
-from Ahc import ComponentModel, MessageDestinationIdentifiers, Event, GenericMessageHeader, GenericMessagePayload, GenericMessage, EventTypes, ConnectorTypes, Topology, ComponentRegistry
+from MutualExclusion.Peterson import *
+from Ahc import ComponentModel, Event, EventTypes, ConnectorTypes, Topology
 from Channels import FIFOBroadcastPerfectChannel
 
 class AdHocNode(ComponentModel):

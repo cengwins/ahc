@@ -1,12 +1,8 @@
-import random
-import time
-from enum import Enum
-
 import matplotlib.pyplot as plt
 import networkx as nx
 
-from BakeryComponent import *
-from Ahc import ComponentModel, Event, GenericMessageHeader, GenericMessagePayload, GenericMessage, EventTypes, ConnectorTypes, Topology, ComponentRegistry
+from MutualExclusion.Bakery import *
+from Ahc import ComponentModel, Event, EventTypes, ConnectorTypes, Topology
 from Channels import FIFOBroadcastPerfectChannel
 
 class AdHocNode(ComponentModel):
@@ -24,10 +20,10 @@ class AdHocNode(ComponentModel):
 
   def __init__(self, componentname, componentid, type):
     if type == 0:
-      self.mainComponent = BakeryComponent("BakeryProducerComponent", componentid,BakeryMessageTypes.INC)
+      self.mainComponent = MutualExclusionBakeryComponent("BakeryProducerComponent", componentid, BakeryMessageTypes.INC)
       self.mainComponent.connect_me_to_component(ConnectorTypes.DOWN, self)
     elif type == 1:
-      self.mainComponent = BakeryComponent("BakeryConsumerComponent", componentid,BakeryMessageTypes.DEC)
+      self.mainComponent = MutualExclusionBakeryComponent("BakeryConsumerComponent", componentid, BakeryMessageTypes.DEC)
       self.mainComponent.connect_me_to_component(ConnectorTypes.DOWN, self)
     elif type == 2:
       self.mainComponent = ResourceComponent("ResourceComponent", componentid)
