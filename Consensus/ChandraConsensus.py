@@ -278,6 +278,7 @@ class ChandraChannel(Channel):
         else:
           myevent = Event(eventobj.eventsource, EventTypes.MFRB, eventobj.eventcontent, self.componentinstancenumber)
           callee.trigger_event(myevent)
+
 class ChandraConsensusNode(ComponentModel):
 
     def __init__(self, componentname, componentid, numberofNodes=10):
