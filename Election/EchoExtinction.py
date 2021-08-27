@@ -1,5 +1,3 @@
-import os
-import sys
 from enum import Enum
 from Ahc import ComponentModel, Event
 from Ahc import ComponentRegistry
