@@ -4,8 +4,9 @@ simdump/
 simdump_dev/
 bench_dump/
 
-.DS_Store
-
+.DS_Store/
+.idea/
+.idea/*
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

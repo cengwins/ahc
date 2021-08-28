@@ -5,13 +5,13 @@
 
 import sys
 import threading
-from math import atan2, cos, radians, sin, sqrt
+from math import atan2, cos, radians, sin
 from time import sleep
 
 import matplotlib.pyplot as plt
 import networkx as nx
 from Ahc import Topology
-from Channels import P2PFIFOPerfectChannel
+from PhysicalLayer.Channels import P2PFIFOPerfectChannel
 
 from AnonymousNetworks.ItaiRodeh import ItaiRodehNode, State
 

@@ -1,8 +1,6 @@
-from Ahc import ComponentModel, Event, GenericMessage, GenericMessageHeader, EventTypes, ComponentRegistry, Lock, Thread, Topology
-from Channels import P2PFIFOPerfectChannel, Channel
-import time
+from Ahc import Topology
+from PhysicalLayer.Channels import P2PFIFOPerfectChannel
 import networkx as nx
-import numpy as np
 from Routing.FredericksonAlgorithmAdvanced.CaseStudy.MachineLearningNodeComponent import MachineLearningNode
 
 edges = [(0, 1, {"weight": 1}), (0, 2, {"weight": 1}), (1, 3, {"weight": 1}), (2, 4, {"weight": 1}), (4, 5, {"weight": 1}),

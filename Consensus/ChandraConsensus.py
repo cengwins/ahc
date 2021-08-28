@@ -3,7 +3,7 @@ from threading import Timer
 import random
 from Ahc import Topology, ComponentRegistry, ComponentModel, ConnectorTypes, Event, GenericMessageHeader, \
     GenericMessage, EventTypes
-from Channels import Channel
+from PhysicalLayer.Channels import Channel
 
 registry = ComponentRegistry()
 class ChandraMessageTypes(Enum):

@@ -1,7 +1,6 @@
 import os
 import sys
 import time
-from enum import Enum
 from graph import *
 import numpy  as np
 sys.path.insert(0, os.getcwd())
@@ -10,8 +9,8 @@ import matplotlib.pyplot as plt
 
 from Ahc import ComponentModel, Event, ConnectorTypes, Topology
 from Ahc import ComponentRegistry
-from Ahc import GenericMessagePayload, GenericMessageHeader, GenericMessage, EventTypes
-from Channels import P2PFIFOPerfectChannel
+from Ahc import EventTypes
+from PhysicalLayer.Channels import P2PFIFOPerfectChannel
 from LinkLayers.GenericLinkLayer import LinkLayer
 from NetworkLayers.AllSeeingEyeNetworkLayer import AllSeingEyeNetworkLayer
 from Election.Spira import ElectionSpiraComponent

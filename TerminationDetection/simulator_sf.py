@@ -1,20 +1,16 @@
-import os
-import sys
 import time
 import pickle
 import random
-from typing import Text
 import pandas as pd
 import seaborn as sns
 import networkx as nx
 import matplotlib.pyplot as plt
 from datetime import datetime as dt
-from networkx.drawing.nx_pydot import graphviz_layout
 
 from Ahc import Topology
 from graph import ERG, Grid, Star
 from shavit_francez import ShavitFrancezAdHocNode, SFAHCNodeSimulationStatus
-from Channels import P2PFIFOPerfectChannel
+from PhysicalLayer.Channels import P2PFIFOPerfectChannel
 
 def run_shavit_francez_simulation(args):
     if args.network_type == "erg":

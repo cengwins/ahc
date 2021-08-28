@@ -1,12 +1,11 @@
 import os
 import sys
-import random
 import networkx as nx
 import matplotlib.pyplot as plt
 
 sys.path.insert(0, os.getcwd())
 
-from Channels import Channel
+from PhysicalLayer.Channels import Channel
 from WaveAlgorithms.TreeAlgorithm import *
 
 def main():

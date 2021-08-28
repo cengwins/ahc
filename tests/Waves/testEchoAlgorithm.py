@@ -1,11 +1,10 @@
 import os
 import sys
 import time
-import random
 
 sys.path.insert(0, os.getcwd())
 
-from Channels import Channel
+from PhysicalLayer.Channels import Channel
 from WaveAlgorithms.EchoAlgorithm import *
 
 def main():

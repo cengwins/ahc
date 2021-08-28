@@ -4,7 +4,7 @@ import networkx as nx
 
 from Ahc import Topology
 from Ahc import ComponentRegistry
-from Channels import BasicLossyChannel
+from PhysicalLayer.Channels import BasicLossyChannel
 from Consensus.Raft.raft_component import RaftConsensusComponent
 from itertools import combinations
 

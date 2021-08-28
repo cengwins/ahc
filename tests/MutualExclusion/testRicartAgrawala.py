@@ -12,7 +12,7 @@ from math import cos, sin, atan2
 
 from MutualExclusion.RicartAgrawala import MutualExclusionAgrawalaComponent
 from Ahc import Topology
-from Channels import P2PFIFOPerfectChannel
+from PhysicalLayer.Channels import P2PFIFOPerfectChannel
 
 
 SAVED_FILE_INDEX = 0
