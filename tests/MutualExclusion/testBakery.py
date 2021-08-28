@@ -3,7 +3,7 @@ import networkx as nx
 
 from MutualExclusion.Bakery import *
 from Ahc import ComponentModel, Event, EventTypes, ConnectorTypes, Topology
-from PhysicalLayer.Channels import FIFOBroadcastPerfectChannel
+from PhysicalLayers.Channels import FIFOBroadcastPerfectChannel
 
 class AdHocNode(ComponentModel):
 

@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from Ahc import ComponentModel, Event, ConnectorTypes, Topology, EventTypes
 from Ahc import ComponentRegistry
 from Waves.DepthFirstSearch import DfsTraverse
-from PhysicalLayer.Channels import P2PFIFOPerfectChannel
+from PhysicalLayers.Channels import P2PFIFOPerfectChannel
 from LinkLayers.GenericLinkLayer import LinkLayer
 
 registry = ComponentRegistry()

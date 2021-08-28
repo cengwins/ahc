@@ -7,7 +7,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 from Ahc import ComponentModel, Event, Topology, ComponentRegistry, GenericMessage, GenericMessageHeader, EventTypes
-from PhysicalLayer.Channels import P2PFIFOFairLossChannel
+from PhysicalLayers.Channels import P2PFIFOFairLossChannel
 
 registry = ComponentRegistry()
 

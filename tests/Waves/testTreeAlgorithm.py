@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 sys.path.insert(0, os.getcwd())
 
-from PhysicalLayer.Channels import Channel
+from PhysicalLayers.Channels import Channel
 from WaveAlgorithms.TreeAlgorithm import *
 
 def main():

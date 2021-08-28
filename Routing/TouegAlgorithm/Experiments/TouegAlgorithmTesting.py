@@ -1,5 +1,5 @@
 from Ahc import Topology
-from PhysicalLayer.Channels import  P2PFIFOPerfectChannel
+from PhysicalLayers.Channels import  P2PFIFOPerfectChannel
 from Routing.TouegAlgorithm.Experiments.ExperimentDataCollector import ExperimentCollector
 import networkx as nx
 from Routing.TouegAlgorithm.Experiments.MachineLearningNodeComponent import  MachineLearningNode

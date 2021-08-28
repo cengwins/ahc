@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from Ahc import ComponentModel, Event, ConnectorTypes, Topology
 from Ahc import ComponentRegistry
 from Ahc import EventTypes
-from PhysicalLayer.Channels import P2PFIFOPerfectChannel
+from PhysicalLayers.Channels import P2PFIFOPerfectChannel
 from LinkLayers.GenericLinkLayer import LinkLayer
 from NetworkLayers.AllSeeingEyeNetworkLayer import AllSeingEyeNetworkLayer
 from Election.Spira import ElectionSpiraComponent
