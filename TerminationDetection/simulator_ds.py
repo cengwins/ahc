@@ -11,7 +11,7 @@ from datetime import datetime as dt
 from Ahc import Topology
 from graph import ERG, Grid, Star
 from dijkstra_scholten import DijkstraScholtenAdHocNode, DSAHCNodeSimulationStatus
-from PhysicalLayers.Channels import P2PFIFOPerfectChannel
+from Channels.Channels import P2PFIFOPerfectChannel
 
 import glob
 from PIL import Image

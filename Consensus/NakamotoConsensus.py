@@ -11,7 +11,7 @@ from random import choice
 
 import matplotlib.pyplot as plt
 
-from PhysicalLayers.Channels import Channel
+from Channels.Channels import Channel
 from Ahc import ComponentRegistry, Topology, GenericMessageHeader, GenericMessage, EventTypes, Event, ComponentModel
 
 PATH_OF_DATA = "data"

@@ -5,7 +5,7 @@ import networkx as nx
 
 from Ahc import Topology
 from Ahc import ComponentRegistry
-from PhysicalLayers.Channels import BasicLossyChannel
+from Channels.Channels import BasicLossyChannel
 from Consensus.Paxos.paxos_component import PaxosConsensusComponentModel, Resolution
 from itertools import combinations
 import logging

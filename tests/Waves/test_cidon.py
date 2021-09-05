@@ -15,7 +15,7 @@ import networkx as nx
 from Ahc import Topology
 from Ahc import ComponentModel, Event, ConnectorTypes, ComponentRegistry
 from Ahc import EventTypes
-from PhysicalLayers.Channels import P2PFIFOPerfectChannel
+from Channels.Channels import P2PFIFOPerfectChannel
 from LinkLayers.GenericLinkLayer import LinkLayer
 from NetworkLayers.AllSeeingEyeNetworkLayer import AllSeingEyeNetworkLayer
 from Waves.CidonDFS import ApplicationLayerComponent_Cidon

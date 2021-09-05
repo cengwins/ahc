@@ -10,7 +10,7 @@ from datetime import datetime as dt
 from Ahc import Topology
 from graph import ERG, Grid, Star
 from shavit_francez import ShavitFrancezAdHocNode, SFAHCNodeSimulationStatus
-from PhysicalLayers.Channels import P2PFIFOPerfectChannel
+from Channels.Channels import P2PFIFOPerfectChannel
 
 def run_shavit_francez_simulation(args):
     if args.network_type == "erg":

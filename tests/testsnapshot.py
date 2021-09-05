@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from PhysicalLayers.Channels import Channel
+from Channels.Channels import Channel
 from Snapshot.Snapshot import ChandyLamportComponentModel, LaiYangComponentModel
 from Snapshot.Snapshot import SnapshotEventTypes
 from Ahc import Event, Topology

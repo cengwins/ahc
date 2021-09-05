@@ -1,5 +1,5 @@
 from Ahc import Topology
-from PhysicalLayers.Channels import P2PFIFOPerfectChannel
+from Channels.Channels import P2PFIFOPerfectChannel
 
 import networkx as nx
 from Routing.FredericksonAlgorithmAdvanced.Experiments.MachineLearningNodeComponent import MachineLearningNode

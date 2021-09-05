@@ -10,7 +10,7 @@ from time import sleep
 import matplotlib.pyplot as plt
 import networkx as nx
 from Ahc import Topology
-from PhysicalLayers.Channels import P2PFIFOPerfectChannel
+from Channels.Channels import P2PFIFOPerfectChannel
 
 from AnonymousNetworks.IEEE1394 import FireWireNode
 

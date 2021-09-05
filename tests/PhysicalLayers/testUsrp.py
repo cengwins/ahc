@@ -4,11 +4,11 @@ import time
 from enum import Enum
 sys.path.insert(0, os.getcwd())
 
-from Ahc import ComponentModel, Event, ConnectorTypes, Topology, EventTypes, GenericMessage, GenericMessageHeader, GenericMessagePayload
+from Ahc import ComponentModel, Event, ConnectorTypes, Topology, EventTypes, GenericMessage, GenericMessageHeader
 from Ahc import ComponentRegistry
 from PhysicalLayers.UsrpPhysicalLayer import  PhyUsrpB210OFDMPhysicalLayer
 registry = ComponentRegistry()
-from PhysicalLayers.Channels import FIFOBroadcastPerfectChannel
+from Channels.Channels import FIFOBroadcastPerfectChannel
 
 
 # define your own message types

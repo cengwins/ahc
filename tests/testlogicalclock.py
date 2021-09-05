@@ -1,16 +1,15 @@
 import random
 import time
 
-import matplotlib.pyplot as plt
 import networkx as nx
 
 from Ahc import ComponentModel, Event, ConnectorTypes, Topology
 from Ahc import EventTypes
-from PhysicalLayers.Channels import P2PFIFOPerfectChannel
+from Channels.Channels import P2PFIFOPerfectChannel
 from LinkLayers.GenericLinkLayer import LinkLayer
 from NetworkLayers.AllSeeingEyeNetworkLayer import AllSeingEyeNetworkLayer
 
-from Clocks.LogicalClocks import LogicalClock, VectorClock 
+from Clocks.LogicalClocks import VectorClock
 
 
 class ApplicationLayerComponent(ComponentModel):

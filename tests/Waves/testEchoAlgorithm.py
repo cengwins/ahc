@@ -4,7 +4,7 @@ import time
 
 sys.path.insert(0, os.getcwd())
 
-from PhysicalLayers.Channels import Channel
+from Channels.Channels import Channel
 from WaveAlgorithms.EchoAlgorithm import *
 
 def main():
