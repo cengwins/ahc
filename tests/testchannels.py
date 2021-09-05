@@ -1,13 +1,14 @@
 import os
 import sys
-
+import time
+import pdb, traceback, sys
 sys.path.insert(0, os.getcwd())
 
 import networkx as nx
 import matplotlib.pyplot as plt
 
 from Ahc import ComponentModel, Event, Topology, ComponentRegistry, GenericMessage, GenericMessageHeader, EventTypes
-from PhysicalLayers.Channels import P2PFIFOFairLossChannel
+from PhysicalLayers.UsrpPhysicalLayer import PhyUsrpB210OFDMPhysicalLayer
 
 registry = ComponentRegistry()
 
@@ -19,13 +20,15 @@ class Sender(ComponentModel):
 
   def on_generate_message(self, eventobj: Event):
     self.sendcnt = self.sendcnt + 1
-    msg = GenericMessage(GenericMessageHeader("AL", 0, 1), self.sendcnt)
+    msg = GenericMessage(GenericMessageHeader("AL", 0, 1), str(self.sendcnt))
     self.send_down(Event(self, EventTypes.MFRT, msg))
-    # time.sleep(1)
+    time.sleep(0.1)
     self.send_self(Event(self, "generatemessage", "..."))
 
   def on_message_from_bottom(self, eventobj: Event):
-    pass
+    self.recvcnt = self.recvcnt + 1
+    self.sentcnt = int(eventobj.eventcontent.payload)
+    print(f"{self.recvcnt / self.sentcnt}")
 
   def __init__(self, componentname, componentinstancenumber):
     super().__init__(componentname, componentinstancenumber)
@@ -38,20 +41,18 @@ class Receiver(ComponentModel):
 
   def on_message_from_bottom(self, eventobj: Event):
     self.recvcnt = self.recvcnt + 1
-    self.sentcnt = eventobj.eventcontent.payload
+    self.sentcnt = int(eventobj.eventcontent.payload)
     print(f"{self.recvcnt / self.sentcnt}")
     # print(nx.adjacency_matrix(Topology().G).todense())
     # print("Progress {:2.2}".format(self.recvcnt/self.sentcnt), end="\r")
-    Topology().shortest_path_to_all(self.componentinstancenumber)
+    #Topology().shortest_path_to_all(self.componentinstancenumber)
 
 def main():
   topo = Topology()
 
-  topo.construct_sender_receiver(Sender, Receiver, P2PFIFOFairLossChannel)
+  topo.construct_sender_receiver(Sender, Sender, PhyUsrpB210OFDMPhysicalLayer)
   nx.draw(topo.G, with_labels=True, font_weight='bold')
   plt.draw()
-  topo.channels["0-1"].setPacketLossProbability(0.1)
-  topo.channels["0-1"].setAverageNumberOfDuplicates(0)
 
   # topo.computeForwardingTable()
 
@@ -60,4 +61,9 @@ def main():
   # while (True): pass   #plt.show() handles this
 
 if __name__ == "__main__":
-  main()
+  try:
+    main()
+  except:
+    extype, value, tb = sys.exc_info()
+    traceback.print_exc()
+    pdb.post_mortem(tb)
