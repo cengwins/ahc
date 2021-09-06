@@ -30,8 +30,15 @@ class UsrpApplicationLayer(ComponentModel):
     pass
 
   def on_message_from_bottom(self, eventobj: Event):
-    print(f"I am {self.componentname}, eventcontent={eventobj.eventcontent}\n")
+    #print(f"I am {self.componentname}, eventcontent={eventobj.eventcontent}\n")
+    pass
 
+
+  def on_message_from_top(self, eventobj: Event):
+    #print(f"I am {self.componentname}, eventcontent={eventobj.eventcontent}\n")
+    evt = Event(self, EventTypes.MFRT, eventobj.eventcontent)
+    self.send_down(evt)
+    pass
 
 
 
@@ -41,15 +48,16 @@ class UsrpNode(ComponentModel):
     pass
 
   def on_message_from_top(self, eventobj: Event):
-    print(f"I am {self.componentname}.{self.componentinstancenumber},sending down eventcontent={eventobj.eventcontent}\n")
+    #print(f"I am {self.componentname}.{self.componentinstancenumber},sending down eventcontent={eventobj.eventcontent}\n")
     self.send_down(Event(self, EventTypes.MFRT, eventobj.eventcontent))
 
   def on_message_from_bottom(self, eventobj: Event):
     evt = Event(self, EventTypes.MFRB, eventobj.eventcontent)
     self.send_up(evt)
     self.counter = self.counter + 1
-    evt.eventcontent.payload = "This is a broadcast message" + str(self.counter)
-    print(f"I am {self.componentname}.{self.componentinstancenumber},sending down eventcontent={eventobj.eventcontent}\n")
+    evt.eventcontent.payload = "Component:" + str(self.componentinstancenumber) + "This is a broadcast message" + str(self.counter)
+    time.sleep(1)
+    #print(f"I am {self.componentname}.{self.componentinstancenumber},sending down eventcontent={eventobj.eventcontent}\n")
     self.send_down(Event(self, EventTypes.MFRT, eventobj.eventcontent)) #PINGPONG
 
   def on_startbroadcast(self, eventobj: Event):
@@ -59,6 +67,8 @@ class UsrpNode(ComponentModel):
     evt = Event(self, EventTypes.MFRT, broadcastmessage)
     time.sleep(3)
     self.send_down(evt)
+    print("Starting broadcast")
+
   def __init__(self, componentname, componentid):
     # SUBCOMPONENTS
     self.appl = UsrpApplicationLayer("UsrpApplicationLayer", componentid)
@@ -69,8 +79,8 @@ class UsrpNode(ComponentModel):
     self.phy.connect_me_to_component(ConnectorTypes.UP, self.appl)
 
     # Connect the bottom component to the composite component....
-    self.phy.connect_me_to_component(ConnectorTypes.DOWN, self)
-    self.connect_me_to_component(ConnectorTypes.UP, self.phy)
+    #self.phy.connect_me_to_component(ConnectorTypes.DOWN, self)
+    #self.connect_me_to_component(ConnectorTypes.UP, self.phy)
     self.connect_me_to_component(ConnectorTypes.DOWN, self.appl)
 
     super().__init__(componentname, componentid)
@@ -83,7 +93,7 @@ def main():
   topo.construct_sender_receiver(UsrpNode,
                                  UsrpNode, FIFOBroadcastPerfectChannel)
 
-  time.sleep(5)
+  time.sleep(10)
   topo.sender.send_self(Event(topo.sender, UsrpNodeEventTypes.STARTBROADCAST, None))
 
   topo.start()
