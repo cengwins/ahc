@@ -13,6 +13,7 @@ import signal
 import argparse
 import math
 import time
+from datetime import datetime  
 from threading import Thread
 import numpy as np
 
@@ -26,6 +27,7 @@ wave_freq=10000
 wave_ampl = 0.3
 hw_tx_gain = 70.0           # hardware tx antenna gain
 hw_rx_gain = 20.0           # hardware rx antenna gain
+duration = 0.1
 
 
 waveforms = {
@@ -35,9 +37,9 @@ waveforms = {
     "ramp": lambda n, tone_offset, rate:
             2*(n*(tone_offset/rate) - np.floor(float(0.5 + n*(tone_offset/rate))))
 }
-waveform = "sine"
+waveform = "square"
 
-def get_usrp_power(streamer, num_samps=1e6, chan=0):
+def get_usrp_power(streamer, num_samps=1000000, chan=0):
     uhd.dsp.signals.get_usrp_power(streamer, num_samps, chan)
 
 def get_streamer(usrp, chan):
@@ -68,9 +70,10 @@ def sender_thread(usrp):
                 int(10 * np.floor(rate / wave_freq)),
                 dtype=np.complex64))),
         dtype=np.complex64)  # One period
-
-    while(True):
-        usrp.send_waveform(data, 1, freq, rate)
+    duration = len(data)/rate
+    print(f"Length: {len(data)} rate: {rate} duration: {duration}")
+    while(True): 
+        usrp.send_waveform(data, duration, freq, rate)
         time.sleep(1)
 
 def main():
@@ -98,12 +101,17 @@ def main():
     t = Thread(target=sender_thread, args=[usrp])
     t.daemon = True
     t.start()
-      
+    prevtime = time.time_ns()
+    currbool = False
     while(True):
-        time.sleep(0.1)
+        #time.sleep(duration/2)
         isclear, powerlevel = ischannelclear(usrp, streamer, chan)
-        print(f"Is the channel clear?", isclear, powerlevel)
-        
+        if (currbool != isclear ):
+        #if (isclear==False):
+            currtime = time.time_ns()
+            print(f"Is the channel clear{isclear}\t {powerlevel}\t{(currtime-prevtime)/1e9}\t {datetime.now()}")
+            prevtime = currtime
+        currbool = isclear
         
 if __name__ == "__main__":
     main()
