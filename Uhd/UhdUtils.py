@@ -27,7 +27,7 @@ wave_freq=10000
 wave_ampl = 0.3
 hw_tx_gain = 70.0           # hardware tx antenna gain
 hw_rx_gain = 20.0           # hardware rx antenna gain
-duration = 0.1
+duration = 1
 
 
 waveforms = {
@@ -70,7 +70,7 @@ def sender_thread(usrp):
                 int(10 * np.floor(rate / wave_freq)),
                 dtype=np.complex64))),
         dtype=np.complex64)  # One period
-    duration = len(data)/rate
+    #duration = len(data)/rate
     print(f"Length: {len(data)} rate: {rate} duration: {duration}")
     while(True): 
         usrp.send_waveform(data, duration, freq, rate)
