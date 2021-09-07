@@ -4,6 +4,9 @@ simdump/
 simdump_dev/
 bench_dump/
 
+.project
+.pydevproject
+
 .DS_Store/
 .idea/
 .idea/*
