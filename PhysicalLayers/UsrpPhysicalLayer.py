@@ -54,6 +54,7 @@ class PhyUsrpB210OFDMPhysicalLayer(ComponentModel):
       print("Exception: UnicodeDecodeError {}".format(e))
 
   def on_recv(self, eventobj: Event):
+    print(eventobj.eventcontent.payload)
     self.send_up(Event(self, EventTypes.MFRB, eventobj.eventcontent))
 
   def __init__(self, componentname, componentinstancenumber):
