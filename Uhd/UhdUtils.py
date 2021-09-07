@@ -7,7 +7,6 @@
 
 import sys
 from numpy import power
-from PyQt6.Qt3DExtras import QAbstractSpriteSheet
 sys.path.append('/usr/local/lib')
 import uhd
 import signal
@@ -75,7 +74,7 @@ def sender_thread(usrp):
         time.sleep(1)
 
 def main():
-    usrp = uhd.usrp.MultiUSRP(f"type=b200,name=winslab_b210_2")
+    usrp = uhd.usrp.MultiUSRP(f"type=b200")
     
     usrp.set_rx_bandwidth(bandwidth, chan)
     usrp.set_tx_bandwidth(bandwidth, chan)
