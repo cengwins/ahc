@@ -6,17 +6,19 @@
 #TL = -70 dBm/MHz + 10 × log10 (100 mW / Pout) (Pout in mW e.i.r.p.)
 
 import sys
-from numpy import power
+import os
 sys.path.append('/usr/local/lib')
-import uhd
-import signal
-import argparse
-import math
+#sys.path.append('/opt/local/lib/python3.8/site-packages')
+sys.path.insert(0, os.getcwd())
 import time
-from datetime import datetime  
 from threading import Thread
 import numpy as np
-from Uhd.UhdUtils import AhcUhdUtils
+from EttusUsrp.UhdUtils import AhcUhdUtils
+import matplotlib.pyplot as plt
+import ctypes
+from ctypes.util import find_library
+import pathlib
+from EttusUsrp.LiquidSdrUtils import ofdmflexframegenprops_s
 
 samps_per_est = 100
 chan = 0
@@ -30,8 +32,29 @@ hw_tx_gain = 70.0           # hardware tx antenna gain
 hw_rx_gain = 20.0           # hardware rx antenna gain
 duration = 1
 
+ahcuhd = AhcUhdUtils()
+
 def rx_callback(num_rx_samps, recv_buffer):
     print(f"recv_callback {num_rx_samps} {len(recv_buffer)}")
+    # Calculate power spectral density (frequency domain version of signal)
+    sample_rate = ahcuhd.rx_rate
+    rx_samples = recv_buffer
+    psd = np.abs(np.fft.fftshift(np.fft.fft(rx_samples))) ** 2
+    psd_dB = 10 * np.log10(psd)
+    f = np.linspace(sample_rate / -2, sample_rate / 2, len(psd))
+
+    # Plot time domain
+    plt.figure(0)
+    plt.plot(np.real(rx_samples[::100]))
+    plt.plot(np.imag(rx_samples[::100]))
+    plt.xlabel("Time")
+
+    # Plot freq domain
+    plt.figure(1)
+    plt.plot(f / 1e6, psd_dB)
+    plt.xlabel("Frequency [MHz]")
+    plt.ylabel("PSD")
+    plt.show()
     pass
 
 def sender_thread(ahcuhd):
@@ -50,10 +73,26 @@ def sender_thread(ahcuhd):
         time.sleep(1)
 
 def main():
-    
-    ahcuhd = AhcUhdUtils()
-    
-    ahcuhd.configureUsrp("winslab_b210_2")
+    libname = find_library("libliquid.dylib")
+    print(libname)
+    #libname = pathlib.Path().absolute() / "libliquid.dylib"
+    liquiddsp = ctypes.CDLL(libname)
+    print(liquiddsp)
+
+    aa = liquiddsp.randf()
+    print(aa)
+    aa = liquiddsp.randf()
+    print(aa)
+    aa = liquiddsp.randf()
+    print(aa)
+
+    fgprops = ofdmflexframegenprops_s()
+    fgprops.check = 11
+
+    print(fgprops.check)
+
+
+    ahcuhd.configureUsrp("winslab_b210_1")
     
     ahcuhd.start_rx(rx_callback)
 

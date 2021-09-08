@@ -5,16 +5,8 @@
 # The energy detection threshold for the CCA shall be proportional to the transmit power of the transmitter: for a 20 dBm e.i.r.p. transmitter the CCA threshold level (TL) shall be equal to or less than -70 dBm/MHz at the input to the receiver assuming a 0 dBi (receive) antenna assembly. This threshold level (TL) may be corrected for the (receive) antenna assembly gain (G); however, beamforming gain (Y) shall not be taken into account. For power levels less than 20 dBm e.i.r.p. the CCA threshold level may be relaxed to:
 #TL = -70 dBm/MHz + 10 × log10 (100 mW / Pout) (Pout in mW e.i.r.p.)
 
-import sys
-from numpy import power
-from pickle import FALSE
-sys.path.append('/usr/local/lib')
 import uhd
-import signal
-import argparse
 import math
-import time
-from datetime import datetime  
 from threading import Thread
 import numpy as np
 
@@ -72,7 +64,9 @@ class AhcUhdUtils:
         
         self.usrp.set_rx_gain(self.hw_rx_gain, self.chan)
         self.usrp.set_tx_gain(self.hw_tx_gain, self.chan)
-        
+
+        self.usrp.set_rx_agc(True, self.chan)
+
         stream_args = uhd.usrp.StreamArgs('fc32', 'sc16')
         stream_args.channels = [self.chan]
         self.streamer = self.usrp.get_rx_stream(stream_args)
