@@ -6018,7 +6018,7 @@ struct_modulation_type_s._fields_ = [
     ('bps', ctypes.c_uint32),
 ]
 
-modulation_types = struct_modulation_type_s * 52() # Variable struct_modulation_type_s * 52
+modulation_types = struct_modulation_type_s * 52 # Variable struct_modulation_type_s * 52
 liquid_print_modulation_schemes = _libraries['FIXME_STUB'].liquid_print_modulation_schemes
 liquid_print_modulation_schemes.restype = ctypes.c_int32
 liquid_print_modulation_schemes.argtypes = []

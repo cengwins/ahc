@@ -7,6 +7,7 @@
 
 import sys
 import os
+from curses.ascii import FS
 sys.path.append('/usr/local/lib')
 #sys.path.append('/opt/local/lib/python3.8/site-packages')
 sys.path.insert(0, os.getcwd())
@@ -14,10 +15,14 @@ import time
 from threading import Thread
 import numpy as np
 from EttusUsrp.UhdUtils import AhcUhdUtils
-import ctypes
+from ctypes import *
 from ctypes.util import find_library
 import pathlib
-from EttusUsrp.LiquidSdrUtils import ofdmflexframegenprops_s
+from EttusUsrp.LiquidDspUtils import *
+
+
+liquiddsp = CDLL("/usr/local/lib/libliquid.dylib")
+
 
 # On MacOS, export DYLD_LIBRARY_PATH=/usr/local/lib for sure!
 
@@ -34,17 +39,39 @@ hw_rx_gain = 20.0           # hardware rx antenna gain
 duration = 1
 
 ahcuhd = AhcUhdUtils()
+fgprops = ofdmflexframegenprops_s(LIQUID_CRC_32, LIQUID_FEC_NONE, LIQUID_FEC_HAMMING128, LIQUID_MODEM_QPSK)
+fs = 0
 
+
+def ofdm_callback(header, header_valid, payload, payload_len, payload_valid, stats, userdata):
+    print("ofdm_callback")
+    pass
 
 def rx_callback(num_rx_samps, recv_buffer):
     print(f"recv_callback {num_rx_samps} {len(recv_buffer)}")
     # Calculate power spectral density (frequency domain version of signal)
-    sample_rate = ahcuhd.rx_rate
-    rx_samples = recv_buffer
-    psd = np.abs(np.fft.fftshift(np.fft.fft(rx_samples))) ** 2
-    psd_dB = 10 * np.log10(psd)
-    f = np.linspace(sample_rate / -2, sample_rate / 2, len(psd))
+    #sample_rate = ahcuhd.rx_rate
+    #rx_samples = recv_buffer
+    #psd = np.abs(np.fft.fftshift(np.fft.fft(rx_samples))) ** 2
+    #psd_dB = 10 * np.log10(psd)
+    #f = np.linspace(sample_rate / -2, sample_rate / 2, len(psd))
     
+    recv_buffer_real = recv_buffer.real
+    recv_buffer_imag = recv_buffer.imag
+    #print(recv_buffer_real)
+    for j in range(len(recv_buffer)):
+        usrp_sample = struct_c__SA_liquid_float_complex(recv_buffer_real[j], recv_buffer_imag[j])
+        #usrp_sample.real = recv_buffer_real[j]
+        #usrp_sample.imag = recv_buffer_imag[j]
+        #print(usrp_sample.real, " + j* ", usrp_sample.imag)
+        try:
+            if fs == 0:
+                print("fs is null")
+            liquiddsp.ofdmflexframesync_execute(fs, byref(usrp_sample), 1);
+        except:
+            #print("Exception")
+            pass
+        
 def sender_thread(ahcuhd):
     print("Sender thread initialized")
     data = np.array(
@@ -61,13 +88,14 @@ def sender_thread(ahcuhd):
         time.sleep(1)
 
 def main():
+    ahcuhd.configureUsrp("winslab_b210_1")
+    
     libname = find_library("libliquid.dylib")
     libfecname = find_library("libfec.dylib")
     print(libname)
     print(libfecname)
     #libname = pathlib.Path().absolute() / "libliquid.dylib"
-    libfec = ctypes.CDLL(libfecname)
-    liquiddsp = ctypes.CDLL(libname)
+    libfec = CDLL(libfecname)
     print(liquiddsp)
 
     aa = liquiddsp.randf()
@@ -76,16 +104,36 @@ def main():
     print(aa)
     aa = liquiddsp.randf()
     print(aa)
-
-    fgprops = ofdmflexframegenprops_s()
-    fgprops.check = 11
+    M=c_uint()
+    M=256
+    cp_len = 16
+    taper_len = 16
+    res = c_int32()
+  
+    print(fgprops)
+    fgprops_pointer = pointer(fgprops)
+    print("pointer", fgprops_pointer)
+    print("content", fgprops_pointer.contents)
+    res = liquiddsp.ofdmflexframegenprops_init_default(byref(fgprops));
+    fgprops.check = LIQUID_CRC_32
+    fgprops.fec0 = LIQUID_FEC_NONE
+    fgprops.fec1 = LIQUID_FEC_HAMMING128
+    fgprops.mod_scheme = LIQUID_MODEM_QPSK
+    fg = liquiddsp.ofdmflexframegen_create(M, cp_len, taper_len, None, byref(fgprops) );
 
     print(fgprops.check)
-
-
-    ahcuhd.configureUsrp("winslab_b210_1")
+    ofdm_callback_function = framesync_callback(ofdm_callback)
+    
+    fs = liquiddsp.ofdmflexframesync_create(M, cp_len, taper_len, None, ofdm_callback_function, None);
+    if (fs == None):
+        print("Something really bad happened :-)")
+    else:
+        print("fs created", fs)
+    #liquiddsp.ofdmflexframesync_reset(fs);
+    
     
     ahcuhd.start_rx(rx_callback)
+    
 
     t = Thread(target=sender_thread, args=[ahcuhd])
     t.daemon = True

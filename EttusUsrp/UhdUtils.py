@@ -69,10 +69,12 @@ class AhcUhdUtils:
 
         stream_args = uhd.usrp.StreamArgs('fc32', 'sc16')
         stream_args.channels = [self.chan]
-        self.streamer = self.usrp.get_rx_stream(stream_args)
+        
+        self.rx_streamer = self.usrp.get_rx_stream(stream_args)
+        self.tx_streamer = self.usrp.get_tx_stream(stream_args)
     
     def get_usrp_power(self,num_samps=1000000, chan=0):
-        uhd.dsp.signals.get_usrp_power(self.streamer, num_samps, chan)
+        uhd.dsp.signals.get_usrp_power(self.rx_streamer, num_samps, chan)
         
     
     def ischannelclear(self, threshold=-70, pout=100):
@@ -80,7 +82,7 @@ class AhcUhdUtils:
         tx_rate = self.usrp.get_rx_rate(self.chan) / 1e6
         samps_per_est = math.floor(18 * tx_rate)
         power_dbfs = uhd.dsp.signals.get_usrp_power(
-              self.streamer, num_samps=int(samps_per_est), chan=self.chan)
+              self.rx_streamer, num_samps=int(samps_per_est), chan=self.chan)
         if (power_dbfs > cca_threshold ):
             #print(power_dbfs)
             return False, power_dbfs
@@ -91,24 +93,24 @@ class AhcUhdUtils:
         self.rx_callback = rx_callback
         self.rx_rate = self.usrp.get_rx_rate()
         stream_cmd = uhd.types.StreamCMD(uhd.types.StreamMode.start_cont)
-        self.streamer.issue_stream_cmd(stream_cmd)
+        self.rx_streamer.issue_stream_cmd(stream_cmd)
         t = Thread(target=self.rx_thread, args=[])
         t.daemon = True
         t.start()
         
     def stop_rx(self):
-        self.streamer.issue_stream_cmd(uhd.types.StreamCMD(uhd.types.StreamMode.stop_cont))
+        self.rx_streamer.issue_stream_cmd(uhd.types.StreamCMD(uhd.types.StreamMode.stop_cont))
         
     def rx_thread(self):
         had_an_overflow = False
         rx_metadata = uhd.types.RXMetadata()
-        max_samps_per_packet = self.streamer.get_max_num_samps()
+        max_samps_per_packet = self.rx_streamer.get_max_num_samps()
         print(f"max_samps_per_packet={max_samps_per_packet}")
         recv_buffer = np.empty( max_samps_per_packet, dtype=np.complex64)
         #print(f"recv_buffer={recv_buffer")
         while(True):
             try:
-                num_rx_samps = self.streamer.recv(recv_buffer, rx_metadata)
+                num_rx_samps = self.rx_streamer.recv(recv_buffer, rx_metadata)
                 #print(f"num_rx_samps={num_rx_samps}")
                 self.rx_callback(num_rx_samps, recv_buffer)
             except RuntimeError as ex:
@@ -129,8 +131,8 @@ class AhcUhdUtils:
     def transmit_samples(self, transmit_buffer):    
         tx_metadata = uhd.types.TXMetadata()
         tx_metadata.has_time_spec = False
-        num_tx_samps = self.streamer.send(transmit_buffer, tx_metadata)
+        num_tx_samps = self.tx_streamer.send(transmit_buffer, tx_metadata)
         # Send a mini EOB packet
         tx_metadata.end_of_burst = True
-        self.streamer.send(np.zeros(0, dtype=np.complex64), tx_metadata)
+        self.tx_streamer.send(np.zeros((1,0), dtype=np.complex64), tx_metadata)
         
