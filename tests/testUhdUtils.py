@@ -14,11 +14,12 @@ import time
 from threading import Thread
 import numpy as np
 from EttusUsrp.UhdUtils import AhcUhdUtils
-import matplotlib.pyplot as plt
 import ctypes
 from ctypes.util import find_library
 import pathlib
 from EttusUsrp.LiquidSdrUtils import ofdmflexframegenprops_s
+
+# On MacOS, export DYLD_LIBRARY_PATH=/usr/local/lib for sure!
 
 samps_per_est = 100
 chan = 0
@@ -34,6 +35,7 @@ duration = 1
 
 ahcuhd = AhcUhdUtils()
 
+
 def rx_callback(num_rx_samps, recv_buffer):
     print(f"recv_callback {num_rx_samps} {len(recv_buffer)}")
     # Calculate power spectral density (frequency domain version of signal)
@@ -42,21 +44,7 @@ def rx_callback(num_rx_samps, recv_buffer):
     psd = np.abs(np.fft.fftshift(np.fft.fft(rx_samples))) ** 2
     psd_dB = 10 * np.log10(psd)
     f = np.linspace(sample_rate / -2, sample_rate / 2, len(psd))
-
-    # Plot time domain
-    plt.figure(0)
-    plt.plot(np.real(rx_samples[::100]))
-    plt.plot(np.imag(rx_samples[::100]))
-    plt.xlabel("Time")
-
-    # Plot freq domain
-    plt.figure(1)
-    plt.plot(f / 1e6, psd_dB)
-    plt.xlabel("Frequency [MHz]")
-    plt.ylabel("PSD")
-    plt.show()
-    pass
-
+    
 def sender_thread(ahcuhd):
     print("Sender thread initialized")
     data = np.array(
@@ -74,8 +62,11 @@ def sender_thread(ahcuhd):
 
 def main():
     libname = find_library("libliquid.dylib")
+    libfecname = find_library("libfec.dylib")
     print(libname)
+    print(libfecname)
     #libname = pathlib.Path().absolute() / "libliquid.dylib"
+    libfec = ctypes.CDLL(libfecname)
     liquiddsp = ctypes.CDLL(libname)
     print(liquiddsp)
 
