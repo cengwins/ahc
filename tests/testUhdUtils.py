@@ -7,7 +7,6 @@
 
 import sys
 import os
-from curses.ascii import FS
 sys.path.append('/usr/local/lib')
 #sys.path.append('/opt/local/lib/python3.8/site-packages')
 sys.path.insert(0, os.getcwd())
@@ -19,7 +18,7 @@ from ctypes import *
 import pathlib
 from EttusUsrp.LiquidDspUtils import *
 
-
+from PhysicalMediaDependentSubLayer.OfdmPmdComponent import  UsrpB210OfdmPhysicalSubLayer
 
 
 # On MacOS, export DYLD_LIBRARY_PATH=/usr/local/lib for sure!
@@ -41,31 +40,6 @@ fgprops = ofdmflexframegenprops_s(LIQUID_CRC_32, LIQUID_FEC_NONE, LIQUID_FEC_HAM
 fs = 0
 
 
-def rx_callback(num_rx_samps, recv_buffer):
-    print(f"recv_callback {num_rx_samps} {len(recv_buffer)}")
-    # Calculate power spectral density (frequency domain version of signal)
-    #sample_rate = ahcuhd.rx_rate
-    #rx_samples = recv_buffer
-    #psd = np.abs(np.fft.fftshift(np.fft.fft(rx_samples))) ** 2
-    #psd_dB = 10 * np.log10(psd)
-    #f = np.linspace(sample_rate / -2, sample_rate / 2, len(psd))
-    
-    recv_buffer_real = recv_buffer.real
-    recv_buffer_imag = recv_buffer.imag
-    #print(recv_buffer_real)
-    for j in range(len(recv_buffer)):
-        usrp_sample = struct_c__SA_liquid_float_complex(recv_buffer_real[j], recv_buffer_imag[j])
-        #usrp_sample.real = recv_buffer_real[j]
-        #usrp_sample.imag = recv_buffer_imag[j]
-        #print(usrp_sample.real, " + j* ", usrp_sample.imag)
-        try:
-            if fs == 0:
-                print("fs is null")
-            liquiddsp.ofdmflexframesync_execute(fs, byref(usrp_sample), 1);
-        except:
-            #print("Exception")
-            pass
-        
 def sender_thread(ahcuhd):
     print("Sender thread initialized")
     data = np.array(
@@ -90,10 +64,10 @@ def main():
     res = c_int32()
     
     
+    ofdm_pmd = UsrpB210OfdmPhysicalSubLayer("UsrpB210OfdmPhysicalSubLayer", 0)
+    ofdm_pmd.configure("winslab_b210_2", M, cp_len, taper_len)
     
-    
-    
-
+    time.sleep(5)
     t = Thread(target=sender_thread, args=[ahcuhd])
     t.daemon = True
     t.start()
