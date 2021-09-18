@@ -7,7 +7,7 @@
 
 import sys
 import os
-from curses.ascii import FS
+from EttusUsrp import LiquidDspUtils
 sys.path.append('/usr/local/lib')
 #sys.path.append('/opt/local/lib/python3.8/site-packages')
 sys.path.insert(0, os.getcwd())
@@ -16,12 +16,10 @@ from threading import Thread
 import numpy as np
 from EttusUsrp.UhdUtils import AhcUhdUtils
 from ctypes import *
-from ctypes.util import find_library
-import pathlib
 from EttusUsrp.LiquidDspUtils import *
 
 
-liquiddsp = CDLL("/usr/local/lib/libliquid.dylib")
+
 
 
 # On MacOS, export DYLD_LIBRARY_PATH=/usr/local/lib for sure!
@@ -40,10 +38,11 @@ duration = 1
 
 ahcuhd = AhcUhdUtils()
 fgprops = ofdmflexframegenprops_s(LIQUID_CRC_32, LIQUID_FEC_NONE, LIQUID_FEC_HAMMING128, LIQUID_MODEM_QPSK)
-fs = 0
 
 
-def ofdm_callback(header, header_valid, payload, payload_len, payload_valid, stats, userdata):
+#ofdmframesync_callback = ctypes.CFUNCTYPE(ctypes.c_int32, ctypes.POINTER(struct_c__SA_liquid_float_complex), ctypes.POINTER(ctypes.c_ubyte), ctypes.c_uint32, ctypes.POINTER(None))
+
+def ofdm_callback(header:POINTER(struct_c__SA_liquid_float_complex), header_valid, payload, payload_len, payload_valid, stats, userdata) -> c_int32:
     print("ofdm_callback")
     pass
 
@@ -59,18 +58,21 @@ def rx_callback(num_rx_samps, recv_buffer):
     recv_buffer_real = recv_buffer.real
     recv_buffer_imag = recv_buffer.imag
     #print(recv_buffer_real)
+    numberofsamplestoprocess = 1
     for j in range(len(recv_buffer)):
         usrp_sample = struct_c__SA_liquid_float_complex(recv_buffer_real[j], recv_buffer_imag[j])
         #usrp_sample.real = recv_buffer_real[j]
         #usrp_sample.imag = recv_buffer_imag[j]
         #print(usrp_sample.real, " + j* ", usrp_sample.imag)
         try:
-            if fs == 0:
+            if ahcuhd.fs == 0:
                 print("fs is null")
-            liquiddsp.ofdmflexframesync_execute(fs, byref(usrp_sample), 1);
-        except:
-            #print("Exception")
-            pass
+            else:
+                print("fs is not null", ahcuhd.fs)
+            #liquiddsp.ofdmflexframesync_execute(ahcuhd.fs, byref(usrp_sample), c_uint32(numberofsamplestoprocess));
+        except Exception as ex:
+            print("Exception", ex)
+            
         
 def sender_thread(ahcuhd):
     print("Sender thread initialized")
@@ -87,57 +89,87 @@ def sender_thread(ahcuhd):
         ahcuhd.transmit_samples(data)
         time.sleep(1)
 
+class liquiddsphandler(object):
+    def create(self):
+            
+        M=c_uint32()
+        M=512
+        cp_len = c_uint32()
+        cp_len = 64
+        taper_len = c_uint32()
+        taper_len = 64
+        
+        res = c_int32()
+      
+        print(fgprops)
+        fgprops_pointer = pointer(fgprops)
+        print("pointer", fgprops_pointer)
+        print("content", fgprops_pointer.contents)
+        res = ofdmflexframegenprops_init_default(byref(fgprops));
+        fgprops.check = LIQUID_CRC_32
+        fgprops.fec0 = LIQUID_FEC_NONE
+        fgprops.fec1 = LIQUID_FEC_HAMMING128
+        fgprops.mod_scheme = LIQUID_MODEM_QPSK
+        fg = ofdmflexframegen_create(M, cp_len, taper_len, None, byref(fgprops) );
+        afg = cast(fg, ofdmflexframegen)
+        print("fg", afg)
+        ret = ofdmflexframegen_print(fg)
+        print("check", fgprops.check)
+        ofdm_callback_function = framesync_callback(ofdm_callback)
+        print(ofdm_callback_function.argtypes)
+        try:
+            #fs = POINTER(struct_ofdmflexframegen_s)()
+            #print("fs", fs )
+            #fs = cast(liquiddsp.ofdmflexframesync_create(M, cp_len, taper_len, None, ofdm_callback_function, None), ofdmflexframegen)
+            self.fs = ofdmflexframesync_create(M, cp_len, taper_len, None, ofdm_callback_function, None)
+            print("fs", self.fs )
+    #        afs = cast(fs,ofdmflexframegen)
+            self.afs = cast(self.fs, ofdmflexframegen)
+            print("afs", self.afs.contents() )
+            #a = liquiddsp.ofdmflexframesync_print(fs)
+            #print("afs2", a )
+        except Exception as ex:
+            print("Exception", ex)
+                    
+        
+        
+        ahcuhd.set_frame_synch(self.fs)
+        try:
+        #    liquiddsp.ofdmflexframesync_destroy(cast(fs,ofdmflexframegen))
+            pass
+        except Exception as ex:
+            print("Exception", ex)
+           
+        try:
+            liquiddsp.ofdmflexframesync_print(ahcuhd.fs)
+            #liquiddsp.ofdmflexframesync_print(afs,None)
+            pass
+        except Exception as ex:
+            print("Exception", ex)
+            
+        if (ahcuhd.fs==0):
+            print("Something really bad happened :-)")
+        else:
+            print("fs created", ahcuhd.fs)
+        #liquiddsp.ofdmflexframesync_reset(fs);
+
+
 def main():
-    ahcuhd.configureUsrp("winslab_b210_1")
-    
-    libname = find_library("libliquid.dylib")
-    libfecname = find_library("libfec.dylib")
-    print(libname)
-    print(libfecname)
-    #libname = pathlib.Path().absolute() / "libliquid.dylib"
-    libfec = CDLL(libfecname)
-    print(liquiddsp)
-
-    aa = liquiddsp.randf()
-    print(aa)
-    aa = liquiddsp.randf()
-    print(aa)
-    aa = liquiddsp.randf()
-    print(aa)
-    M=c_uint()
-    M=256
-    cp_len = 16
-    taper_len = 16
-    res = c_int32()
-  
-    print(fgprops)
-    fgprops_pointer = pointer(fgprops)
-    print("pointer", fgprops_pointer)
-    print("content", fgprops_pointer.contents)
-    res = liquiddsp.ofdmflexframegenprops_init_default(byref(fgprops));
-    fgprops.check = LIQUID_CRC_32
-    fgprops.fec0 = LIQUID_FEC_NONE
-    fgprops.fec1 = LIQUID_FEC_HAMMING128
-    fgprops.mod_scheme = LIQUID_MODEM_QPSK
-    fg = liquiddsp.ofdmflexframegen_create(M, cp_len, taper_len, None, byref(fgprops) );
-
-    print(fgprops.check)
-    ofdm_callback_function = framesync_callback(ofdm_callback)
-    
-    fs = liquiddsp.ofdmflexframesync_create(M, cp_len, taper_len, None, ofdm_callback_function, None);
-    if (fs == None):
-        print("Something really bad happened :-)")
-    else:
-        print("fs created", fs)
-    #liquiddsp.ofdmflexframesync_reset(fs);
+    #ahcuhd.configureUsrp("winslab_b210_1")
     
     
-    ahcuhd.start_rx(rx_callback)
+    #print(LiquidDspUtils.liquiddsp)
+    xx =liquiddsphandler()
+    xx.create()
+    
+    
+    
+    #ahcuhd.start_rx(rx_callback)
     
 
-    t = Thread(target=sender_thread, args=[ahcuhd])
-    t.daemon = True
-    t.start()
+    #t = Thread(target=sender_thread, args=[ahcuhd])
+    #t.daemon = True
+    #t.start()
     
     while (True):
         time.sleep(1)

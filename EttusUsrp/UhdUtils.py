@@ -101,6 +101,9 @@ class AhcUhdUtils:
     def stop_rx(self):
         self.rx_streamer.issue_stream_cmd(uhd.types.StreamCMD(uhd.types.StreamMode.stop_cont))
         
+    def set_frame_synch(self, _fs):
+        self.fs = _fs
+        
     def rx_thread(self):
         had_an_overflow = False
         rx_metadata = uhd.types.RXMetadata()
