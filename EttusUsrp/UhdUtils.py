@@ -89,7 +89,8 @@ class AhcUhdUtils:
         else:
             return True, power_dbfs
     
-    def start_rx(self, rx_callback):
+    def start_rx(self, rx_callback, framer):
+        self.framer = framer
         self.rx_callback = rx_callback
         self.rx_rate = self.usrp.get_rx_rate()
         stream_cmd = uhd.types.StreamCMD(uhd.types.StreamMode.start_cont)
@@ -101,21 +102,19 @@ class AhcUhdUtils:
     def stop_rx(self):
         self.rx_streamer.issue_stream_cmd(uhd.types.StreamCMD(uhd.types.StreamMode.stop_cont))
         
-    def set_frame_synch(self, _fs):
-        self.fs = _fs
-        
     def rx_thread(self):
         had_an_overflow = False
         rx_metadata = uhd.types.RXMetadata()
         max_samps_per_packet = self.rx_streamer.get_max_num_samps()
         print(f"max_samps_per_packet={max_samps_per_packet}")
-        recv_buffer = np.empty( max_samps_per_packet, dtype=np.complex)
+        
         #print(f"recv_buffer={recv_buffer")
         while(True):
             try:
+                recv_buffer = np.zeros( max_samps_per_packet, dtype=np.complex64)
                 num_rx_samps = self.rx_streamer.recv(recv_buffer, rx_metadata)
                 #print(f"num_rx_samps={num_rx_samps}")
-                self.rx_callback(num_rx_samps, recv_buffer)
+                self.framer.rx_callback(num_rx_samps, recv_buffer)
             except RuntimeError as ex:
                 print("Runtime error in receive: %s", ex)
             
@@ -134,13 +133,19 @@ class AhcUhdUtils:
     def finalize_transmit_samples(self):   
         tx_metadata = uhd.types.TXMetadata() 
         tx_metadata.end_of_burst = True
-        self.tx_streamer.send(np.zeros((1,0), dtype=np.complex), tx_metadata)
+        tx_metadata.start_of_burst = False
+        tx_metadata.has_time_spec = False
+        self.tx_streamer.send(np.zeros((1, 0), dtype=np.complex64), tx_metadata)
+        #self.tx_streamer.send(np.zeros(1, dtype=np.complex64), tx_metadata)
         
     def transmit_samples(self, transmit_buffer):
         tx_metadata = uhd.types.TXMetadata()
         tx_metadata.has_time_spec = False
+        tx_metadata.start_of_burst = True
+        tx_metadata.end_of_burst = False
         #print(transmit_buffer)
         num_tx_samps = self.tx_streamer.send(transmit_buffer, tx_metadata)
+        print("num_tx_samples", num_tx_samps)
         # Send a mini EOB packet
         #tx_metadata.end_of_burst = True
         #self.tx_streamer.send(np.zeros((1,0), dtype=np.complex), tx_metadata)
