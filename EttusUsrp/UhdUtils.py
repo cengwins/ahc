@@ -109,7 +109,7 @@ class AhcUhdUtils:
         rx_metadata = uhd.types.RXMetadata()
         max_samps_per_packet = self.rx_streamer.get_max_num_samps()
         print(f"max_samps_per_packet={max_samps_per_packet}")
-        recv_buffer = np.empty( max_samps_per_packet, dtype=np.complex64)
+        recv_buffer = np.empty( max_samps_per_packet, dtype=np.complex)
         #print(f"recv_buffer={recv_buffer")
         while(True):
             try:
@@ -131,11 +131,17 @@ class AhcUhdUtils:
                 print("Receiver error: %s", rx_metadata.strerror())
                 
         
-    def transmit_samples(self, transmit_buffer):    
+    def finalize_transmit_samples(self):   
+        tx_metadata = uhd.types.TXMetadata() 
+        tx_metadata.end_of_burst = True
+        self.tx_streamer.send(np.zeros((1,0), dtype=np.complex), tx_metadata)
+        
+    def transmit_samples(self, transmit_buffer):
         tx_metadata = uhd.types.TXMetadata()
         tx_metadata.has_time_spec = False
+        #print(transmit_buffer)
         num_tx_samps = self.tx_streamer.send(transmit_buffer, tx_metadata)
         # Send a mini EOB packet
-        tx_metadata.end_of_burst = True
-        self.tx_streamer.send(np.zeros((1,0), dtype=np.complex64), tx_metadata)
+        #tx_metadata.end_of_burst = True
+        #self.tx_streamer.send(np.zeros((1,0), dtype=np.complex), tx_metadata)
         
