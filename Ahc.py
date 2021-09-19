@@ -35,8 +35,6 @@ import queue
 from enum import Enum
 from threading import Thread, Lock
 from random import sample
-
-import matplotlib.pyplot as plt
 import networkx as nx
 
 # TIMING ASSUMPTIONS

@@ -7,8 +7,11 @@
 
 import sys
 import os
+<<<<<<< HEAD
 from EttusUsrp import LiquidDspUtils
 from setuptools._vendor.more_itertools.more import last
+=======
+>>>>>>> 9d23c3e0ad20e809eefa16ca7863083f52423385
 sys.path.append('/usr/local/lib')
 # sys.path.append('/opt/local/lib/python3.8/site-packages')
 sys.path.insert(0, os.getcwd())
@@ -17,8 +20,17 @@ from threading import Thread
 import numpy as np
 from EttusUsrp.UhdUtils import AhcUhdUtils
 from ctypes import *
+<<<<<<< HEAD
 from EttusUsrp.LiquidDspUtils import *
 
+=======
+import pathlib
+from EttusUsrp.LiquidDspUtils import *
+
+from PhysicalMediaDependentSubLayer.OfdmPmdComponent import  UsrpB210OfdmPhysicalSubLayer
+
+
+>>>>>>> 9d23c3e0ad20e809eefa16ca7863083f52423385
 # On MacOS, export DYLD_LIBRARY_PATH=/usr/local/lib for sure!
 
 samps_per_est = 100
@@ -38,6 +50,7 @@ ahcuhd = AhcUhdUtils()
 # ofdmframesync_callback = ctypes.CFUNCTYPE(ctypes.c_int32, ctypes.POINTER(struct_c__SA_liquid_float_complex), ctypes.POINTER(ctypes.c_ubyte), ctypes.c_uint32, ctypes.POINTER(None))
 
 
+<<<<<<< HEAD
 def ofdm_callback(header:POINTER(struct_c__SA_liquid_float_complex), header_valid, payload, payload_len, payload_valid, stats, userdata) -> c_int32:
     print("ofdm_callback")
     ofdmflexframesync_print(ahcuhd.fs) 
@@ -83,6 +96,18 @@ def sender_thread(ahcuhd, framer):
     print("payload", payload)
     
     payload_len = plen
+=======
+def sender_thread(ahcuhd):
+    print("Sender thread initialized")
+    data = np.array(
+        list(map(lambda n: wave_ampl * ahcuhd.waveforms[ahcuhd.waveform](n, wave_freq, rate),
+            np.arange(
+                int(10 * np.floor(rate / wave_freq)),
+                dtype=np.complex64))),
+        dtype=np.complex64)  # One period
+    #duration = len(data)/rate
+    print(f"Length: {len(data)} rate: {rate} duration: {duration}")
+>>>>>>> 9d23c3e0ad20e809eefa16ca7863083f52423385
     while(True): 
         print("will transmit...")
         framer.transmit(header, payload, payload_len, LIQUID_MODEM_QPSK, LIQUID_FEC_NONE, LIQUID_FEC_HAMMING128)
@@ -164,8 +189,8 @@ class LiquidDspOfdmFlexFrameHandler(object):
 
 
 def main():
-    ahcuhd.configureUsrp("winslab_b210_1")
     
+<<<<<<< HEAD
     # print(LiquidDspUtils.liquiddsp)
     xx = LiquidDspOfdmFlexFrameHandler()
     xx.configure()
@@ -173,6 +198,20 @@ def main():
     ahcuhd.start_rx(rx_callback)
 
     t = Thread(target=sender_thread, args=[ahcuhd, xx])
+=======
+    M=c_uint()
+    M=256
+    cp_len = 16
+    taper_len = 16
+    res = c_int32()
+    
+    
+    ofdm_pmd = UsrpB210OfdmPhysicalSubLayer("UsrpB210OfdmPhysicalSubLayer", 0)
+    ofdm_pmd.configure("winslab_b210_2", M, cp_len, taper_len)
+    
+    time.sleep(5)
+    t = Thread(target=sender_thread, args=[ahcuhd])
+>>>>>>> 9d23c3e0ad20e809eefa16ca7863083f52423385
     t.daemon = True
     t.start()
     
