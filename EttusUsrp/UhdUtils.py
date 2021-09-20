@@ -9,7 +9,7 @@ import uhd
 import math
 from threading import Thread
 import numpy as np
-
+import inspect
 
 
 class AhcUhdUtils:
@@ -106,7 +106,7 @@ class AhcUhdUtils:
         had_an_overflow = False
         rx_metadata = uhd.types.RXMetadata()
         max_samps_per_packet = self.rx_streamer.get_max_num_samps()
-        print(f"max_samps_per_packet={max_samps_per_packet}")
+        #print(f"max_samps_per_packet={max_samps_per_packet}")
         
         #print(f"recv_buffer={recv_buffer")
         while(True):
@@ -124,7 +124,7 @@ class AhcUhdUtils:
                 print("Receiver error: overflow  %s, continuing...", rx_metadata.strerror())
             elif rx_metadata.error_code == uhd.types.RXMetadataErrorCode.late:
                 print("Receiver error: late %s, continuing...", rx_metadata.strerror())
-            elif metadata.error_code == uhd.types.RXMetadataErrorCode.timeout:
+            elif rx_metadata.error_code == uhd.types.RXMetadataErrorCode.timeout:
                 print("Receiver error:timeout  %s, continuing...", rx_metadata.strerror())
             else:
                 print("Receiver error: %s", rx_metadata.strerror())
@@ -135,7 +135,7 @@ class AhcUhdUtils:
         tx_metadata.end_of_burst = True
         tx_metadata.start_of_burst = False
         tx_metadata.has_time_spec = False
-        self.tx_streamer.send(np.zeros((1, 0), dtype=np.complex64), tx_metadata)
+        num_tx_samps = self.tx_streamer.send(np.zeros((1, 0), dtype=np.complex64), tx_metadata)
         #self.tx_streamer.send(np.zeros(1, dtype=np.complex64), tx_metadata)
         
     def transmit_samples(self, transmit_buffer):
@@ -145,7 +145,7 @@ class AhcUhdUtils:
         tx_metadata.end_of_burst = False
         #print(transmit_buffer)
         num_tx_samps = self.tx_streamer.send(transmit_buffer, tx_metadata)
-        print("num_tx_samples", num_tx_samps)
+        #print("num_tx_samples", num_tx_samps)
         # Send a mini EOB packet
         #tx_metadata.end_of_burst = True
         #self.tx_streamer.send(np.zeros((1,0), dtype=np.complex), tx_metadata)
