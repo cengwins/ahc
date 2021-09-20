@@ -1,14 +1,13 @@
-
 import sys
 import os
 sys.path.append('/usr/local/lib')
 #sys.path.insert(0, os.getcwd())
 import time
-from ctypes import *
 from EttusUsrp.LiquidDspUtils import *
 from threading import Thread
 from EttusUsrp.LiquidDspOfdmFlexFrameHandler import LiquidDspOfdmFlexFrameHandler
 # On MacOS, export DYLD_LIBRARY_PATH=/usr/local/lib for sure!
+from ctypes import *
 
 
 def sender_thread(framer):
