@@ -10,10 +10,6 @@ from threading import Thread
 from EttusUsrp.LiquidDspOfdmFlexFrameHandler import LiquidDspOfdmFlexFrameHandler
 # On MacOS, export DYLD_LIBRARY_PATH=/usr/local/lib for sure!
 
-# framesync_callback = ctypes.CFUNCTYPE(ctypes.c_int32, 
-# ctypes.POINTER(ctypes.c_ubyte), ctypes.c_int32, 
-# ctypes.POINTER(ctypes.c_ubyte), ctypes.c_uint32, ctypes.c_int32, 
-# struct_c__SA_framesyncstats_s, ctypes.POINTER(None))
 
 def sender_thread(framer):
     str_header = '12345678'
