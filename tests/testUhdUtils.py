@@ -2,7 +2,7 @@
 import sys
 import os
 sys.path.append('/usr/local/lib')
-sys.path.insert(0, os.getcwd())
+#sys.path.insert(0, os.getcwd())
 import time
 from ctypes import *
 from EttusUsrp.LiquidDspUtils import *
