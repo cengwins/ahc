@@ -10,6 +10,7 @@
 # LONGDOUBLE_SIZE is: 16
 #
 import ctypes
+import platform
 
 
 class FunctionFactoryStub:
@@ -23,8 +24,14 @@ class FunctionFactoryStub:
 # Or manually fix this by comment the ctypes.CDLL loading
 _libraries = {}
 #liquiddsp = FunctionFactoryStub() #  ctypes.CDLL('FIXME_STUB')
-liquiddsp = ctypes.CDLL("/usr/local/lib/libliquid.dylib")
-    
+myplatform = platform.system()
+if myplatform == "Darwin":
+    liquiddsp = ctypes.CDLL("/usr/local/lib/libliquid.dylib")
+
+if myplatform == "Linux":
+    liquiddsp = ctypes.CDLL("/usr/local/lib/libliquid.so")
+
+
 def string_cast(char_pointer, encoding='utf-8', errors='strict'):
     value = ctypes.cast(char_pointer, ctypes.c_char_p).value
     if value is not None and encoding is not None:
