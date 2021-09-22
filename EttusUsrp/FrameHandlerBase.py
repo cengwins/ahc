@@ -14,7 +14,8 @@ class FramerObjects():
     
 class FrameHandlerBase(ComponentModel):
 
-    def __init__(self):
+    def __init__(self,componentname, componentinstancenumber):
+        super().__init__(componentname, componentinstancenumber)
         framers.add_framer(id(self), self)
         
 framers = FramerObjects()

@@ -6,7 +6,7 @@ sys.path.insert(0, os.getcwd())
 
 from Ahc import ComponentModel, Event, ConnectorTypes, Topology, EventTypes, GenericMessage, GenericMessageHeader
 from Ahc import ComponentRegistry
-from PhysicalLayers.UsrpPhysicalLayer import  PhyUsrpB210OFDMPhysicalLayer
+from PhysicalMediaDependentSubLayer.UsrpB210OfdmFlexFramePhysicalSubLayer import  UsrpB210OfdmFlexFramePhysicalSubLayer
 registry = ComponentRegistry()
 from Channels.Channels import FIFOBroadcastPerfectChannel
 
@@ -72,7 +72,7 @@ class UsrpNode(ComponentModel):
   def __init__(self, componentname, componentid):
     # SUBCOMPONENTS
     self.appl = UsrpApplicationLayer("UsrpApplicationLayer", componentid)
-    self.phy = PhyUsrpB210OFDMPhysicalLayer("PhyUsrpB210OFDMPhysicalLayer", componentid)
+    self.phy = UsrpB210OfdmFlexFramePhysicalSubLayer("UsrpB210OfdmFlexFramePhysicalSubLayer", componentid)
 
     # CONNECTIONS AMONG SUBCOMPONENTS
     self.appl.connect_me_to_component(ConnectorTypes.DOWN, self.phy)
@@ -93,10 +93,11 @@ def main():
   topo.construct_sender_receiver(UsrpNode,
                                  UsrpNode, FIFOBroadcastPerfectChannel)
 
-  time.sleep(10)
+  time.sleep(1)
   topo.sender.send_self(Event(topo.sender, UsrpNodeEventTypes.STARTBROADCAST, None))
 
   topo.start()
+  
   while(True):
     time.sleep(1)
 

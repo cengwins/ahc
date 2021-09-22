@@ -1,26 +1,39 @@
-# https://www.etsi.org/deliver/etsi_en/300300_300399/300328/02.01.01_60/en_300328v020101p.pdf
-# 1) Before transmission, the equipment shall perform a Clear Channel Assessment (CCA) check using energy detect. The equipment shall observe the operating channel for the duration of the CCA observation time which shall be not less than 18 μs. The channel shall be considered occupied if the energy level in the channel exceeds the threshold given in step 5 below. If the equipment finds the channel to be clear, it may transmit immediately. See figure 2 below.
-# 3) The total time during which an equipment has transmissions on a given channel without re-evaluating the availability of that channel, is defined as the Channel Occupancy Time.
-# The Channel Occupancy Time shall be in the range 1 ms to 10 ms followed by an Idle Period of at least 5 % of the Channel Occupancy Time used in the equipment for the current Fixed Frame Period.
-# The energy detection threshold for the CCA shall be proportional to the transmit power of the transmitter: for a 20 dBm e.i.r.p. transmitter the CCA threshold level (TL) shall be equal to or less than -70 dBm/MHz at the input to the receiver assuming a 0 dBi (receive) antenna assembly. This threshold level (TL) may be corrected for the (receive) antenna assembly gain (G); however, beamforming gain (Y) shall not be taken into account. For power levels less than 20 dBm e.i.r.p. the CCA threshold level may be relaxed to:
-# TL = -70 dBm/MHz + 10 × log10 (100 mW / Pout) (Pout in mW e.i.r.p.)
-# from __future__ import annotations 
-import numpy as np
-from EttusUsrp.UhdUtils import AhcUhdUtils
 from ctypes import *
+from enum import Enum
+import sys
+
+from Ahc import Event, EventTypes, GenericMessage, GenericMessageHeader, ComponentModel
 from EttusUsrp.LiquidDspUtils import *
+from EttusUsrp.UhdUtils import AhcUhdUtils
 from EttusUsrp.FrameHandlerBase import FrameHandlerBase, framers
-# On MacOS, export DYLD_LIBRARY_PATH=/usr/local/lib for sure!
+import numpy as np
+sys.path.append('/usr/local/lib')
 
-# framesync_callback = ctypes.CFUNCTYPE(ctypes.c_int32, 
-# ctypes.POINTER(ctypes.c_ubyte), ctypes.c_int32, 
-#  ctypes.POINTER(ctypes.c_ubyte), ctypes.c_uint32, ctypes.c_int32, 
-# struct_c__SA_framesyncstats_s, ctypes.POINTER(None))
+# framesync_callback = ctypes.CFUNCTYPE(ctypes.c_int32, ctypes.POINTER(ctypes.c_ubyte), ctypes.c_int32, ctypes.POINTER(ctypes.c_ubyte), ctypes.c_uint32, ctypes.c_int32, struct_c__SA_framesyncstats_s, ctypes.POINTER(None))
 
 
-class LiquidDspOfdmFlexFrameHandler(FrameHandlerBase):
+class UsrpB210OfdmFlexFramePhysicalSubLayerEventTypes(Enum):
+  RECV = "recv"
+
+
+def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_uint32, payload:POINTER(c_ubyte), payload_len:c_uint32, payload_valid:c_int32, stats:struct_c__SA_framesyncstats_s, userdata:POINTER(None)):
+    try:
+        framer = framers.get_framer_by_id(userdata)
+        # print("ofdm_callback", framer)
+        # userdata.debug_print()
+        ofdmflexframesync_print(framer.fs) 
+        print("Header=", string_at(header, 8), " Payload=", string_at(payload, payload_len), " RSSI=", stats.rssi)
+        msg = GenericMessage(header, payload)
+        framer.send_self(Event(framer, UsrpB210OfdmFlexFramePhysicalSubLayerEventTypes.RECV, None))
+    except Exception as e:
+        print("Exception_ofdm_callback:", e)
     
-    def __init__(self):
+    return 0
+
+  
+class UsrpB210OfdmFlexFramePhysicalSubLayer(FrameHandlerBase):
+    
+    def on_init(self, eventobj: Event):
         print("initialize LiquidDspOfdmFlexFrameHandler")
         self.samps_per_est = 100
         self.chan = 0
@@ -35,16 +48,36 @@ class LiquidDspOfdmFlexFrameHandler(FrameHandlerBase):
         self.sw_tx_gain = -12.0  # software gain
         self.duration = 1
         self.ahcuhd = AhcUhdUtils()
-        super().__init__()
+        self.configure()
+        
 
-    def debug_print(self):
-        print("ok")
+    def on_message_from_top(self, eventobj: Event):
+    # channel receives the input message and will process the message by the process event in the next pipeline stage
+    # Preserve the event id through the pipeline
+        str_header = "12345678"
+        hlen = len(str_header)
+        byte_arr_header = bytearray(str_header, 'utf-8')
+        header = (c_ubyte*hlen)(*(byte_arr_header))
+        str_payload = eventobj.eventcontent.payload
+        plen = len(str_payload)
+        byte_arr_payload = bytearray(str_payload, 'utf-8')
+        payload = (c_ubyte*plen)(*(byte_arr_payload))
+        #payload = cast(str_payload, POINTER(c_ubyte * plen))[0] 
+        print("Header=", string_at(header,hlen), " Payload=", string_at(payload, plen))
+        payload_len = plen
+        self.transmit(header, payload, payload_len, LIQUID_MODEM_QPSK, LIQUID_FEC_NONE, LIQUID_FEC_HAMMING128) #TODO: Check params
+            
     
     def rx_callback(self, num_rx_samps, recv_buffer):
         try:
             ofdmflexframesync_execute(self.fs, recv_buffer.ctypes.data_as(POINTER(struct_c__SA_liquid_float_complex)) , num_rx_samps);
         except Exception as ex:
             print("Exception1", ex)
+
+
+    def on_recv(self, eventobj: Event):
+        print("Received message", eventobj.eventcontent.payload)
+        self.send_up(Event(self, EventTypes.MFRB, eventobj.eventcontent))
     
     def transmit(self, _header, _payload, _payload_len, _mod, _fec0, _fec1):
         self.fgprops.mod_scheme = _mod;
@@ -66,9 +99,9 @@ class LiquidDspOfdmFlexFrameHandler(FrameHandlerBase):
         
     def configure(self):
         
-        self.ahcuhd.configureUsrp("winslab_b210_2")
+        self.ahcuhd.configureUsrp("winslab_b210_"+str(self.componentinstancenumber))
         
-        self.fgprops = ofdmflexframegenprops_s(LIQUID_CRC_32, LIQUID_FEC_NONE, LIQUID_FEC_HAMMING128, LIQUID_MODEM_QPSK)
+        self.fgprops = ofdmflexframegenprops_s(LIQUID_CRC_32, LIQUID_FEC_GOLAY2412, LIQUID_FEC_GOLAY2412, LIQUID_MODEM_QPSK)
             
         M = 1024
         cp_len = 128
@@ -101,16 +134,7 @@ class LiquidDspOfdmFlexFrameHandler(FrameHandlerBase):
 # Callbacks have to be outside since the c library does not like "self"
 # Because of this reason will use userdata to get access back to the framer object 
 
-
-def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_uint32, payload:POINTER(c_ubyte), payload_len:c_uint32, payload_valid:c_int32, stats:struct_c__SA_framesyncstats_s, userdata:POINTER(None)):
-    try:
-        framer = framers.get_framer_by_id(userdata)
-        # print("ofdm_callback", framer)
-        # userdata.debug_print()
-        ofdmflexframesync_print(framer.fs) 
-        print("Header=", string_at(header,8), " Payload=", string_at(payload, payload_len), " RSSI=", stats.rssi)
-    except Exception as e:
-        print("Exception_ofdm_callback:", e)
-    
-    return 0
-
+    def __init__(self, componentname, componentinstancenumber):
+        super().__init__(componentname, componentinstancenumber)
+        self.eventhandlers[UsrpB210OfdmFlexFramePhysicalSubLayerEventTypes.RECV] = self.on_recv
+        

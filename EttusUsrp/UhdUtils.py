@@ -121,9 +121,11 @@ class AhcUhdUtils:
             if rx_metadata.error_code == uhd.types.RXMetadataErrorCode.none:
                 pass
             elif rx_metadata.error_code == uhd.types.RXMetadataErrorCode.overflow:
-                print("Receiver error: overflow  %s, continuing...", rx_metadata.strerror())
+                #print("Receiver error: overflow  %s, continuing...", rx_metadata.strerror())
+                pass
             elif rx_metadata.error_code == uhd.types.RXMetadataErrorCode.late:
-                print("Receiver error: late %s, continuing...", rx_metadata.strerror())
+                #print("Receiver error: late %s, continuing...", rx_metadata.strerror())
+                pass
             elif rx_metadata.error_code == uhd.types.RXMetadataErrorCode.timeout:
                 print("Receiver error:timeout  %s, continuing...", rx_metadata.strerror())
             else:
