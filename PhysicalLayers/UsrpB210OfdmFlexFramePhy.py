@@ -12,7 +12,7 @@ sys.path.append('/usr/local/lib')
 # framesync_callback = ctypes.CFUNCTYPE(ctypes.c_int32, ctypes.POINTER(ctypes.c_ubyte), ctypes.c_int32, ctypes.POINTER(ctypes.c_ubyte), ctypes.c_uint32, ctypes.c_int32, struct_c__SA_framesyncstats_s, ctypes.POINTER(None))
 
 
-class UsrpB210OfdmFlexFramePhysicalSubLayerEventTypes(Enum):
+class UsrpB210OfdmFlexFramePhyEventTypes(Enum):
   RECV = "recv"
 
 
@@ -24,14 +24,14 @@ def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_uint32, payload:POINTE
         ofdmflexframesync_print(framer.fs) 
         print("Header=", string_at(header, 8), " Payload=", string_at(payload, payload_len), " RSSI=", stats.rssi)
         msg = GenericMessage(header, payload)
-        framer.send_self(Event(framer, UsrpB210OfdmFlexFramePhysicalSubLayerEventTypes.RECV, None))
+        framer.send_self(Event(framer, UsrpB210OfdmFlexFramePhyEventTypes.RECV, None))
     except Exception as e:
         print("Exception_ofdm_callback:", e)
     
     return 0
 
   
-class UsrpB210OfdmFlexFramePhysicalSubLayer(FrameHandlerBase):
+class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
     
     def on_init(self, eventobj: Event):
         print("initialize LiquidDspOfdmFlexFrameHandler")
@@ -136,5 +136,5 @@ class UsrpB210OfdmFlexFramePhysicalSubLayer(FrameHandlerBase):
 
     def __init__(self, componentname, componentinstancenumber):
         super().__init__(componentname, componentinstancenumber)
-        self.eventhandlers[UsrpB210OfdmFlexFramePhysicalSubLayerEventTypes.RECV] = self.on_recv
+        self.eventhandlers[UsrpB210OfdmFlexFramePhyEventTypes.RECV] = self.on_recv
         

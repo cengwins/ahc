@@ -6,7 +6,7 @@ import time
 from EttusUsrp.LiquidDspUtils import *
 from threading import Thread
 #from EttusUsrp.LiquidDspOfdmFlexFrameHandler import LiquidDspOfdmFlexFrameHandler
-from PhysicalMediaDependentSubLayer.UsrpB210OfdmFlexFramePhysicalSubLayer import UsrpB210OfdmFlexFramePhysicalSubLayer
+from PhysicalLayers.UsrpB210OfdmFlexFramePhy import UsrpB210OfdmFlexFramePhy
 # On MacOS, export DYLD_LIBRARY_PATH=/usr/local/lib for sure!
 from ctypes import *
 
@@ -33,9 +33,9 @@ def sender_thread(framer):
 
 def main():
     
-    ofdmframer = UsrpB210OfdmFlexFramePhysicalSubLayer("UsrpB210OfdmFlexFramePhysicalSubLayer",0)
+    ofdmframer = UsrpB210OfdmFlexFramePhy("UsrpB210OfdmFlexFramePhy",0)
     ofdmframer.on_init(None) # This will be removed after integrating to AHC
-    ofdmframer.configure()
+    #ofdmframer.configure()
     
     print("LiquidDspOfdmFlexFrameHandler ofdmframer id=", id(ofdmframer))
     
