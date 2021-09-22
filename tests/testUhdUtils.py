@@ -14,18 +14,16 @@ def sender_thread(framer):
     str_header = '12345678'
     hlen = len(str_header)
     header = cast(str_header, POINTER(c_ubyte * hlen))[0]
-    print("header" , header)
     str_payload = 'mycontent'
     plen = len(str_payload)
     payload = cast(str_payload, POINTER(c_ubyte * plen))[0] 
-    print("payload", payload)
-    
+    print("Header=", string_at(header,hlen), " Payload=", string_at(payload, plen))
     payload_len = plen
 
     while(True): 
         # print("will transmit...")
         framer.transmit(header, payload, payload_len, LIQUID_MODEM_QPSK, LIQUID_FEC_NONE, LIQUID_FEC_HAMMING128)
-        time.sleep(1)
+        time.sleep(0.01)
 
 
 def main():
