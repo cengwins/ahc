@@ -1,7 +1,7 @@
 import sys
 import os
 sys.path.append('/usr/local/lib')
-#sys.path.insert(0, os.getcwd())
+sys.path.insert(0, os.getcwd())
 import time
 from EttusUsrp.LiquidDspUtils import *
 from threading import Thread
@@ -23,11 +23,9 @@ def sender_thread(framer):
     payload_len = plen
 
     while(True): 
-        #print("will transmit...")
+        # print("will transmit...")
         framer.transmit(header, payload, payload_len, LIQUID_MODEM_QPSK, LIQUID_FEC_NONE, LIQUID_FEC_HAMMING128)
         time.sleep(1)
-
-
 
 
 def main():
