@@ -55,14 +55,14 @@ class UsrpNode(ComponentModel):
     evt = Event(self, EventTypes.MFRB, eventobj.eventcontent)
     self.send_up(evt)
     self.counter = self.counter + 1
-    evt.eventcontent.payload = "Component:" + str(self.componentinstancenumber) + "This is a broadcast message" + str(self.counter)
+    evt.eventcontent.payload = "Component:" + str(self.componentinstancenumber) + "BMSG-" + str(self.counter)
     time.sleep(1)
     #print(f"I am {self.componentname}.{self.componentinstancenumber},sending down eventcontent={eventobj.eventcontent}\n")
     self.send_down(Event(self, EventTypes.MFRT, eventobj.eventcontent)) #PINGPONG
 
   def on_startbroadcast(self, eventobj: Event):
     hdr = ApplicationLayerMessageHeader(ApplicationLayerMessageTypes.BROADCAST, 0, 1)
-    payload = "This is a broadcast message 1"
+    payload = "BMSG-1"
     broadcastmessage = GenericMessage(hdr, payload)
     evt = Event(self, EventTypes.MFRT, broadcastmessage)
     time.sleep(3)

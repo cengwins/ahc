@@ -2,18 +2,38 @@ from ctypes import *
 from enum import Enum
 import sys
 
-from Ahc import Event, EventTypes, GenericMessage, GenericMessageHeader, ComponentModel
+from Ahc import Event, EventTypes, GenericMessage, GenericMessageHeader, GenericMessagePayload,MessageDestinationIdentifiers
 from EttusUsrp.LiquidDspUtils import *
 from EttusUsrp.UhdUtils import AhcUhdUtils
 from EttusUsrp.FrameHandlerBase import FrameHandlerBase, framers
 import numpy as np
 sys.path.append('/usr/local/lib')
-
+import pickle
 # framesync_callback = ctypes.CFUNCTYPE(ctypes.c_int32, ctypes.POINTER(ctypes.c_ubyte), ctypes.c_int32, ctypes.POINTER(ctypes.c_ubyte), ctypes.c_uint32, ctypes.c_int32, struct_c__SA_framesyncstats_s, ctypes.POINTER(None))
+
+
+# define your own message types
+class UsrpB210OfdmFlexFramePhyMessageTypes(Enum):
+  PHYFRAMEDATA = "PHYFRAMEDATA"
 
 
 class UsrpB210OfdmFlexFramePhyEventTypes(Enum):
   RECV = "recv"
+
+
+# define your own message header structure
+class UsrpB210OfdmFlexFramePhyMessageHeader(GenericMessageHeader):
+    pass
+
+
+# define your own message payload structure
+class UsrpB210OfdmFlexFramePhyMessagePayload(GenericMessagePayload):
+    
+  def __init__(self, header, payload):
+    self.phyheader = header
+    self.phypayload = payload
+
+    pass
 
 
 def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_uint32, payload:POINTER(c_ubyte), payload_len:c_uint32, payload_valid:c_int32, stats:struct_c__SA_framesyncstats_s, userdata:POINTER(None)):
@@ -22,9 +42,12 @@ def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_uint32, payload:POINTE
         # print("ofdm_callback", framer)
         # userdata.debug_print()
         ofdmflexframesync_print(framer.fs) 
-        print("Header=", string_at(header, 8), " Payload=", string_at(payload, payload_len), " RSSI=", stats.rssi)
-        msg = GenericMessage(header, payload)
-        framer.send_self(Event(framer, UsrpB210OfdmFlexFramePhyEventTypes.RECV, None))
+        if payload_valid == True:
+            phymsg = pickle.loads(payload)
+            msg = GenericMessage(phymsg.header, phymsg.payload)
+            framer.send_self(Event(framer, UsrpB210OfdmFlexFramePhyEventTypes.RECV, None))
+            print("Header=", phymsg.header, " Payload=", phymsg.payload, " RSSI=", stats.rssi)
+        
     except Exception as e:
         print("Exception_ofdm_callback:", e)
     
@@ -49,7 +72,6 @@ class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
         self.duration = 1
         self.ahcuhd = AhcUhdUtils()
         self.configure()
-        
 
     def on_message_from_top(self, eventobj: Event):
     # channel receives the input message and will process the message by the process event in the next pipeline stage
@@ -57,23 +79,28 @@ class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
         str_header = "12345678"
         hlen = len(str_header)
         byte_arr_header = bytearray(str_header, 'utf-8')
-        header = (c_ubyte*hlen)(*(byte_arr_header))
+        header = (c_ubyte * hlen)(*(byte_arr_header))
         str_payload = eventobj.eventcontent.payload
         plen = len(str_payload)
+        
+        hdr = UsrpB210OfdmFlexFramePhyMessageHeader(UsrpB210OfdmFlexFramePhyMessageTypes.PHYFRAMEDATA, self.componentinstancenumber,MessageDestinationIdentifiers.LINKLAYERBROADCAST)
+        pld = UsrpB210OfdmFlexFramePhyMessagePayload(eventobj.eventcontent.header, eventobj.eventcontent.payload )
+        msg = GenericMessage(hdr, pld)
+        byte_arr_msg = pickle.dumps(msg)
+        payload = (c_ubyte * len(byte_arr_msg))(*(byte_arr_msg))
+
         byte_arr_payload = bytearray(str_payload, 'utf-8')
-        payload = (c_ubyte*plen)(*(byte_arr_payload))
-        #payload = cast(str_payload, POINTER(c_ubyte * plen))[0] 
-        print("Header=", string_at(header,hlen), " Payload=", string_at(payload, plen))
+        #payload = (c_ubyte * plen)(*(byte_arr_payload))
+        # payload = cast(str_payload, POINTER(c_ubyte * plen))[0] 
+        #print("Header=", string_at(header, hlen), " Payload=", string_at(payload, plen))
         payload_len = plen
-        self.transmit(header, payload, payload_len, LIQUID_MODEM_QPSK, LIQUID_FEC_NONE, LIQUID_FEC_HAMMING128) #TODO: Check params
-            
+        self.transmit(header, payload, payload_len, LIQUID_MODEM_QPSK, LIQUID_FEC_NONE, LIQUID_FEC_HAMMING128)  # TODO: Check params
     
     def rx_callback(self, num_rx_samps, recv_buffer):
         try:
             ofdmflexframesync_execute(self.fs, recv_buffer.ctypes.data_as(POINTER(struct_c__SA_liquid_float_complex)) , num_rx_samps);
         except Exception as ex:
             print("Exception1", ex)
-
 
     def on_recv(self, eventobj: Event):
         print("Received message", eventobj.eventcontent.payload)
@@ -99,9 +126,9 @@ class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
         
     def configure(self):
         
-        self.ahcuhd.configureUsrp("winslab_b210_"+str(self.componentinstancenumber))
+        self.ahcuhd.configureUsrp("winslab_b210_" + str(self.componentinstancenumber))
         
-        print("Configuring", "winslab_b210_"+str(self.componentinstancenumber))
+        print("Configuring", "winslab_b210_" + str(self.componentinstancenumber))
         
         self.fgprops = ofdmflexframegenprops_s(LIQUID_CRC_32, LIQUID_FEC_GOLAY2412, LIQUID_FEC_GOLAY2412, LIQUID_MODEM_QPSK)
             
