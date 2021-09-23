@@ -23,12 +23,11 @@ __copyright__ = "Copyright 2021, WINSLAB"
 __credits__ = ["Ertan Onur", "Berke Tezergil", "etc"]
 __date__ = "2021/04/07"
 __deprecated__ = False
-__email__ =  "eonur@ceng.metu.edu.tr"
+__email__ = "eonur@ceng.metu.edu.tr"
 __license__ = "GPLv3"
 __maintainer__ = "developer"
 __status__ = "Production"
 __version__ = "0.0.1"
-
 
 import datetime
 import queue
@@ -36,7 +35,7 @@ from enum import Enum
 from threading import Thread, Lock
 from random import sample
 import networkx as nx
-
+import itertools
 # TIMING ASSUMPTIONS
 # TODO: Event handling time, message sending time, assumptions about clock (drift, skew, ...)
 # TODO: 1. Asynch,  2. Synch 3. Partial-synch 4. Timed asynch
@@ -47,7 +46,6 @@ import networkx as nx
 #  AUTOMATA and EXECUTIONS
 # TODO: Let component model hande executions and chekcs on executions (which event, in which order, per process or per system, similarity of executions)
 
-
 #  VISUALIZATION
 # TODO: Space-time diagrams for events
 
@@ -56,6 +54,7 @@ import networkx as nx
 
 inf = float('inf')
 
+
 # The following are the common default events for all components.
 class EventTypes(Enum):
   INIT = "init"
@@ -63,12 +62,15 @@ class EventTypes(Enum):
   MFRT = "msgfromtop"
   MFRP = "msgfrompeer"
 
+
 class MessageDestinationIdentifiers(Enum):
   LINKLAYERBROADCAST = -1,  # sinngle-hop broadcast, means all directly connected nodes
   NETWORKLAYERBROADCAST = -2  # For flooding over multiple-hops means all connected nodes to me over one or more links
 
+
 # A Dictionary that holds a list for the same key
 class ConnectorList(dict):
+
   def __setitem__(self, key, value):
     try:
       self[key]
@@ -76,27 +78,35 @@ class ConnectorList(dict):
       super(ConnectorList, self).__setitem__(key, [])
     self[key].append(value)
 
+
 class ConnectorTypes(Enum):
   DOWN = "DOWN"
   UP = "UP"
   PEER = "PEER"
 
+
 def auto_str(cls):
+
     def __str__(self):
         return '%s(%s)' % (
             type(self).__name__,
             ', '.join('%s=%s' % item for item in vars(self).items())
         )
+
     cls.__str__ = __str__
     return cls
 
+
 @auto_str
 class GenericMessagePayload:
+
   def __init__(self, messagepayload):
     self.messagepayload = messagepayload
 
+
 @auto_str
 class GenericMessageHeader:
+
   def __init__(self, messagetype, messagefrom, messageto, nexthop=float('inf'), interfaceid=float('inf'), sequencenumber=-1):
     self.messagetype = messagetype
     self.messagefrom = messagefrom
@@ -105,12 +115,15 @@ class GenericMessageHeader:
     self.interfaceid = interfaceid
     self.sequencenumber = sequencenumber
 
+
 @auto_str
 class GenericMessage:
+
   def __init__(self, header, payload):
     self.header = header
     self.payload = payload
     self.uniqueid = str(header.messagefrom) + "-" + str(header.sequencenumber)
+
 
 @auto_str
 class Event:
@@ -137,6 +150,7 @@ class Event:
   def __hash__(self) -> int:
     return self.eventid
 
+
 def singleton(cls):
   instance = [None]
 
@@ -146,6 +160,7 @@ def singleton(cls):
     return instance[0]
 
   return wrapper
+
 
 @singleton
 class ComponentRegistry:
@@ -181,7 +196,6 @@ class ComponentRegistry:
         for p in connectedcmp:
           print(f"\t{i} {p.componentname}.{p.componentinstancenumber}")
 
-
   def get_non_channel_components(self):
     res = []
     for itemkey in self.components:
@@ -191,7 +205,9 @@ class ComponentRegistry:
       res.append(cmp)
     return res
 
+
 registry = ComponentRegistry()
+
 
 class ComponentModel:
   terminated = False
@@ -300,10 +316,38 @@ class ComponentModel:
   def trigger_event(self, eventobj: Event):
     self.inputqueue.put_nowait(eventobj)
 
+
 @singleton
 class Topology:
   nodes = {}
   channels = {}
+
+
+  def construct_winslab_topology_with_channels(self, nodecount, nodetype, channeltype, context=None):
+    
+    self.construct_winslab_topology_without_channels(nodecount, nodetype, context)
+    
+    pairs = list(itertools.permutations(range(nodecount), 2))
+    print("Pairs", pairs)
+    self.G.add_edges_from(pairs)
+    edges = list(self.G.edges)
+    for k in edges:
+      ch = channeltype(channeltype.__name__, str(k[0]) + "-" + str(k[1]))
+      self.channels[k] = ch
+      self.nodes[k[0]].connect_me_to_channel(ConnectorTypes.DOWN, ch)
+      self.nodes[k[1]].connect_me_to_channel(ConnectorTypes.DOWN, ch)
+
+
+  def construct_winslab_topology_without_channels(self, nodecount, nodetype, context=None):
+    
+    self.G = nx.Graph()
+    self.G.add_nodes_from(range(nodecount))  # TODO : Change depending on the 
+
+    nodes = list(self.G.nodes)
+    for i in nodes:
+      cc = nodetype(nodetype.__name__, i)
+      self.nodes[i] = cc
+
 
   def construct_from_graph(self, G: nx.Graph, nodetype, channeltype, context=None):
     self.G = G
@@ -318,7 +362,7 @@ class Topology:
       self.nodes[k[0]].connect_me_to_channel(ConnectorTypes.DOWN, ch)
       self.nodes[k[1]].connect_me_to_channel(ConnectorTypes.DOWN, ch)
 
-#TODO: construct_from_graph_peterson and construct_from_graph_bakery will be removed... Does not follow the AHC style..
+# TODO: construct_from_graph_peterson and construct_from_graph_bakery will be removed... Does not follow the AHC style..
   def construct_from_graph_peterson(self, G: nx.Graph, nodetype, channeltype):
     self.G = G
     nodes = list(G.nodes)
@@ -328,7 +372,7 @@ class Topology:
     edges = edges[::-1]
 
     for i in nodes:
-      cc = nodetype(nodetype.__name__, i,i)
+      cc = nodetype(nodetype.__name__, i, i)
       self.nodes[i] = cc
     for k in edges:
       ch = channeltype(channeltype.__name__, str(k[0]) + "-" + str(k[1]))
@@ -345,14 +389,13 @@ class Topology:
     edges = edges[::-1]
 
     for i in nodes:
-      cc = nodetype(nodetype.__name__, i,i)
+      cc = nodetype(nodetype.__name__, i, i)
       self.nodes[i] = cc
     for k in edges:
       ch = channeltype(channeltype.__name__, str(k[0]) + "-" + str(k[1]))
       self.channels[k] = ch
       self.nodes[k[0]].connect_me_to_channel(ConnectorTypes.DOWN, ch)
       self.nodes[k[1]].connect_me_to_channel(ConnectorTypes.DOWN, ch)
-
 
   def construct_single_node(self, nodetype, instancenumber):
     self.singlenode = nodetype(nodetype.__name__, instancenumber)
@@ -392,21 +435,21 @@ class Topology:
     ComponentRegistry().init()
 
   def compute_forwarding_table(self):
-    #N = len(self.G.nodes)
+    # N = len(self.G.nodes)
     self.ForwardingTable = dict(nx.all_pairs_shortest_path(self.G))
     # print(f"There are {N} nodes")
-    #for i in range(N):
-      #for j in range(N):
-        #try:
-          #mypath = path[i][j]
+    # for i in range(N):
+      # for j in range(N):
+        # try:
+          # mypath = path[i][j]
           # print(f"{i}to{j} path = {path[i][j]} nexthop = {path[i][j][1]}")
-          #self.ForwardingTable[i][j] = path[i][j][1]
+          # self.ForwardingTable[i][j] = path[i][j][1]
 
           # print(f"{i}to{j}path = NONE")
-          #self.ForwardingTable[i][j] = inf  # No paths
-        #except IndexError:
+          # self.ForwardingTable[i][j] = inf  # No paths
+        # except IndexError:
           # print(f"{i}to{j} nexthop = NONE")
-          #self.ForwardingTable[i][j] = i  # There is a path but length = 1 (self)
+          # self.ForwardingTable[i][j] = i  # There is a path but length = 1 (self)
 
   # all-seeing eye routing table contruction
   def print_forwarding_table(self):
@@ -434,18 +477,17 @@ class Topology:
   def get_successors(self, nodeId):
     return sorted([neighbor for neighbor in self.G.neighbors(nodeId)])
 
-
   # Returns the list of neighbors of a node
   def get_neighbor_count(self, nodeId):
     # return len([neighbor for neighbor in self.G.neighbors(nodeId)])
     return self.G.degree[nodeId]
 
   def plot(self):
-    #self.lock.acquire()
+    # self.lock.acquire()
     # nx.draw(self.G, self.nodepos, node_color=self.nodecolors, with_labels=True, font_weight='bold')
     # plt.draw()
     print(self.nodecolors)
-    #self.lock.release()
+    # self.lock.release()
 
   def get_random_node(self):
     return self.nodes[sample(self.G.nodes(), 1)[0]]
