@@ -101,6 +101,8 @@ class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
         
         self.ahcuhd.configureUsrp("winslab_b210_"+str(self.componentinstancenumber))
         
+        print("Configuring", "winslab_b210_"+str(self.componentinstancenumber))
+        
         self.fgprops = ofdmflexframegenprops_s(LIQUID_CRC_32, LIQUID_FEC_GOLAY2412, LIQUID_FEC_GOLAY2412, LIQUID_MODEM_QPSK)
             
         M = 1024

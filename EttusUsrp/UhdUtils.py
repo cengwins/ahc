@@ -48,7 +48,7 @@ class AhcUhdUtils:
         self.tx_rate=4*self.bandwidth
         self.rx_rate=4*self.bandwidth
         print(f"Configuring type={type},devicename={devicename}, freq={freq}, bandwidth={bandwidth}, channel={chan}, hw_tx_gain={hw_tx_gain}, hw_rx_gain={hw_rx_gain}")
-        self.usrp = uhd.usrp.MultiUSRP(f"type={type},devicename={devicename}")
+        self.usrp = uhd.usrp.MultiUSRP(f"name={devicename}")
         
         self.usrp.set_rx_bandwidth(self.bandwidth, self.chan)
         self.usrp.set_tx_bandwidth(self.bandwidth, self.chan)
