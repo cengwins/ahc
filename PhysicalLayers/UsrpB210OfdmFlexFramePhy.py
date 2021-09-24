@@ -4,7 +4,6 @@ import sys
 
 from Ahc import Event, EventTypes, GenericMessage, GenericMessageHeader, GenericMessagePayload,MessageDestinationIdentifiers
 from EttusUsrp.LiquidDspUtils import *
-from EttusUsrp.UhdUtils import AhcUhdUtils
 from EttusUsrp.FrameHandlerBase import FrameHandlerBase, framers
 import numpy as np
 sys.path.append('/usr/local/lib')
@@ -41,7 +40,7 @@ def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_uint32, payload:POINTE
         framer = framers.get_framer_by_id(userdata)
         # print("ofdm_callback", framer)
         # userdata.debug_print()
-        ofdmflexframesync_print(framer.fs) 
+        #ofdmflexframesync_print(framer.fs) 
         if payload_valid == True:
             phymsg = pickle.loads(payload)
             msg = GenericMessage(phymsg.header, phymsg.payload)
@@ -58,42 +57,22 @@ class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
     
     def on_init(self, eventobj: Event):
         print("initialize LiquidDspOfdmFlexFrameHandler")
-        self.samps_per_est = 100
-        self.chan = 0
-        self.bandwidth = 250000
-        self.freq = 2462000000.0
-        self.lo_offset = 0
-        self.rate = 4 * self.bandwidth
-        self.wave_freq = 10000
-        self.wave_ampl = 0.3
-        self.hw_tx_gain = 70.0  # hardware tx antenna gain
-        self.hw_rx_gain = 20.0  # hardware rx antenna gain
-        self.sw_tx_gain = -12.0  # software gain
-        self.duration = 1
-        self.ahcuhd = AhcUhdUtils()
-        self.configure()
 
     def on_message_from_top(self, eventobj: Event):
     # channel receives the input message and will process the message by the process event in the next pipeline stage
     # Preserve the event id through the pipeline
-        str_header = "12345678"
+        
+        str_header = "12345678"  #This is the PMD flexframe header. Ourt physical layer header will be concat with the payload below...
         hlen = len(str_header)
         byte_arr_header = bytearray(str_header, 'utf-8')
         header = (c_ubyte * hlen)(*(byte_arr_header))
-        str_payload = eventobj.eventcontent.payload
-        plen = len(str_payload)
         
         hdr = UsrpB210OfdmFlexFramePhyMessageHeader(UsrpB210OfdmFlexFramePhyMessageTypes.PHYFRAMEDATA, self.componentinstancenumber,MessageDestinationIdentifiers.LINKLAYERBROADCAST)
         pld = UsrpB210OfdmFlexFramePhyMessagePayload(eventobj.eventcontent.header, eventobj.eventcontent.payload )
         msg = GenericMessage(hdr, pld)
         byte_arr_msg = pickle.dumps(msg)
         payload = (c_ubyte * len(byte_arr_msg))(*(byte_arr_msg))
-
-        byte_arr_payload = bytearray(str_payload, 'utf-8')
-        #payload = (c_ubyte * plen)(*(byte_arr_payload))
-        # payload = cast(str_payload, POINTER(c_ubyte * plen))[0] 
-        #print("Header=", string_at(header, hlen), " Payload=", string_at(payload, plen))
-        payload_len = plen
+        payload_len = len(payload)
         self.transmit(header, payload, payload_len, LIQUID_MODEM_QPSK, LIQUID_FEC_NONE, LIQUID_FEC_HAMMING128)  # TODO: Check params
     
     def rx_callback(self, num_rx_samps, recv_buffer):
@@ -126,9 +105,7 @@ class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
         
     def configure(self):
         
-        self.ahcuhd.configureUsrp("winslab_b210_" + str(self.componentinstancenumber))
         
-        print("Configuring", "winslab_b210_" + str(self.componentinstancenumber))
         
         self.fgprops = ofdmflexframegenprops_s(LIQUID_CRC_32, LIQUID_FEC_GOLAY2412, LIQUID_FEC_GOLAY2412, LIQUID_MODEM_QPSK)
             
