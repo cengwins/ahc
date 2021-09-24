@@ -47,7 +47,7 @@ class ControlledFlooding(ComponentModel):
     self.update_topology()
     self.uniquebroadcastidentifier = self.uniquebroadcastidentifier + 1
     self.senddownbroadcast(eventobj, self.componentinstancenumber, self.uniquebroadcastidentifier)
-
+        
   def on_message_from_top(self, eventobj: Event):
     self.update_topology()
     evt = Event(self, BroadcastingEventTypes.BROADCAST, eventobj.eventcontent)
