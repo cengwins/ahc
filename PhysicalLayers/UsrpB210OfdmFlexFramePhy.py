@@ -35,8 +35,8 @@ def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_uint32, payload:POINTE
 class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
     
     def on_init(self, eventobj: Event):
-        print("initialize LiquidDspOfdmFlexFrameHandler")
-
+        #print("initialize LiquidDspOfdmFlexFrameHandler")
+        pass
     
     def rx_callback(self, num_rx_samps, recv_buffer):
         try:

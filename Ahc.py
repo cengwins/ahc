@@ -186,6 +186,7 @@ class ComponentRegistry:
     for itemkey in self.components:
       cmp = self.components[itemkey]
       cmp.inputqueue.put_nowait(Event(self, EventTypes.INIT, None))
+      print("Initializing, ", cmp.componentname, ":", cmp.componentinstancenumber)
 
   def print_components(self):
     for itemkey in self.components:
@@ -208,6 +209,8 @@ class ComponentRegistry:
 
 registry = ComponentRegistry()
 
+class ComponentConfigurationParameters():
+    pass
 
 class ComponentModel:
   terminated = False
@@ -225,8 +228,9 @@ class ComponentModel:
   def on_message_from_peer(self, eventobj: Event):
     print(f"{EventTypes.MFRP}  {self.componentname}.{self.componentinstancenumber}")
 
-  def __init__(self, componentname, componentinstancenumber, context=None, num_worker_threads=1):
+  def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1):
     self.context = context
+    self.configurationparameters = configurationparameters
     self.eventhandlers = {EventTypes.INIT: self.on_init, EventTypes.MFRB: self.on_message_from_bottom,
                           EventTypes.MFRT: self.on_message_from_top, EventTypes.MFRP: self.on_message_from_peer}
     # Add default handlers to all instantiated components.
@@ -492,8 +496,6 @@ class Topology:
   def get_random_node(self):
     return self.nodes[sample(self.G.nodes(), 1)[0]]
 
-
-
 @singleton
 class FramerObjects():
     framerobjects = {}
@@ -511,5 +513,7 @@ class FramerObjects():
         return self.ahcuhdubjects[id]
 
 
+
+framers = FramerObjects()
 
 
