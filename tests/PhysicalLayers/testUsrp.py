@@ -71,7 +71,7 @@ class UsrpNode(ComponentModel):
     def __init__(self, componentname, componentid):
         # SUBCOMPONENTS
         
-        macconfig = MacCsmaPPersistentConfigurationParameters(1)
+        macconfig = MacCsmaPPersistentConfigurationParameters(0.5)
         
         self.appl = UsrpApplicationLayer("UsrpApplicationLayer", componentid)
         self.phy = UsrpB210OfdmFlexFramePhy("UsrpB210OfdmFlexFramePhy", componentid)
@@ -107,7 +107,7 @@ def main():
     
     while(True):
         topo.nodes[0].appl.send_self(Event(topo.nodes[0], UsrpApplicationLayerEventTypes.STARTBROADCAST, None))
-        time.sleep(3)
+        time.sleep(1)
 
 
 if __name__ == "__main__":

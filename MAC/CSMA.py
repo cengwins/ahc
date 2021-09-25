@@ -23,7 +23,7 @@ class MacCsmaPPersistent(GenericMac):
         #TODO: not a good solution put message in queue, schedule a future event to retry yhe first item in queueu    
         #print("handle_frame")
         if self.framequeue.qsize() > 0:
-            print("handle_frame", "queue not empty")
+            #print("handle_frame", "queue not empty")
             randval = random.random()
             if randval < self.p: # TODO: Check if correct
                 clearmi, powerdb  = self.ahcuhd.ischannelclear(threshold=-35)
@@ -42,7 +42,7 @@ class MacCsmaPPersistent(GenericMac):
         else:
             #print("Queue size", self.framequeue.qsize())
             pass
-        time.sleep(0.0001)
+        time.sleep(0.000001) # TODO: Think about this otherwise we will only do cca
         self.send_self(Event(self, GenericMacEventTypes.HANDLEMACFRAME, None)) #Continuously trigger handle_frame
         
             
