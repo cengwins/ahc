@@ -26,6 +26,9 @@ class SSBRNode(ComponentModel):
 
         self.NetworkInterface.connect_me_to_component(ConnectorTypes.UP, self.DRP)
 
+        self.NetworkInterface.connect_me_to_component(ConnectorTypes.DOWN, self)
+        self.connect_me_to_component(ConnectorTypes.UP, self.NetworkInterface)
+
     def on_init(self, eventobj: Event):
         print(f"{self.componentname} - #{self.componentid} is up.\n")
         pass

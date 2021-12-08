@@ -1,26 +1,24 @@
 import time
+from Ahc import GenericMessage, GenericMessageHeader
 
 
 def messageParser(self, eventobj):
-    messageFrom = eventobj.eventcontent["from"]
-    message = eventobj.eventcontent["message"]
+    messagePayload = eventobj.eventcontent.payload
+    messageFrom = eventobj.eventcontent.header.messagefrom
     
-    print(f"{self.componentname} - #{self.componentid} got a message from {messageFrom}. \n Message is {message}\n")
-    eventMessage = {
-        "from": "{} - #{}".format(self.componentname,self.componentid),
-        "message": message,
-    } 
-    return eventMessage
+    print(f"{self.componentname} - #{self.componentid} got a message from {messageFrom}. \n Message is {messagePayload}\n")
+    message = GenericMessage(eventobj.eventcontent.header, messagePayload)
+    return message
+        
         
 def messageGenerator(self):
     time.sleep(1)
-    testMessage = input("Enter message text content...\n")
-    print(f"{self.componentname} - #{self.componentid} is generating a test message with content of \"{testMessage}\" in 3 seconds...")
+    message_payload = input("Enter message payload content...\n")
+
+    message_header = GenericMessageHeader("SSBR", self.componentname + "-" + str(self.componentinstancenumber), "-" + str(self.componentinstancenumber))
+    message = GenericMessage(message_header, message_payload)
+
+    print(f"{self.componentname} - #{self.componentid} is generating a test message with content of \"{message_payload}\" in 3 seconds...\n")
     time.sleep(3)
     
-    eventMessage = {
-        "from": "{} - #{}".format(self.componentname,self.componentid),
-        "message": testMessage,
-    }
-
-    return eventMessage
+    return message
