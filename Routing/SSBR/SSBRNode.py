@@ -8,6 +8,7 @@ from Routing.SSBR.DRPComponent import DRP
 class SSBRNode(ComponentModel):
     def __init__(self, componentname, componentid):
         super(SSBRNode, self).__init__(componentname, componentid)
+        self.componentid = componentid
         self.ApplicationAndNetwork = ApplicationAndNetwork(ApplicationAndNetwork.__name__, componentid)
         self.FP = FP(FP.__name__, componentid)
         self.DRP = DRP(DRP.__name__, componentid)
@@ -24,6 +25,7 @@ class SSBRNode(ComponentModel):
         self.NetworkInterface.connect_me_to_component(ConnectorTypes.UP, self.DRP)
 
     def on_init(self, eventobj: Event):
+        print(f"{self.componentname} - #{self.componentid} is up.\n")
         pass
 
     def on_message_from_bottom(self, eventobj: Event):
