@@ -14,8 +14,8 @@ class NetworkInterface(ComponentModel):
         #self.send_peer(evt)
 
     def on_message_from_top(self, eventobj: Event):
-        evt = Event(self, EventTypes.MFRB, messageParser(self, eventobj))
-        self.send_up(evt)
+        evt = Event(self, EventTypes.MFRT, messageParser(self, eventobj))
+        self.send_down(evt)
 
     def on_message_from_bottom(self, eventobj: Event):
         evt = Event(self, EventTypes.MFRB, messageParser(self, eventobj))

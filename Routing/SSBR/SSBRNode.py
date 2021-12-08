@@ -1,10 +1,9 @@
-from Ahc import ComponentModel, Event, ConnectorTypes
+from Ahc import ComponentModel, Event, ConnectorTypes, EventTypes
 from Routing.SSBR.ApplicationAndNetworkComponent import ApplicationAndNetwork
 from Routing.SSBR.FPComponent import FP
 from Routing.SSBR.NetworkInterfaceComponent import NetworkInterface
 from Routing.SSBR.DRPComponent import DRP
-
-
+from Routing.SSBR.HelperFunctions import messageParser
 
 # Encapsulator for the SSBR Node
 class SSBRNode(ComponentModel):
@@ -34,8 +33,11 @@ class SSBRNode(ComponentModel):
         pass
 
     def on_message_from_bottom(self, eventobj: Event):
-        self.send_up(eventobj) # send incoming messages to upper components
+        evt = Event(self, EventTypes.MFRB,messageParser(self,eventobj))
+        self.send_up(evt) # send incoming messages to upper components
 
     def on_message_from_top(self, eventobj: Event):
-        self.send_down(eventobj) # send incoming messages from upper components to a channel
+        evt = Event(self, EventTypes.MFRT,messageParser(self,eventobj))
+        print("3")
+        self.send_down(evt) # send incoming messages from upper components to a channel
 

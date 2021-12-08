@@ -17,7 +17,7 @@ class ApplicationAndNetwork(ComponentModel):
     def on_message_from_bottom(self, eventobj: Event):
         messagePayload = eventobj.eventcontent.payload
         messageFrom = eventobj.eventcontent.header.messagefrom
-        print(f"{self.componentname} - #{self.componentid} got a message from {messageFrom}. \n Message is {messagePayload}\n")
+        print(f"{self.componentname}-{self.componentid} got a message from {messageFrom}. \n Message is {messagePayload}\n")
         #evt = Event(self, EventTypes.MFRB, "B to higher layer")
         #self.send_up(evt)
 

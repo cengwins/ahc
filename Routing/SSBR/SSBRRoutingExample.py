@@ -2,6 +2,8 @@ import os
 import sys
 import random
 
+from pprint import pprint
+
 sys.path.insert(0, os.getcwd())
 
 from Ahc import Topology
@@ -44,7 +46,7 @@ labels = nx.get_edge_attributes(graph,'weight')
 print(labels)
 nx.draw(graph, pos, with_labels=True)
 nx.draw_networkx_edge_labels(graph, pos, edge_labels=labels)
-  
+
 plt.show()
 plt.close()
 
