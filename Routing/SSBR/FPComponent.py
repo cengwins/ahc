@@ -1,4 +1,6 @@
+from Routing.SSBR.HelperFunctions import messageParser
 from Ahc import ComponentModel, Event, GenericMessage, GenericMessageHeader, EventTypes
+
 
 class FP(ComponentModel):
     def __init__(self, componentname, componentid):
@@ -13,10 +15,12 @@ class FP(ComponentModel):
         #self.send_peer(evt)
 
     def on_message_from_top(self, eventobj: Event):
-        print(f"{self.componentname} - #{self.componentid} got a message from upper layer. \n Message is {eventobj.eventcontent}\n")
+        evt = Event(self, EventTypes.MFRT,messageParser(self,eventobj))
+        self.send_down(evt)
     
 
-    def on_message_from_peer(self, eventobj: Event):
-        print(f"{self.componentname} - #{self.componentid} got a message from peer. \n Message is {eventobj.eventcontent}\n")
+    def on_message_from_peer(self, eventobj: Event):        
+        evt = Event(self, EventTypes.MFRB,messageParser(self,eventobj))
+        self.send_up(evt)
 
 

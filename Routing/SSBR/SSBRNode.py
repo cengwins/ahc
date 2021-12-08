@@ -4,6 +4,8 @@ from Routing.SSBR.FPComponent import FP
 from Routing.SSBR.NetworkInterfaceComponent import NetworkInterface
 from Routing.SSBR.DRPComponent import DRP
 
+
+
 # Encapsulator for the SSBR Node
 class SSBRNode(ComponentModel):
     def __init__(self, componentname, componentid):

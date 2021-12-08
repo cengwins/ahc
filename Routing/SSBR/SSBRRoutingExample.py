@@ -4,8 +4,6 @@ import random
 
 sys.path.insert(0, os.getcwd())
 
-
-
 from Ahc import Topology
 from Channels.Channels import  P2PFIFOPerfectChannel
 import networkx as nx
