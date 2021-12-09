@@ -3,6 +3,7 @@ import sys
 import random
 
 from pprint import pprint
+import time 
 
 sys.path.insert(0, os.getcwd())
 
@@ -11,7 +12,7 @@ from Channels.Channels import  P2PFIFOPerfectChannel
 import networkx as nx
 import matplotlib.pyplot as plt
 from Routing.SSBR.SSBRNode import SSBRNode
-from Routing.SSBR.HelperFunctions import messageGenerator, triggerTestMessage
+from Routing.SSBR.HelperFunctions import triggerTestMessage, findStrongConnectedLinksForSingleNode
 
 edges = [(0, 1, {"weight": 1}), (0, 2, {"weight": 1}), (1, 3, {"weight": 1}), (2, 4, {"weight": 1}), (4, 5, {"weight": 1}),
          (3, 5, {"weight": 1})]
@@ -58,7 +59,18 @@ topology.construct_from_graph(graph, SSBRNode, P2PFIFOPerfectChannel)
 # ComponentRegistry().init()
 
 topology.start()
+threshold = 0.5
+# Menu
+time.sleep(2)
+print("SSBR Implementation\n 1. Trigger a test message \n 2. Find strong connected links")
+menuItem = input("Enter a value to proceed:\n")
+menuItem = int(menuItem)
+if menuItem == 1:
+    triggerTestMessage()    
+elif menuItem == 2:
+    findStrongConnectedLinksForSingleNode(labels, threshold)
 
-triggerTestMessage()
+
+
 
 while True: pass

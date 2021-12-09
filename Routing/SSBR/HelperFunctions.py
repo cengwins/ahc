@@ -1,6 +1,11 @@
 import time
 from Ahc import GenericMessage, GenericMessageHeader, ComponentRegistry
 
+def convertTuple(tup):
+    str = ''
+    for item in tup:
+        str = str + str(item)
+    return str
 
 def messageParser(self, eventobj):
     messagePayload = eventobj.eventcontent.payload
@@ -57,8 +62,27 @@ def sendMessageToOtherNode(self, eventobj ,nodeid):
     return message
 
 def triggerTestMessage():
-    nodeToTest= input("Enter input node to sent message\n")
+    nodeToTest= input("Enter input node to sent message:\n")
     myNode = ComponentRegistry().get_component_by_key("ApplicationAndNetwork",nodeToTest)
-    myNode.trial()
+    myNode.send_test_message()
 
+def findStrongConnectedLinksForSingleNode(labels, threshold):
+    nodeToTest= input("Enter input node to find strong links:\n")
+
+    stongLinks = dict()
+
+    for (new_key, new_value) in labels.items():
+
+        str_tup = str(new_key[0])+ ',' + str(new_key[1])
+
+        if new_value >= threshold:
+            if str_tup.find("("+nodeToTest):
+                stongLinks[new_key] = new_value
+            if str_tup.find(nodeToTest+")"):
+                stongLinks[new_key] = new_value
+
+    print(stongLinks)
+    return
+    
 #def ApplicationAndNetworkComponentMessageHandler(self, eventobj):
+

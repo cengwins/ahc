@@ -18,7 +18,7 @@ class ApplicationAndNetwork(ComponentModel):
         messageFrom = eventobj.eventcontent.header.messagefrom
         print(f"{self.componentname}-{self.componentid} got a message from {messageFrom}. \n Message is {messagePayload}\n")
 
-    def trial(self):
+    def send_test_message(self):
         evt = Event(self, EventTypes.MFRT, messageGenerator(self))
         self.send_down(evt) 
 
