@@ -4,6 +4,7 @@
 - [Osman Ufuk Yağmur](https://github.com/VengerA)
 - [Berke Tezergil](https://github.com/btezergil)
 - [Saim Sunel](https://github.com/SaimSUNEL)
+- [Hakan Kanbur](https://github.com/HakanKanbur)
 - [Ozan Akın](https://github.com/oznakn)
 - [Ilyas Eren Yilmaz](https://github.com/ilyaserenyilmaz)
 - [İbrahim Koç]
