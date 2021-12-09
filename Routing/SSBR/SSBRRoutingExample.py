@@ -6,11 +6,12 @@ from pprint import pprint
 
 sys.path.insert(0, os.getcwd())
 
-from Ahc import Topology
+from Ahc import ComponentRegistry, Topology
 from Channels.Channels import  P2PFIFOPerfectChannel
 import networkx as nx
 import matplotlib.pyplot as plt
 from Routing.SSBR.SSBRNode import SSBRNode
+from Routing.SSBR.HelperFunctions import messageGenerator, triggerTestMessage
 
 edges = [(0, 1, {"weight": 1}), (0, 2, {"weight": 1}), (1, 3, {"weight": 1}), (2, 4, {"weight": 1}), (4, 5, {"weight": 1}),
          (3, 5, {"weight": 1})]
@@ -48,12 +49,16 @@ nx.draw(graph, pos, with_labels=True)
 nx.draw_networkx_edge_labels(graph, pos, edge_labels=labels)
 
 plt.show()
-plt.close()
 
 topology = Topology()
 topology.construct_from_graph(graph, SSBRNode, P2PFIFOPerfectChannel)
+
+
 # process1 = MachineLearningNode("MachineLearningNode", 0)
 # ComponentRegistry().init()
 
 topology.start()
+
+triggerTestMessage()
+
 while True: pass
