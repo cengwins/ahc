@@ -72,14 +72,11 @@ def findStrongConnectedLinksForSingleNode(labels, threshold):
     stongLinks = dict()
 
     for (new_key, new_value) in labels.items():
-
-        str_tup = str(new_key[0])+ ',' + str(new_key[1])
-
+       
         if new_value >= threshold:
-            if str_tup.find("("+nodeToTest):
+            if (str(new_key[0]) == nodeToTest) or (str(new_key[1]) == nodeToTest):
                 stongLinks[new_key] = new_value
-            if str_tup.find(nodeToTest+")"):
-                stongLinks[new_key] = new_value
+
 
     print(stongLinks)
     return

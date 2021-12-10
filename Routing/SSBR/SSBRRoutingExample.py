@@ -59,11 +59,13 @@ topology.construct_from_graph(graph, SSBRNode, P2PFIFOPerfectChannel)
 # ComponentRegistry().init()
 
 topology.start()
-threshold = 0.5
+threshold = input("Enter threshold value for signal strength (between 0 an 1):\n")
+threshold = float(threshold)
 # Menu
 time.sleep(2)
 
 print("SSBR Implementation\n 1. Trigger a test message \n 2. Find strong connected links \n 3. Print forwarding table")
+
 menuItem = input("Enter a value to proceed:\n")
 menuItem = int(menuItem)
 
@@ -75,9 +77,9 @@ while(menuItem):
     elif menuItem == 3:
         topology.compute_forwarding_table()
         print(topology.ForwardingTable)
-    elif menuItem == 0:
-        break
+
     print("SSBR Implementation\n 1. Trigger a test message \n 2. Find strong connected links \n 3. Print forwarding table")
+    
     menuItem = input("Enter a new value to proceed:\n")
     menuItem = int(menuItem)
 
