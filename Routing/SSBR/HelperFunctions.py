@@ -1,4 +1,5 @@
 import time
+import networkx as nx
 from Ahc import GenericMessage, GenericMessageHeader, ComponentRegistry
 
 def convertTuple(tup):
@@ -81,5 +82,14 @@ def findStrongConnectedLinksForSingleNode(labels, threshold):
     print(stongLinks)
     return
     
+def findAllSimplePaths(graph): 
+    source = int(input("Enter source node id:\n"))
+    target = int(input("Enter target node id:\n"))
+    paths = nx.all_simple_paths(graph, source, target)
+    sortedPath = sorted(paths, key=len)
+    print(f"Possible paths between node#{source} to node#{target}")
+    print(list(sortedPath))
+    return sortedPath
+
 #def ApplicationAndNetworkComponentMessageHandler(self, eventobj):
 

@@ -12,7 +12,7 @@ from Channels.Channels import  P2PFIFOPerfectChannel
 import networkx as nx
 import matplotlib.pyplot as plt
 from Routing.SSBR.SSBRNode import SSBRNode
-from Routing.SSBR.HelperFunctions import triggerTestMessage, findStrongConnectedLinksForSingleNode
+from Routing.SSBR.HelperFunctions import triggerTestMessage, findStrongConnectedLinksForSingleNode, findAllSimplePaths
 
 edges = [(0, 1, {"weight": 1}), (0, 2, {"weight": 1}), (1, 3, {"weight": 1}), (2, 4, {"weight": 1}), (4, 5, {"weight": 1}),
          (3, 5, {"weight": 1})]
@@ -64,7 +64,7 @@ threshold = float(threshold)
 # Menu
 time.sleep(2)
 
-print("SSBR Implementation\n 1. Trigger a test message \n 2. Find strong connected links \n 3. Print forwarding table")
+print("SSBR Implementation\n 1. Trigger a test message \n 2. Find strong connected links \n 3. Print forwarding table \n 4. Find all simple paths for given node\n")
 
 menuItem = input("Enter a value to proceed:\n")
 menuItem = int(menuItem)
@@ -77,8 +77,10 @@ while(menuItem):
     elif menuItem == 3:
         topology.compute_forwarding_table()
         print(topology.ForwardingTable)
+    elif menuItem ==4:
+        findAllSimplePaths(graph)
 
-    print("SSBR Implementation\n 1. Trigger a test message \n 2. Find strong connected links \n 3. Print forwarding table")
+    print("1. Trigger a test message \n 2. Find strong connected links \n 3. Print forwarding table \n 4. Find all simple paths for given node")
     
     menuItem = input("Enter a new value to proceed:\n")
     menuItem = int(menuItem)
