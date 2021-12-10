@@ -49,7 +49,7 @@ print(labels)
 nx.draw(graph, pos, with_labels=True)
 nx.draw_networkx_edge_labels(graph, pos, edge_labels=labels)
 
-plt.show()
+plt.show(block=False)
 
 topology = Topology()
 topology.construct_from_graph(graph, SSBRNode, P2PFIFOPerfectChannel)
@@ -62,13 +62,24 @@ topology.start()
 threshold = 0.5
 # Menu
 time.sleep(2)
-print("SSBR Implementation\n 1. Trigger a test message \n 2. Find strong connected links")
+
+print("SSBR Implementation\n 1. Trigger a test message \n 2. Find strong connected links \n 3. Print forwarding table")
 menuItem = input("Enter a value to proceed:\n")
 menuItem = int(menuItem)
-if menuItem == 1:
-    triggerTestMessage()    
-elif menuItem == 2:
-    findStrongConnectedLinksForSingleNode(labels, threshold)
+
+while(menuItem):
+    if menuItem == 1:
+        triggerTestMessage()
+    elif menuItem == 2:
+        findStrongConnectedLinksForSingleNode(labels, threshold)
+    elif menuItem == 3:
+        topology.compute_forwarding_table()
+        print(topology.ForwardingTable)
+    elif menuItem == 0:
+        break
+    print("SSBR Implementation\n 1. Trigger a test message \n 2. Find strong connected links \n 3. Print forwarding table")
+    menuItem = input("Enter a new value to proceed:\n")
+    menuItem = int(menuItem)
 
 
 
