@@ -5,8 +5,7 @@ class DRP(ComponentModel):
     def __init__(self, componentname, componentid):
         super(DRP, self).__init__(componentname, componentid)
         self.componentid = componentid
-        self.RoutingTable = {}
-        self.Response_Record = {}
+        self.signalStabilityTable = {}
 
     def on_init(self, eventobj: Event):
         print(f"{self.componentname} - #{self.componentid} is up.\n")
@@ -16,6 +15,13 @@ class DRP(ComponentModel):
     def on_message_from_bottom(self, eventobj: Event):      
         evt = Event(self, EventTypes.MFRP,messageParser(self, eventobj))
         self.send_peer(evt)
-       
-
+    
+    def editSignalStabilityTable(self, item, mode):
+        if mode == "SC":
+            self.signalStabilityTable[item] = "SC"
+        else:
+            self.signalStabilityTable[item] = "WC"
+        
+    def printSignalStabilityTable(self):
+        print(self.signalStabilityTable)
 

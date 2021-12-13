@@ -67,19 +67,34 @@ def triggerTestMessage():
     myNode = ComponentRegistry().get_component_by_key("ApplicationAndNetwork",nodeToTest)
     myNode.send_test_message()
 
-def findStrongConnectedLinksForSingleNode(labels, threshold):
-    nodeToTest= input("Enter input node to find strong links:\n")
+def findStrongConnectedLinksForSingleNode(labels, threshold, nodeCount):
 
-    stongLinks = dict()
+    for nodeToBeCalculated in range (nodeCount):
+        
+        strongLinks = dict()
+        allNeighbors = dict()
+        
+        for (new_key, new_value) in labels.items():
+        
+            if new_value >= threshold:
+                if (str(new_key[0]) == str(nodeToBeCalculated)):
+                    strongLinks[new_key[1]] = new_value
+                elif (str(new_key[1]) == str(nodeToBeCalculated)):
+                    strongLinks[new_key[0]] = new_value
+            elif (str(new_key[0]) == str(nodeToBeCalculated)):
+                    allNeighbors[new_key[1]] = new_value
+            elif (str(new_key[1]) == str(nodeToBeCalculated)):
+                allNeighbors[new_key[0]] = new_value
 
-    for (new_key, new_value) in labels.items():
-       
-        if new_value >= threshold:
-            if (str(new_key[0]) == nodeToTest) or (str(new_key[1]) == nodeToTest):
-                stongLinks[new_key] = new_value
-
-
-    print(stongLinks)
+        print(strongLinks)
+        print(allNeighbors)
+        nodeToEditSST = ComponentRegistry().get_component_by_key("DRP",nodeToBeCalculated)
+        
+        for (key) in strongLinks.keys():
+            nodeToEditSST.editSignalStabilityTable(key, "SC")
+        for (key) in allNeighbors.keys():
+            nodeToEditSST.editSignalStabilityTable(key, "WC")
+    
     return
     
 def findAllSimplePaths(graph): 
@@ -91,5 +106,9 @@ def findAllSimplePaths(graph):
     print(list(sortedPath))
     return sortedPath
 
+def printSSTForANode():
+    nodeId = int(input("Enter node to check its SC links... \n"))
+    nodeToEditSST = ComponentRegistry().get_component_by_key("DRP",nodeId)
+    nodeToEditSST.printSignalStabilityTable()
 #def ApplicationAndNetworkComponentMessageHandler(self, eventobj):
 
