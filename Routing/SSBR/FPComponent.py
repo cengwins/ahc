@@ -14,8 +14,11 @@ class FP(ComponentModel):
         #self.send_peer(evt)
 
     def on_message_from_top(self, eventobj: Event):
-        evt = Event(self, EventTypes.MFRT, messageParser(self,eventobj))
-        self.send_down(evt)
+        if(eventobj.eventcontent.header.messagetype == "UNICASTDATA"):
+            print("lalala")
+        else: 
+            evt = Event(self, EventTypes.MFRT, messageParser(self,eventobj))
+            self.send_down(evt)
     
     def on_message_from_peer(self, eventobj: Event):      
         evt = Event(self, EventTypes.MFRB,messageParser(self,eventobj))

@@ -85,13 +85,14 @@ while(menuItem):
     elif menuItem == 6:
         source = int(input("Enter source node id:\n"))
         target = int(input("Enter target node id:\n"))
-        constructStrongRoute(graph, source, target)
+        print(constructStrongRoute(graph, source, target))
     elif menuItem == 7:
         source = int(input("Enter source node id:\n"))
         target = int(input("Enter target node id:\n"))
         SSBRForwardingTable = constructStrongRoute(graph, source, target)
         if len(SSBRForwardingTable) >= 1:
-            SSBRMessageGenerator(source, target)
+            sourceNode = ComponentRegistry().get_component_by_key("ApplicationAndNetwork", source)
+            sourceNode.send_SSBR_unicast_message(target)
 
     print("1. Trigger a test message \n 2. Find strong connected links for all nodes \n 3. Print forwarding table \n 4. Find all simple paths for given node \n 5. Print the SST of a node.\n 6. Construct strongly connected route for a node.")
     

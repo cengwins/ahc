@@ -126,19 +126,18 @@ def constructStrongRoute(graph, source, target):
     print(f"No possible path found between node#{source} to node#{target}")
     return []
   
-def SSBRMessageGenerator(source, destinationID):
+def SSBRMessageGenerator(self, destinationID):
     time.sleep(1)
-    sourceNode = ComponentRegistry().get_component_by_key("ApplicationAndNetwork", source)
-    
+
     message_payload = input("Enter message payload content...\n")
 
-    message_header = GenericMessageHeader("UNICASTDATA", str(sourceNode.componentname) + "-" + str(sourceNode.componentinstancenumber), str(sourceNode.componentname)  + "-" + str(destinationID), interfaceid=str(sourceNode.componentinstancenumber), sequencenumber=1)
+    message_header = GenericMessageHeader("UNICASTDATA", str(self.componentname) + "-" + str(self.componentinstancenumber), str(self.componentname)  + "-" + str(destinationID), interfaceid=str(self.componentinstancenumber), sequencenumber=1)
     message = GenericMessage(message_header, message_payload)
 
-    print(f"{sourceNode.componentname}-{sourceNode.componentid} is generating a test message with content of \"{message_payload}\" in 3 seconds...\n")
+    print(f"{self.componentname}-{self.componentid} is generating a test message with content of \"{message_payload}\" in 3 seconds...\n")
     time.sleep(3)
     
-    print(message)
+    return message
 
 #def sendSSBRMessage(table, source, target):
     

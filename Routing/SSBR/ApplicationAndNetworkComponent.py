@@ -1,5 +1,5 @@
-from Routing.SSBR.HelperFunctions import messageGenerator, messageParser
-from Ahc import ComponentModel, Event, GenericMessage, GenericMessageHeader, EventTypes
+from Routing.SSBR.HelperFunctions import messageGenerator, SSBRMessageGenerator
+from Ahc import ComponentModel, Event, EventTypes
 
 class ApplicationAndNetwork(ComponentModel):
     def __init__(self, componentname, componentid):
@@ -20,6 +20,10 @@ class ApplicationAndNetwork(ComponentModel):
 
     def send_test_message(self):
         evt = Event(self, EventTypes.MFRT, messageGenerator(self))
+        self.send_down(evt) 
+
+    def send_SSBR_unicast_message(self, target):
+        evt = Event(self, EventTypes.MFRT, SSBRMessageGenerator(self, target))
         self.send_down(evt) 
 
 
