@@ -86,8 +86,7 @@ def findStrongConnectedLinksForSingleNode(labels, threshold, nodeCount):
             elif (str(new_key[1]) == str(nodeToBeCalculated)):
                 allNeighbors[new_key[0]] = new_value
 
-        print(strongLinks)
-        print(allNeighbors)
+
         nodeToEditSST = ComponentRegistry().get_component_by_key("DRP",nodeToBeCalculated)
         
         for (key) in strongLinks.keys():
@@ -110,5 +109,22 @@ def printSSTForANode():
     nodeId = int(input("Enter node to check its SC links... \n"))
     nodeToEditSST = ComponentRegistry().get_component_by_key("DRP",nodeId)
     nodeToEditSST.printSignalStabilityTable()
-#def ApplicationAndNetworkComponentMessageHandler(self, eventobj):
+
+def constructStrongRoute(graph):
+    source = int(input("Enter source node id:\n"))
+    target = int(input("Enter target node id:\n"))
+    paths = nx.all_simple_paths(graph, source, target)
+    sortedPath = sorted(paths, key=len)
+    for i in sortedPath:
+        desiredPath = True
+        for index, item in enumerate(i):
+            if len(i) > index+1:
+                nodeToBeInvestigated = ComponentRegistry().get_component_by_key("DRP",i[index+1])
+                if nodeToBeInvestigated.getSignalStabilityTable()[i[index]] == "WC":
+                    desiredPath = False
+        if desiredPath:
+            print(i)
+            return i
+    print(f"No possible path found between node#{source} to node#{target}")
+
 

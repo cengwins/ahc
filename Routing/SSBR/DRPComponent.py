@@ -25,3 +25,5 @@ class DRP(ComponentModel):
     def printSignalStabilityTable(self):
         print(self.signalStabilityTable)
 
+    def getSignalStabilityTable(self):
+        return self.signalStabilityTable

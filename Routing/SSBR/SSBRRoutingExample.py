@@ -12,7 +12,7 @@ from Channels.Channels import  P2PFIFOPerfectChannel
 import networkx as nx
 import matplotlib.pyplot as plt
 from Routing.SSBR.SSBRNode import SSBRNode
-from Routing.SSBR.HelperFunctions import triggerTestMessage, findStrongConnectedLinksForSingleNode, findAllSimplePaths, printSSTForANode
+from Routing.SSBR.HelperFunctions import triggerTestMessage, findStrongConnectedLinksForSingleNode, findAllSimplePaths, printSSTForANode, constructStrongRoute
 
 edges = [(0, 1, {"weight": 1}), (0, 2, {"weight": 1}), (1, 3, {"weight": 1}), (2, 4, {"weight": 1}), (4, 5, {"weight": 1}),
          (3, 5, {"weight": 1})]
@@ -64,7 +64,7 @@ threshold = float(threshold)
 # Menu
 time.sleep(2)
 
-print("1. Trigger a test message \n 2. Find strong connected links for all nodes \n 3. Print forwarding table \n 4. Find all simple paths for given node \n 5. Print the SST of a node.")
+print("1. Trigger a test message \n 2. Find strong connected links for all nodes \n 3. Print forwarding table \n 4. Find all simple paths for given node \n 5. Print the SST of a node.\n 6. Construct strongly connected route for a node.")
 
 menuItem = input("Enter a value to proceed:\n")
 menuItem = int(menuItem)
@@ -81,8 +81,10 @@ while(menuItem):
         findAllSimplePaths(graph)
     elif menuItem == 5:
         printSSTForANode()
+    elif menuItem == 6:
+        constructStrongRoute(graph)
 
-    print("1. Trigger a test message \n 2. Find strong connected links for all nodes \n 3. Print forwarding table \n 4. Find all simple paths for given node \n 5. Print the SST of a node.")
+    print("1. Trigger a test message \n 2. Find strong connected links for all nodes \n 3. Print forwarding table \n 4. Find all simple paths for given node \n 5. Print the SST of a node.\n 6. Construct strongly connected route for a node.")
     
     menuItem = input("Enter a new value to proceed:\n")
     menuItem = int(menuItem)
