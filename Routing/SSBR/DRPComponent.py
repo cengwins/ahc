@@ -15,11 +15,11 @@ class DRP(ComponentModel):
         #self.send_peer(evt)
 
     def on_message_from_bottom(self, eventobj: Event):
+        messagefrom = eventobj.eventcontent.header.messagefrom
+        messageto = eventobj.eventcontent.header.messageto
+        messageFromID = int(messagefrom.split("-")[1])
         if(eventobj.eventcontent.header.messagetype == "ROUTESEARCH"):
-            messagefrom = eventobj.eventcontent.header.messagefrom
-            messageto = eventobj.eventcontent.header.messageto
             if self.routingTableFlag == False:
-                messageFromID = int(messagefrom.split("-")[1])
                 tableVal = self.signalStabilityTable.get(messageFromID)
                 if tableVal == "SC":
                     self.routingTableFlag = True
@@ -28,10 +28,6 @@ class DRP(ComponentModel):
                 if int(messageto.split("-")[1]) == int(self.componentid):
                     evt = Event(self, EventTypes.MFRP, SSBRRouteReplyMessage(self, eventobj))
                     self.send_peer(evt)
-            if int(messageto.split("-")[1]) == int(self.componentid):
-                evt = Event(self, EventTypes.MFRP, messageParser(self, eventobj))
-                self.send_peer(evt)
-                  
         else:
             evt = Event(self, EventTypes.MFRP,messageParser(self, eventobj))
             self.send_peer(evt)

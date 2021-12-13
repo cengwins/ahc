@@ -24,18 +24,15 @@ class FP(ComponentModel):
         SelfDRP = ComponentRegistry().get_component_by_key("DRP",self.componentid)
         SelfDRP.routingTableFlag = True
         evt = Event(self, EventTypes.MFRT, SSBRRouteSearchMessage(self, target))
-        self.send_down(evt) 
+        self.send_down(evt)
 
     def on_message_from_peer(self, eventobj: Event):
-        if eventobj.eventcontent.header.messagetype == "ROUTEREPLY":
-            print(f"routereply is here - #{self.componentid}")
-            print(eventobj.eventcontent)
-            print("\n")
+        if eventobj.eventcontent.header.messagetype == "ROUTESEARCH":
             evt = Event(self, EventTypes.MFRT,messageParser(self,eventobj))
             self.send_down(evt)
-        if eventobj.eventcontent.header.messagetype == "ROUTESEARCH" or "ROUTEREPLY":
-            evt = Event(self, EventTypes.MFRT,messageParser(self,eventobj))
-            self.send_down(evt)
+            print(eventobj.eventcontent.header)
+        elif eventobj.eventcontent.header.messagetype == "ROUTEREPLY":           
+            print(eventobj.eventcontent.header)
         else:
             evt = Event(self, EventTypes.MFRB,messageParser(self,eventobj))
             self.send_up(evt) # send incoming messages to upper components
