@@ -12,7 +12,7 @@ from Channels.Channels import  P2PFIFOPerfectChannel
 import networkx as nx
 import matplotlib.pyplot as plt
 from Routing.SSBR.SSBRNode import SSBRNode
-from Routing.SSBR.HelperFunctions import triggerTestMessage, findStrongConnectedLinksForSingleNode, findAllSimplePaths, printSSTForANode, constructStrongRoute, SSBRMessageGenerator
+from Routing.SSBR.HelperFunctions import buildRoutingTable, findStrongConnectedLinksForSingleNode, findAllSimplePaths, printSSTForANode, constructStrongRoute
 
 edges = [(0, 1, {"weight": 1}), (0, 2, {"weight": 1}), (1, 3, {"weight": 1}), (2, 4, {"weight": 1}), (4, 5, {"weight": 1}),
          (3, 5, {"weight": 1})]
@@ -72,7 +72,7 @@ SSBRForwardingTable = []
 
 while(menuItem):
     if menuItem == 1:
-        triggerTestMessage()
+        buildRoutingTable()
     elif menuItem == 2:
         findStrongConnectedLinksForSingleNode(labels, threshold, NODE_COUNT)
     elif menuItem == 3:

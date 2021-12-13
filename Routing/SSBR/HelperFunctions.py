@@ -9,13 +9,16 @@ def convertTuple(tup):
         str = str + str(item)
     return str
 
-def messageParser(self, eventobj):
+def messageParser(self, eventobj, destination = ""):
+    messageTo = eventobj.eventcontent.header.messageto
+    if destination != "":
+        messageTo = destination
     messagePayload = eventobj.eventcontent.payload
     messageFrom = eventobj.eventcontent.header.messagefrom
-    print(f"{self.componentname}-{self.componentid} got a message from {messageFrom}. \n Message is {messagePayload}\n")
+    #print(f"{self.componentname}-{self.componentid} got a message from messageFrom}. \n Message is {messagePayload}\n")
     
-    message_header = GenericMessageHeader("SSBR", str(self.componentname) + "-" + str(self.componentinstancenumber), str(self.componentname)  + "-" + str(self.componentinstancenumber))
-    message = GenericMessage(message_header, messagePayload)
+    messageHeader = GenericMessageHeader(eventobj.eventcontent.header.messagetype, eventobj.eventcontent.header.messagefrom, messageTo, interfaceid = eventobj.eventcontent.header.interfaceid, sequencenumber = eventobj.eventcontent.header.sequencenumber)
+    message = GenericMessage(messageHeader, messagePayload)
     return message
            
 def messageGenerator(self):
@@ -30,43 +33,32 @@ def messageGenerator(self):
     
     return message
 
-def getMessageFromOtherNode(self, eventobj ,nodeid):
-
-    interfaceid=str(self.componentinstancenumber)+"-"+str(nodeid)
-    if nodeid < self.componentinstancenumber:
-        interfaceid = str(nodeid)+"-"+str(self.componentinstancenumber)
-
-    messagePayload = eventobj.eventcontent.payload
-
-    message_header = GenericMessageHeader("SSBR", str(self.componentname) + "-" + str(self.componentinstancenumber), str(self.componentname)  + "-" + str(nodeid), interfaceid=interfaceid)
-    
-    message = GenericMessage(message_header, messagePayload)
-
-    print(f"{self.componentname}-{self.nodeid} got a message from {self.componentname}-{self.componentid}. \n Message is {messagePayload}\n")
-
-    return message
-
-def sendMessageToOtherNode(self, eventobj ,nodeid):
+def sendMessageToOtherNode(self, eventobj , nodeid):
 
     messageFrom = eventobj.eventcontent.header.messagefrom
+    messageTo = eventobj.eventcontent.header.messageto
     interfaceid=str(self.componentinstancenumber)+"-"+str(nodeid)
-    if nodeid < self.componentinstancenumber:
+    sequenceNumber = int(eventobj.eventcontent.header.sequencenumber) + 1
+    nextHop = nodeid
+    messagePayload = eventobj.eventcontent.payload
+    messageType = eventobj.eventcontent.header.messagetype
+
+    if int(nodeid) < self.componentinstancenumber:
         interfaceid = str(nodeid)+"-"+str(self.componentinstancenumber)
 
-    messagePayload = eventobj.eventcontent.payload
-
-    message_header = GenericMessageHeader("SSBR", str(self.componentname) + "-" + str(self.componentinstancenumber), str(self.componentname)  + "-" + str(nodeid), interfaceid=interfaceid)
+    messageHeader = GenericMessageHeader(messageType, messageFrom, messageTo, nextHop,interfaceid, sequenceNumber)
     
-    message = GenericMessage(message_header, messagePayload)
+    message = GenericMessage(messageHeader, messagePayload)
     
-    print(f"{self.componentname}-{self.componentid} got a message from {messageFrom}. \n Message is {messagePayload}\n")
+    #print(f"{self.componentname}-{self.componentid} got a message from {messageFrom}. \n Message is {messagePayload}\n")
 
     return message
 
-def triggerTestMessage():
-    nodeToTest= input("Enter input node to sent message:\n")
-    myNode = ComponentRegistry().get_component_by_key("ApplicationAndNetwork",nodeToTest)
-    myNode.send_test_message()
+def buildRoutingTable():
+    sourceNode= input("Enter source node:\n")
+    destinationNode= input("Enter destination node:\n")
+    myNode = ComponentRegistry().get_component_by_key("FP",sourceNode)
+    myNode.build_routing_table(destinationNode)
 
 def findStrongConnectedLinksForSingleNode(labels, threshold, nodeCount):
 
@@ -86,7 +78,6 @@ def findStrongConnectedLinksForSingleNode(labels, threshold, nodeCount):
                     allNeighbors[new_key[1]] = new_value
             elif (str(new_key[1]) == str(nodeToBeCalculated)):
                 allNeighbors[new_key[0]] = new_value
-
 
         nodeToEditSST = ComponentRegistry().get_component_by_key("DRP",nodeToBeCalculated)
         
@@ -137,6 +128,27 @@ def SSBRMessageGenerator(self, destinationID):
     print(f"{self.componentname}-{self.componentid} is generating a test message with content of \"{message_payload}\" in 3 seconds...\n")
     time.sleep(3)
     
+    return message
+
+def SSBRRouteSearchMessage(self, target):
+    message_payload = []
+    messageFrom = str(self.componentname) + "-" + str(self.componentinstancenumber)
+    messageTo = "FP" + "-" + str(target)
+    message_header = GenericMessageHeader("ROUTESEARCH", messageFrom ,messageTo ,sequencenumber=1)
+    message = GenericMessage(message_header, message_payload)
+
+    return message
+
+def SSBRRouteReplyMessage(self, eventobj):
+    messageFrom = eventobj.eventcontent.header.messagefrom
+    messageTo = eventobj.eventcontent.header.messageto
+    sequenceNumber = eventobj.eventcontent.header.sequencenumber + 1
+    nextHop = eventobj.eventcontent.header.interfaceid.split("-")[1]
+    messagePayload = eventobj.eventcontent.payload.append(self.componentid)
+    messageHeader = GenericMessageHeader("ROUTEREPLY", messageTo, messageFrom, nextHop,sequencenumber=sequenceNumber, interfaceid=str(self.componentinstancenumber))
+
+    message = GenericMessage(messageHeader, messagePayload)
+
     return message
 
 #def sendSSBRMessage(table, source, target):

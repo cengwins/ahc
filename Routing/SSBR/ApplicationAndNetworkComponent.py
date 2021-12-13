@@ -1,4 +1,4 @@
-from Routing.SSBR.HelperFunctions import messageGenerator, SSBRMessageGenerator
+from Routing.SSBR.HelperFunctions import SSBRRouteSearchMessage, SSBRMessageGenerator
 from Ahc import ComponentModel, Event, EventTypes
 
 class ApplicationAndNetwork(ComponentModel):
@@ -19,7 +19,7 @@ class ApplicationAndNetwork(ComponentModel):
         print(f"{self.componentname}-{self.componentid} got a message from {messageFrom}. \n Message is {messagePayload}\n")
 
     def send_test_message(self):
-        evt = Event(self, EventTypes.MFRT, messageGenerator(self))
+        evt = Event(self, EventTypes.MFRT, SSBRRouteSearchMessage(self))
         self.send_down(evt) 
 
     def send_SSBR_unicast_message(self, target):

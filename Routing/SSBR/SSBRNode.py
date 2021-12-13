@@ -38,9 +38,14 @@ class SSBRNode(ComponentModel):
         self.send_up(evt) # send incoming messages to upper components
 
     def on_message_from_top(self, eventobj: Event):
-        for neigh in self.neighbors:
-            evt = Event(self, EventTypes.MFRT,sendMessageToOtherNode(self,eventobj,neigh))
-            self.send_down(evt)   # send incoming messages from upper components to a channel
+        if eventobj.eventcontent.header.messagetype == "ROUTESEARCH":
+            for neigh in self.neighbors:
+                evt = Event(self, EventTypes.MFRT,sendMessageToOtherNode(self,eventobj, neigh))
+                self.send_down(evt)   # send incoming messages from upper components to a channel
+        elif eventobj.eventcontent.header.messagetype == "ROUTEREPLY":
+            messageTo = eventobj.eventcontent.header.messageto.split("-")[1]
+            evt = Event(self, EventTypes.MFRT,sendMessageToOtherNode(self,eventobj,messageTo))
+            self.send_down(evt)  
         
        
 
