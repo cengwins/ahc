@@ -12,7 +12,7 @@ from Channels.Channels import  P2PFIFOPerfectChannel
 import networkx as nx
 import matplotlib.pyplot as plt
 from Routing.SSBR.SSBRNode import SSBRNode
-from Routing.SSBR.HelperFunctions import triggerTestMessage, findStrongConnectedLinksForSingleNode, findAllSimplePaths, printSSTForANode, constructStrongRoute
+from Routing.SSBR.HelperFunctions import triggerTestMessage, findStrongConnectedLinksForSingleNode, findAllSimplePaths, printSSTForANode, constructStrongRoute, SSBRMessageGenerator
 
 edges = [(0, 1, {"weight": 1}), (0, 2, {"weight": 1}), (1, 3, {"weight": 1}), (2, 4, {"weight": 1}), (4, 5, {"weight": 1}),
          (3, 5, {"weight": 1})]
@@ -68,6 +68,7 @@ print("1. Trigger a test message \n 2. Find strong connected links for all nodes
 
 menuItem = input("Enter a value to proceed:\n")
 menuItem = int(menuItem)
+SSBRForwardingTable = []
 
 while(menuItem):
     if menuItem == 1:
@@ -82,7 +83,15 @@ while(menuItem):
     elif menuItem == 5:
         printSSTForANode()
     elif menuItem == 6:
-        constructStrongRoute(graph)
+        source = int(input("Enter source node id:\n"))
+        target = int(input("Enter target node id:\n"))
+        constructStrongRoute(graph, source, target)
+    elif menuItem == 7:
+        source = int(input("Enter source node id:\n"))
+        target = int(input("Enter target node id:\n"))
+        SSBRForwardingTable = constructStrongRoute(graph, source, target)
+        if len(SSBRForwardingTable) >= 1:
+            SSBRMessageGenerator(source, target)
 
     print("1. Trigger a test message \n 2. Find strong connected links for all nodes \n 3. Print forwarding table \n 4. Find all simple paths for given node \n 5. Print the SST of a node.\n 6. Construct strongly connected route for a node.")
     

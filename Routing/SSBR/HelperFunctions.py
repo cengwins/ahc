@@ -1,5 +1,6 @@
 import time
 import networkx as nx
+from networkx.generators.classic import null_graph
 from Ahc import GenericMessage, GenericMessageHeader, ComponentRegistry
 
 def convertTuple(tup):
@@ -110,9 +111,7 @@ def printSSTForANode():
     nodeToEditSST = ComponentRegistry().get_component_by_key("DRP",nodeId)
     nodeToEditSST.printSignalStabilityTable()
 
-def constructStrongRoute(graph):
-    source = int(input("Enter source node id:\n"))
-    target = int(input("Enter target node id:\n"))
+def constructStrongRoute(graph, source, target):
     paths = nx.all_simple_paths(graph, source, target)
     sortedPath = sorted(paths, key=len)
     for i in sortedPath:
@@ -123,8 +122,23 @@ def constructStrongRoute(graph):
                 if nodeToBeInvestigated.getSignalStabilityTable()[i[index]] == "WC":
                     desiredPath = False
         if desiredPath:
-            print(i)
             return i
     print(f"No possible path found between node#{source} to node#{target}")
+    return []
+  
+def SSBRMessageGenerator(source, destinationID):
+    time.sleep(1)
+    sourceNode = ComponentRegistry().get_component_by_key("ApplicationAndNetwork", source)
+    
+    message_payload = input("Enter message payload content...\n")
 
+    message_header = GenericMessageHeader("UNICASTDATA", str(sourceNode.componentname) + "-" + str(sourceNode.componentinstancenumber), str(sourceNode.componentname)  + "-" + str(destinationID), interfaceid=str(sourceNode.componentinstancenumber), sequencenumber=1)
+    message = GenericMessage(message_header, message_payload)
 
+    print(f"{sourceNode.componentname}-{sourceNode.componentid} is generating a test message with content of \"{message_payload}\" in 3 seconds...\n")
+    time.sleep(3)
+    
+    print(message)
+
+#def sendSSBRMessage(table, source, target):
+    
