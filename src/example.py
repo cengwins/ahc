@@ -366,41 +366,6 @@ class Topology:
       self.nodes[k[0]].connect_me_to_channel(ConnectorTypes.DOWN, ch)
       self.nodes[k[1]].connect_me_to_channel(ConnectorTypes.DOWN, ch)
 
-# TODO: construct_from_graph_peterson and construct_from_graph_bakery will be removed... Does not follow the AHC style..
-  def construct_from_graph_peterson(self, G: nx.Graph, nodetype, channeltype):
-    self.G = G
-    nodes = list(G.nodes)
-    edges = list(G.edges)
-
-    nodes = nodes[::-1]
-    edges = edges[::-1]
-
-    for i in nodes:
-      cc = nodetype(nodetype.__name__, i, i)
-      self.nodes[i] = cc
-    for k in edges:
-      ch = channeltype(channeltype.__name__, str(k[0]) + "-" + str(k[1]))
-      self.channels[k] = ch
-      self.nodes[k[0]].connect_me_to_channel(ConnectorTypes.DOWN, ch)
-      self.nodes[k[1]].connect_me_to_channel(ConnectorTypes.DOWN, ch)
-
-  def construct_from_graph_bakery(self, G: nx.Graph, nodetype, channeltype):
-    self.G = G
-    nodes = list(G.nodes)
-    edges = list(G.edges)
-
-    nodes = nodes[::-1]
-    edges = edges[::-1]
-
-    for i in nodes:
-      cc = nodetype(nodetype.__name__, i, i)
-      self.nodes[i] = cc
-    for k in edges:
-      ch = channeltype(channeltype.__name__, str(k[0]) + "-" + str(k[1]))
-      self.channels[k] = ch
-      self.nodes[k[0]].connect_me_to_channel(ConnectorTypes.DOWN, ch)
-      self.nodes[k[1]].connect_me_to_channel(ConnectorTypes.DOWN, ch)
-
   def construct_single_node(self, nodetype, instancenumber):
     self.singlenode = nodetype(nodetype.__name__, instancenumber)
     self.G = nx.Graph()
