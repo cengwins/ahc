@@ -24,7 +24,7 @@ def draw_random_graph(n):
     k = True
     while k == True:
         k = False
-        g_random = nx.gnp_random_graph(n, 0.3)
+        g_random = nx.gnp_random_graph(n, 0.05)
         if not nx.is_connected(g_random):
             k = True
     return g_random

@@ -96,19 +96,6 @@ def constructStrongRoute(graph, source, target):
     print(f"No possible path found between node#{source} to node#{target}")
     return []
   
-def SSBRMessageGenerator(self, destinationID):
-    time.sleep(1)
-
-    message_payload = input("Enter message payload content...\n")
-
-    message_header = GenericMessageHeader("UNICASTDATA", str(self.componentname) + "-" + str(self.componentinstancenumber), str(self.componentname)  + "-" + str(destinationID), interfaceid=str(self.componentinstancenumber), sequencenumber=1)
-    message = GenericMessage(message_header, message_payload)
-
-    print(f"{self.componentname}-{self.componentid} is generating a test message with content of \"{message_payload}\" in 3 seconds...\n")
-    time.sleep(3)
-    
-    return message
-
 def SSBRRouteSearchMessage(self, target):
     message_payload = []
     messageFrom = str(self.componentname) + "-" + str(self.componentinstancenumber)
@@ -173,6 +160,27 @@ def SSBRRouteCompletedMessage(self, eventobj):
    
     messageHeader = GenericMessageHeader("ROUTECOMPLETED", messageTo, messageFrom, nextHop, interfaceid, sequenceNumber)
     message = GenericMessage(messageHeader, messagePayload)
+
+    return message
+
+def SSBRUnicastMessage(self, destination, message=""):
+    messagePayload = message
+    if (messagePayload == ""):
+        messagePayload = input("Enter payload of message...\n")
+    messageFrom = str(self.componentname) + "-" + str(self.componentid)
+    messageTo = str(self.componentname) + "-" + str(destination)
+    sequenceNumber = 0
+   
+    messageHeader = GenericMessageHeader("UNICASTDATA", messageFrom, messageTo, sequencenumber=sequenceNumber)
+    message = GenericMessage(messageHeader, messagePayload)
+
+    return message
+
+def SSBRUnicastMessageFPParser(self, eventobj):
+    target = eventobj.eventcontent.header.messageto.split("-")[1]
+    nextHop = self.routingTable.get(int(target))
+    messageHeader = GenericMessageHeader(eventobj.eventcontent.header.messagetype, eventobj.eventcontent.header.messagefrom, eventobj.eventcontent.header.messageto,  nextHop, sequencenumber=eventobj.eventcontent.header.sequencenumber)
+    message = GenericMessage(messageHeader, eventobj.eventcontent.payload)
 
     return message
 #def sendSSBRMessage(table, source, target):

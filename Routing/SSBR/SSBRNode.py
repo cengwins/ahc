@@ -52,7 +52,10 @@ class SSBRNode(ComponentModel):
         elif eventobj.eventcontent.header.messagetype == "ROUTEREPLY":
             messageTo = self.messageFrom
             evt = Event(self, EventTypes.MFRT,sendMessageToOtherNode(self, eventobj, messageTo))
-            self.send_down(evt)  
-        
+            self.send_down(evt)
+        elif eventobj.eventcontent.header.messagetype == "UNICASTDATA":
+            messageTo = eventobj.eventcontent.header.nexthop
+            evt = Event(self, EventTypes.MFRT,sendMessageToOtherNode(self, eventobj, messageTo))
+            self.send_down(evt)
        
 
