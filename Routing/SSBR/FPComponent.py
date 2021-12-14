@@ -7,7 +7,6 @@ class FP(ComponentModel):
         self.componentid = componentid
         self.routingTable = {}
         
-
     def on_init(self, eventobj: Event):
         print(f"{self.componentname} - #{self.componentid} is up.\n")
         #evt = Event(self, EventTypes.MFRP, "Network interface to peers")
@@ -27,16 +26,19 @@ class FP(ComponentModel):
         self.send_down(evt)
 
     def on_message_from_peer(self, eventobj: Event):
-        print(f"got message from bottom, i am -> {self.componentid} message -> {eventobj.eventcontent.header.messagetype}")
         if eventobj.eventcontent.header.messagetype == "ROUTESEARCH":
             evt = Event(self, EventTypes.MFRT,messageParser(self,eventobj))
             self.send_down(evt)
         elif eventobj.eventcontent.header.messagetype == "ROUTEREPLY":           
             evt = Event(self, EventTypes.MFRT,messageParser(self,eventobj))
             self.send_down(evt)
+            payload = eventobj.eventcontent.payload
+            for el in reversed(payload):
+                self.routingTable[el] = payload[0]
         elif eventobj.eventcontent.header.messagetype == "ROUTECOMPLETED":           
-            print("Route is completed")
-            print(eventobj.eventcontent.payload)
+            payload = eventobj.eventcontent.payload
+            for el in reversed(payload):
+                self.routingTable[el] = payload[0]
         else:
             evt = Event(self, EventTypes.MFRB,messageParser(self,eventobj))
             self.send_up(evt) # send incoming messages to upper components
