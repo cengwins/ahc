@@ -27,12 +27,16 @@ class FP(ComponentModel):
         self.send_down(evt)
 
     def on_message_from_peer(self, eventobj: Event):
+        print(f"got message from bottom, i am -> {self.componentid} message -> {eventobj.eventcontent.header.messagetype}")
         if eventobj.eventcontent.header.messagetype == "ROUTESEARCH":
             evt = Event(self, EventTypes.MFRT,messageParser(self,eventobj))
             self.send_down(evt)
-            print(eventobj.eventcontent.header)
         elif eventobj.eventcontent.header.messagetype == "ROUTEREPLY":           
-            print(eventobj.eventcontent.header)
+            evt = Event(self, EventTypes.MFRT,messageParser(self,eventobj))
+            self.send_down(evt)
+        elif eventobj.eventcontent.header.messagetype == "ROUTECOMPLETED":           
+            print("Route is completed")
+            print(eventobj.eventcontent.payload)
         else:
             evt = Event(self, EventTypes.MFRB,messageParser(self,eventobj))
             self.send_up(evt) # send incoming messages to upper components

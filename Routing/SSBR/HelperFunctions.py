@@ -17,7 +17,7 @@ def messageParser(self, eventobj, destination = ""):
     messageFrom = eventobj.eventcontent.header.messagefrom
     #print(f"{self.componentname}-{self.componentid} got a message from {messageFrom}. \n Message is {messagePayload}\n")
     
-    messageHeader = GenericMessageHeader(eventobj.eventcontent.header.messagetype, eventobj.eventcontent.header.messagefrom, messageTo, interfaceid = eventobj.eventcontent.header.interfaceid, sequencenumber = eventobj.eventcontent.header.sequencenumber)
+    messageHeader = GenericMessageHeader(eventobj.eventcontent.header.messagetype, eventobj.eventcontent.header.messagefrom, messageTo, interfaceid = eventobj.eventcontent.header.interfaceid, nexthop=eventobj.eventcontent.header.nexthop, sequencenumber = eventobj.eventcontent.header.sequencenumber)
     message = GenericMessage(messageHeader, messagePayload)
     return message
            
@@ -119,11 +119,11 @@ def SSBRRouteSearchMessage(self, target):
     return message
 
 def SSBRRouteReplyMessage(self, eventobj):
-    messagePayload = eventobj.eventcontent.payload.append(self.componentid)
     
+    messagePayload = []
     messageFrom = eventobj.eventcontent.header.messagefrom
     messageTo = eventobj.eventcontent.header.messageto
-    sequenceNumber = eventobj.eventcontent.header.sequencenumber
+    sequenceNumber = 0
     interfaceid = eventobj.eventcontent.header.interfaceid
 
     if int(self.componentinstancenumber) == int(interfaceid.split("-")[0]):
@@ -148,14 +148,32 @@ def sendMessageToOtherNode(self, eventobj, nodeid):
 
     sequenceNumber = int(eventobj.eventcontent.header.sequencenumber) + 1
     nextHop = nodeid
+    messageType = eventobj.eventcontent.header.messagetype    
     messagePayload = eventobj.eventcontent.payload
-    messageType = eventobj.eventcontent.header.messagetype
 
+    if eventobj.eventcontent.header.messagetype == "ROUTEREPLY":
+        if int(eventobj.eventcontent.header.sequencenumber) == 0:
+            messagePayload = []
+        messagePayload.append(self.componentinstancenumber)
+        
     messageHeader = GenericMessageHeader(messageType, messageFrom, messageTo, nextHop, interfaceid, sequenceNumber)    
     message = GenericMessage(messageHeader, messagePayload)
-    #print(f"{self.componentname}-{self.componentid} got a message from {messageFrom}. \n Message is {messagePayload}\n")
-
+    #print(message)
+    #print(f"{nextHop} got a {eventobj.eventcontent.header.messagetype} message from {self.componentid}.\n")
     return message
 
+def SSBRRouteCompletedMessage(self, eventobj):
+    
+    messagePayload = eventobj.eventcontent.payload
+    messageFrom = eventobj.eventcontent.header.messagefrom
+    messageTo = eventobj.eventcontent.header.messageto
+    sequenceNumber = eventobj.eventcontent.header.sequencenumber
+    interfaceid = eventobj.eventcontent.header.interfaceid
+    nextHop = eventobj.eventcontent.header.nexthop
+   
+    messageHeader = GenericMessageHeader("ROUTECOMPLETED", messageTo, messageFrom, nextHop, interfaceid, sequenceNumber)
+    message = GenericMessage(messageHeader, messagePayload)
+
+    return message
 #def sendSSBRMessage(table, source, target):
     

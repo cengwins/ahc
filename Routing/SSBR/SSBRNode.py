@@ -14,6 +14,7 @@ class SSBRNode(ComponentModel):
         self.FP = FP(FP.__name__, componentid)
         self.DRP = DRP(DRP.__name__, componentid)
         self.NetworkInterface = NetworkInterface(NetworkInterface.__name__, componentid)
+        self.messageFrom = -1
         
         #   Building SSBR Connections
         self.ApplicationAndNetwork.connect_me_to_component(ConnectorTypes.DOWN, self.FP)
@@ -34,17 +35,23 @@ class SSBRNode(ComponentModel):
         pass
 
     def on_message_from_bottom(self, eventobj: Event):
+       
         evt = Event(self, EventTypes.MFRB,messageParser(self,eventobj))    
         self.send_up(evt) # send incoming messages to upper components
 
     def on_message_from_top(self, eventobj: Event):
+        if eventobj.eventcontent.header.interfaceid != float("inf") and self.messageFrom == -1:
+                messageFrom = int(eventobj.eventcontent.header.interfaceid.split("-")[0])
+                if int(eventobj.eventcontent.header.interfaceid.split("-")[0]) == int(self.componentinstancenumber):
+                    messageFrom = int(eventobj.eventcontent.header.interfaceid.split("-")[1])
+                self.messageFrom = messageFrom
         if eventobj.eventcontent.header.messagetype == "ROUTESEARCH":
             for neigh in self.neighbors:
-                evt = Event(self, EventTypes.MFRT,sendMessageToOtherNode(self,eventobj, neigh))
+                evt = Event(self, EventTypes.MFRT,sendMessageToOtherNode(self, eventobj, neigh))
                 self.send_down(evt)   # send incoming messages from upper components to a channel
         elif eventobj.eventcontent.header.messagetype == "ROUTEREPLY":
-            messageTo = eventobj.eventcontent.header.messageto.split("-")[1]
-            evt = Event(self, EventTypes.MFRT,sendMessageToOtherNode(self,eventobj,messageTo))
+            messageTo = self.messageFrom
+            evt = Event(self, EventTypes.MFRT,sendMessageToOtherNode(self, eventobj, messageTo))
             self.send_down(evt)  
         
        

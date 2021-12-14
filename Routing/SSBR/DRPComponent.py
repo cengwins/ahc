@@ -1,7 +1,6 @@
 from Routing.SSBR.HelperFunctions import messageParser
 from Ahc import ComponentModel, Event, EventTypes
-from Routing.SSBR.HelperFunctions import SSBRRouteReplyMessage
-
+from Routing.SSBR.HelperFunctions import SSBRRouteReplyMessage, SSBRRouteCompletedMessage
 class DRP(ComponentModel):
     def __init__(self, componentname, componentid):
         super(DRP, self).__init__(componentname, componentid)
@@ -15,19 +14,30 @@ class DRP(ComponentModel):
         #self.send_peer(evt)
 
     def on_message_from_bottom(self, eventobj: Event):
-        messagefrom = eventobj.eventcontent.header.messagefrom
         messageto = eventobj.eventcontent.header.messageto
-        messageFromID = int(messagefrom.split("-")[1])
+        interfaceID = eventobj.eventcontent.header.interfaceid
+        messageFromID = int(interfaceID.split("-")[1])
+        if messageFromID == int(self.componentid):
+            messageFromID = int(interfaceID.split("-")[0])
         if(eventobj.eventcontent.header.messagetype == "ROUTESEARCH"):
             if self.routingTableFlag == False:
                 tableVal = self.signalStabilityTable.get(messageFromID)
                 if tableVal == "SC":
                     self.routingTableFlag = True
-                    evt = Event(self, EventTypes.MFRP,messageParser(self, eventobj))
-                    self.send_peer(evt)
-                if int(messageto.split("-")[1]) == int(self.componentid):
-                    evt = Event(self, EventTypes.MFRP, SSBRRouteReplyMessage(self, eventobj))
-                    self.send_peer(evt)
+                    if int(messageto.split("-")[1]) == int(self.componentid):
+                        evt = Event(self, EventTypes.MFRP, SSBRRouteReplyMessage(self, eventobj))
+                        self.send_peer(evt)
+                    else:
+                        evt = Event(self, EventTypes.MFRP,messageParser(self, eventobj))
+                        self.send_peer(evt)
+        elif(eventobj.eventcontent.header.messagetype == "ROUTEREPLY"):
+            if int(messageto.split("-")[1]) == int(self.componentid):
+                evt = Event(self, EventTypes.MFRP, SSBRRouteCompletedMessage(self, eventobj))
+                self.send_peer(evt)
+            else:
+                evt = Event(self, EventTypes.MFRP,messageParser(self, eventobj))
+                self.send_peer(evt)
+                  
         else:
             evt = Event(self, EventTypes.MFRP,messageParser(self, eventobj))
             self.send_peer(evt)

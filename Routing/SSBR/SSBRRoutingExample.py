@@ -62,7 +62,6 @@ topology.start()
 threshold = input("Enter threshold value for signal strength (between 0 an 1):\n")
 threshold = float(threshold)
 # Menu
-time.sleep(2)
 
 print("1. Trigger a test message \n 2. Find strong connected links for all nodes \n 3. Print forwarding table \n 4. Find all simple paths for given node \n 5. Print the SST of a node.\n 6. Construct strongly connected route for a node.")
 
@@ -93,6 +92,8 @@ while(menuItem):
         if len(SSBRForwardingTable) >= 1:
             sourceNode = ComponentRegistry().get_component_by_key("ApplicationAndNetwork", source)
             sourceNode.send_SSBR_unicast_message(target)
+        else:
+            print(f"No possible route between #{source}-#{target}")
 
     print("1. Trigger a test message \n 2. Find strong connected links for all nodes \n 3. Print forwarding table \n 4. Find all simple paths for given node \n 5. Print the SST of a node.\n 6. Construct strongly connected route for a node.")
     
