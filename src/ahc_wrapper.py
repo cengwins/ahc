@@ -1,5 +1,6 @@
 import datetime
 import queue
+from typing import ClassVar
 from helpers import *
 from generics import *
 from definitions import *
@@ -11,21 +12,6 @@ import itertools
 
 inf = float('inf')
 
-class ahc_wrapper:
-
-  
-  def __init__(self, g: nx.Graph):
-      self.graph = g
-
-  def create_topology_by_graph(self, g: nx.Graph):
-    pass
-
-  def create_network_by_topology(self, t: Topology):
-    self.topology = t
-
-
-  def create_network(self):
-    pass
 
 class ConnectorList(dict):
 
@@ -37,7 +23,6 @@ class ConnectorList(dict):
     self[key].append(value)
 
 
-@singleton
 class ComponentRegistry:
   components = {}
 
@@ -81,7 +66,6 @@ class ComponentRegistry:
       res.append(cmp)
     return res
 
-@singleton
 class Topology:
   nodes = {}
   channels = {}
@@ -221,7 +205,6 @@ class Topology:
   def get_random_node(self):
     return self.nodes[sample(self.G.nodes(), 1)[0]]
 
-@singleton
 class FramerObjects():
     framerobjects = {}
     ahcuhdubjects = {}
@@ -345,3 +328,25 @@ class ComponentModel:
   def trigger_event(self, eventobj: GenericEvent):
     self.inputqueue.put_nowait(eventobj)
 
+
+
+class ahc_wrapper:
+
+  component_model = ComponentModel
+  topology = None
+  
+  
+  def __init__(self, g: nx.Graph):
+      self.graph = g
+
+  def create_topology_by_graph(self, g: nx.Graph):
+    pass
+
+  def create_network_by_topology(self, t: Topology):
+    self.topology = t
+
+  def set_base_model(self, model):
+    self.component_model = model
+
+  def create_network(self):
+    pass
