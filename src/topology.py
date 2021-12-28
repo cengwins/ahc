@@ -19,11 +19,7 @@ class ConnectorList(dict):
     self[key].append(value)
 
 class ComponentModel:
-  terminated = False
-
-  def on_init(self, eventobj: Event):
-    # print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
-    pass
+  terminated = False 
 
   def on_message_from_bottom(self, eventobj: Event):
     print(f"{EventTypes.MFRB} {self.componentname}.{self.componentinstancenumber}")

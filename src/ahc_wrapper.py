@@ -9,6 +9,22 @@ from threading import Thread, Lock
 from random import sample
 import networkx as nx
 
+class LayerTypes(Enum):
+  NET = "network"
+  LINK = "link"
+  TRANS = "transport"
+  APP = "app"
+  PHY = "physical"
+class LayerOrder:
+  layerOrder = [
+    LayerTypes.APP,
+    LayerTypes.TRANS,
+    LayerTypes.NET,
+    LayerTypes.LINK
+  ]
+
+  def custom_layerization(self, layerOrder): 
+    self.layerOrder = layerOrder
 
 
 class ahc_wrapper:
@@ -30,11 +46,12 @@ class ahc_wrapper:
   def set_base_model(self, model):
     self.component_model = model
 
-  def create_network(self):
+  def create_osi_network(self):
+    self.layer_order = LayerOrder()
     pass
 
-  def 
-  
+  def create_custom_network(self, layers: LayerOrder = LayerOrder):
+    pass
 
 class Topology: 
 

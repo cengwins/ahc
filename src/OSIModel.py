@@ -7,6 +7,7 @@ from src.topology import ComponentModel
 from topology import ComponentModel
 from Layers.NetworkLayers.AllSeeingEyeNetworkLayer import *
 from Layers.LinkLayers.GenericLinkLayer import *
+from Layers.ApplicationLayers.GenericApplication import *
 
 class AdHocNode(ComponentModel):
 
