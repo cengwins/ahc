@@ -7,6 +7,7 @@ from Ahc import ComponentModel, Event, GenericMessage, GenericMessageHeader, Eve
 class MessageTypes(enum.Enum):
     ROUTE_REQUEST = "ROUTE_REQUEST"
     ROUTE_REPLY = "ROUTE_REPLY"
+    ROUTE_ERROR = "ROUTE_ERROR"
 
 
 class DSRAlgorithmComponent(ComponentModel):
@@ -25,9 +26,15 @@ class DSRAlgorithmComponent(ComponentModel):
     def on_message_from_peer(self, eventobj: Event):
         message_type = eventobj.eventcontent.header.messagetype
 
+        src = eventobj.eventcontent.header.messagefrom
+        dst = eventobj.eventcontent.header.messageto
+        path = eventobj.eventcontent.payload
+
         if MessageTypes.ROUTE_REQUEST == message_type:
             pass
         elif MessageTypes.ROUTE_REPLY == message_type:
+            pass
+        elif MessageTypes.ROUTE_ERROR == message_type:
             pass
 
     def get(self):
@@ -37,11 +44,11 @@ class DSRAlgorithmComponent(ComponentModel):
         # maintenance here
         pass
 
-    def send_route_req(self, src, dest, path, hop_limit):
+    def send_route_req(self, src, dst, path, hop_limit):
 
         message_header = GenericMessageHeader(MessageTypes.ROUTE_REQUEST,
                                               src,
-                                              dest)
+                                              dst)
         message_payload = path
         message = GenericMessage(message_header, message_payload)
 
@@ -74,27 +81,27 @@ class DSRAlgorithmComponent(ComponentModel):
 
         return []
 
-    def start_route_discovery(self, dest) -> list:
+    def start_route_discovery(self, dst) -> list:
         path = [self.componentinstancenumber]
-        self.send_route_req(self.componentinstancenumber, dest, path, self.hop_limit)
+        self.send_route_req(self.componentinstancenumber, dst, path, self.hop_limit)
         return self.wait_for_route_reply()
 
-    def send_data(self, data, dest):
+    def send_data(self, data, dst):
 
         for i in range(self.trial_number):
 
-            path = self.cache[dest]
+            path = self.cache[dst]
             if not path:
-                path = self.start_route_discovery(dest)
-                self.cache[dest] = path
+                path = self.start_route_discovery(dst)
+                self.cache[dst] = path
 
             if path:
                 if self.send(data, path):
                     return
                 else:
-                    self.cache[dest] = []
+                    self.cache[dst] = []
 
-    def send_route_reply(self, src, dest, path: list):
+    def send_route_reply(self, src, dst, path: list):
 
         nexthop = -1
         for i in range(len(path)):
@@ -104,7 +111,7 @@ class DSRAlgorithmComponent(ComponentModel):
 
         message_header = GenericMessageHeader(MessageTypes.ROUTE_REPLY,
                                               src,
-                                              dest,
+                                              dst,
                                               nexthop)
         message_payload = path
         message = GenericMessage(message_header, message_payload)
@@ -114,20 +121,28 @@ class DSRAlgorithmComponent(ComponentModel):
         component_to_send = ComponentRegistry.getComponentByKey(self.componentname, nexthop)
         component_to_send.trigger_event(event)
 
-    def get_route_req(self, src, dest, path, hop_limit):
+    def get_route_reply(self, src, dst, path):
+        if self.componentinstancenumber == src:
+            self.set_route_path
+        else:
+            self.send_route_reply(src, dst, path)
 
-        if self.componentinstancenumber == dest:
+    def get_route_req(self, src, dst, path):
+
+        hop_limit = 2
+        if self.componentinstancenumber == dst:
             path.append(self.componentinstancenumber)
-            new_src = dest
-            new_dest = src
-            self.send_route_reply(new_src, new_dest, path)
+            new_src = dst
+            new_dst = src
+            self.cache[new_dst] = path.reverse()
+            self.send_route_reply(new_src, new_dst, path)
 
-        elif self.cache[dest]:
-            rest_of_the_path = self.cache[dest]
+        elif self.cache[dst]:
+            rest_of_the_path = self.cache[dst]
             path.append(rest_of_the_path)
-            new_src = dest
-            new_dest = src
-            self.send_route_reply(new_src, new_dest, path)
+            new_src = dst
+            new_dst = src
+            self.send_route_reply(new_src, new_dst, path)
 
         elif self.componentinstancenumber == src:
             pass
@@ -138,4 +153,4 @@ class DSRAlgorithmComponent(ComponentModel):
         else:
             if hop_limit > 1:
                 path.append(self.componentinstancenumber)
-                self.send_route_req(src, dest, path, hop_limit - 1)
+                self.send_route_req(src, dst, path, hop_limit - 1)
