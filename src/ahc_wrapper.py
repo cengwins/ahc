@@ -9,19 +9,20 @@ from threading import Thread, Lock
 from random import sample
 import networkx as nx
 
-inf = float('inf')
+
 
 class ahc_wrapper:
 
-  component_model = ComponentModel
-  topology = None
+  component_model = ComponentModel()
+  topology = Topology()
+  graph= None
 
   
   def __init__(self, g: nx.Graph):
       self.graph = g
 
-  def create_topology_by_graph(self, g: nx.Graph):
-    pass
+  def create_topology_by_graph(self, g: nx.Graph, nodetype, channeltype, context=None):
+    self.topology.construct_from_graph(g, nodetype, channeltype, context)
 
   def create_network_by_topology(self, t: Topology):
     self.topology = t
@@ -32,4 +33,8 @@ class ahc_wrapper:
   def create_network(self):
     pass
 
+  def 
   
+
+class Topology: 
+

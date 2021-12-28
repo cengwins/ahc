@@ -1,4 +1,5 @@
 from helpers import auto_str
+import datetime
 
 @auto_str
 class GenericMessagePayload:
@@ -27,7 +28,7 @@ class GenericMessageHeader:
 
 
 @auto_str
-class GenericEvent:
+class Event:
   curr_event_id = 0
 
   def __init__(self, eventsource, event, eventcontent, fromchannel=None,

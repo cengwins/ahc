@@ -1,8 +1,8 @@
 from enum import Enum
-
-from Ahc import ComponentModel, Event, GenericMessageHeader, GenericMessagePayload, GenericMessage, Topology, \
-  MessageDestinationIdentifiers, EventTypes
-
+from generics import *
+from topology import ComponentModel
+from definitions import *
+from topology import Topology
 # define your own message types
 class NetworkLayerMessageTypes(Enum):
   NETMSG = "NETMSG"

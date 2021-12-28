@@ -6,9 +6,11 @@ from threading import Thread, Lock
 from random import sample
 import networkx as nx
 import itertools
+import queue
+
+inf = float('inf')
 
 class ConnectorList(dict):
-
   def __setitem__(self, key, value):
     try:
       self[key]
@@ -19,17 +21,17 @@ class ConnectorList(dict):
 class ComponentModel:
   terminated = False
 
-  def on_init(self, eventobj: GenericEvent):
+  def on_init(self, eventobj: Event):
     # print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
     pass
 
-  def on_message_from_bottom(self, eventobj: GenericEvent):
+  def on_message_from_bottom(self, eventobj: Event):
     print(f"{EventTypes.MFRB} {self.componentname}.{self.componentinstancenumber}")
 
-  def on_message_from_top(self, eventobj: GenericEvent):
+  def on_message_from_top(self, eventobj: Event):
     print(f"{EventTypes.MFRT}  {self.componentname}.{self.componentinstancenumber}")
 
-  def on_message_from_peer(self, eventobj: GenericEvent):
+  def on_message_from_peer(self, eventobj: Event):
     print(f"{EventTypes.MFRP}  {self.componentname}.{self.componentinstancenumber}")
 
   def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1):
@@ -86,28 +88,28 @@ class ComponentModel:
   def terminate(self):
     self.terminated = True
 
-  def send_down(self, event: GenericEvent):
+  def send_down(self, event: Event):
     try:
       for p in self.connectors[ConnectorTypes.DOWN]:
         p.trigger_event(event)
     except:
       pass
 
-  def send_up(self, event: GenericEvent):
+  def send_up(self, event: Event):
     try:
       for p in self.connectors[ConnectorTypes.UP]:
         p.trigger_event(event)
     except:
       pass
 
-  def send_peer(self, event: GenericEvent):
+  def send_peer(self, event: Event):
     try:
       for p in self.connectors[ConnectorTypes.PEER]:
         p.trigger_event(event)
     except:
       pass
 
-  def send_self(self, event: GenericEvent):
+  def send_self(self, event: Event):
     self.trigger_event(event)
 
   # noinspection PyArgumentList
@@ -121,7 +123,7 @@ class ComponentModel:
         print(f"Event Handler: {workitem.event} is not implemented")
       myqueue.task_done()
 
-  def trigger_event(self, eventobj: GenericEvent):
+  def trigger_event(self, eventobj: Event):
     self.inputqueue.put_nowait(eventobj)
 
 class FramerObjects():
@@ -161,7 +163,7 @@ class ComponentRegistry:
   def init(self):
     for itemkey in self.components:
       cmp = self.components[itemkey]
-      cmp.inputqueue.put_nowait(GenericEvent(self, EventTypes.INIT, None))
+      cmp.inputqueue.put_nowait(Event(self, EventTypes.INIT, None))
       print("Initializing, ", cmp.componentname, ":", cmp.componentinstancenumber)
 
   def print_components(self):
@@ -257,11 +259,9 @@ class Topology:
       print(path[myid][i])
 
   def start(self):
-    # registry.printComponents()
     N = len(self.G.nodes)
     self.compute_forwarding_table()
     self.nodecolors = ['b'] * N
-    # self.nodepos = nx.drawing.spring_layout(self.G)
     self.lock = Lock()
     ComponentRegistry().init()
 

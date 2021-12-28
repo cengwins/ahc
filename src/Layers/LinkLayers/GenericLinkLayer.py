@@ -1,8 +1,10 @@
 from enum import Enum
+from generics import *
+from topology import ComponentModel
+from definitions import *
 
-from Ahc import ComponentModel, MessageDestinationIdentifiers, Event, GenericMessageHeader, GenericMessagePayload, \
-  GenericMessage, EventTypes
-
+# from Ahc import ComponentModel, MessageDestinationIdentifiers, Event, GenericMessageHeader, GenericMessagePayload, \
+#   GenericMessage, EventType
 # define your own message types
 class LinkLayerMessageTypes(Enum):
   LINKMSG = "LINKMSG"
