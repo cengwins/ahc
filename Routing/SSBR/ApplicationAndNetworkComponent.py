@@ -5,7 +5,6 @@ class ApplicationAndNetwork(ComponentModel):
     def __init__(self, componentname, componentid):
         super(ApplicationAndNetwork, self).__init__(componentname, componentid)
         self.componentid = componentid
-        self.RoutingTable = {}
         self.Response_Record = {}
 
     def on_init(self, eventobj: Event):
@@ -16,11 +15,13 @@ class ApplicationAndNetwork(ComponentModel):
     def on_message_from_bottom(self, eventobj: Event):
         messagePayload = eventobj.eventcontent.payload
         messageFrom = eventobj.eventcontent.header.messagefrom
-        print(f"{self.componentname}-{self.componentid} got a message from {messageFrom}. \n Message is {messagePayload}\n")
+        #print(f"{self.componentname}-{self.componentid} got a message from {messageFrom}. \n Message is {messagePayload}\n")
         if eventobj.eventcontent.header.messagetype == "ROUTECOMPLETED":
             target = int(eventobj.eventcontent.header.messageto.split("-")[1])
-            evt = Event(self, EventTypes.MFRT, SSBRUnicastMessage(self, target, "test"))
+            evt = Event(self, EventTypes.MFRT, SSBRUnicastMessage(self, target, "ROUTE IS COMPLETED"))
             self.send_down(evt)
+        if eventobj.eventcontent.header.messagetype == "UNICASTDATA":
+            print(f"Message from {eventobj.eventcontent.header.messagefrom} is delivered to {self.componentname}-{self.componentid}. Message is - {eventobj.eventcontent.payload}")
         if eventobj.eventcontent.header.messageto != str(self.componentname) + "-" + str(self.componentid):
             evt = Event(self, EventTypes.MFRT, messageParser(self, eventobj))
             self.send_down(evt)

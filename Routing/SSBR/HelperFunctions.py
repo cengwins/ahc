@@ -1,13 +1,6 @@
 import time
 import networkx as nx
-from networkx.generators.classic import null_graph
-from Ahc import GenericMessage, GenericMessageHeader, ComponentRegistry
-
-def convertTuple(tup):
-    str = ''
-    for item in tup:
-        str = str + str(item)
-    return str
+from Ahc import GenericMessage, GenericMessageHeader, ComponentRegistry, Topology
 
 def messageParser(self, eventobj, destination = ""):
     messageTo = eventobj.eventcontent.header.messageto
@@ -16,28 +9,18 @@ def messageParser(self, eventobj, destination = ""):
     messagePayload = eventobj.eventcontent.payload
     messageFrom = eventobj.eventcontent.header.messagefrom
     #print(f"{self.componentname}-{self.componentid} got a message from {messageFrom}. \n Message is {messagePayload}\n")
-    
-    messageHeader = GenericMessageHeader(eventobj.eventcontent.header.messagetype, eventobj.eventcontent.header.messagefrom, messageTo, interfaceid = eventobj.eventcontent.header.interfaceid, nexthop=eventobj.eventcontent.header.nexthop, sequencenumber = eventobj.eventcontent.header.sequencenumber)
+    nextHop=eventobj.eventcontent.header.nexthop
+
+    if eventobj.eventcontent.header.messagetype == "ROUTESEARCH":
+        nextHop = None
+    messageHeader = GenericMessageHeader(eventobj.eventcontent.header.messagetype, eventobj.eventcontent.header.messagefrom, messageTo, interfaceid = eventobj.eventcontent.header.interfaceid, nexthop=nextHop, sequencenumber = eventobj.eventcontent.header.sequencenumber)
     message = GenericMessage(messageHeader, messagePayload)
+    
     return message
            
-def messageGenerator(self):
-    time.sleep(1)
-    message_payload = input("Enter message payload content...\n")
-
-    message_header = GenericMessageHeader("SSBR", str(self.componentname) + "-" + str(self.componentinstancenumber), str(self.componentname)  + "-" + str(self.componentinstancenumber), interfaceid=str(self.componentinstancenumber))
-    message = GenericMessage(message_header, message_payload)
-
-    print(f"{self.componentname}-{self.componentid} is generating a test message with content of \"{message_payload}\" in 3 seconds...\n")
-    time.sleep(3)
-    
-    return message
-
-def buildRoutingTable():
-    sourceNode= input("Enter source node:\n")
-    destinationNode= input("Enter destination node:\n")
-    myNode = ComponentRegistry().get_component_by_key("FP",sourceNode)
-    myNode.build_routing_table(destinationNode)
+def buildRoutingTable(sourceNode, target):
+    myNode = ComponentRegistry().get_component_by_key("FP", sourceNode)
+    myNode.build_routing_table(target)
 
 def findStrongConnectedLinksForSingleNode(labels, threshold, nodeCount):
 
@@ -76,10 +59,24 @@ def findAllSimplePaths(graph):
     print(list(sortedPath))
     return sortedPath
 
-def printSSTForANode():
-    nodeId = int(input("Enter node to check its SC links... \n"))
-    nodeToEditSST = ComponentRegistry().get_component_by_key("DRP",nodeId)
-    nodeToEditSST.printSignalStabilityTable()
+def printSSTForANode(nodeCount):
+    for x in range(nodeCount):
+        print("--------------------\n")
+        print(f"Information of {x}:\n")
+        nodeToEditSST = ComponentRegistry().get_component_by_key("DRP",x)
+        print("Stability Table:")
+        nodeToEditSST.printSignalStabilityTable()
+        print("Routing Table:")
+        nodeToEditSST = ComponentRegistry().get_component_by_key("FP",x)
+        print(nodeToEditSST.routingTable)
+        
+        
+def resetRoutingState(nodeCount):
+    for x in range (0, nodeCount):
+        nodeToEdit = ComponentRegistry().get_component_by_key("DRP",x)
+        nodeToEditTwo = ComponentRegistry().get_component_by_key("SSBRNode",x)
+        nodeToEdit.routingTableFlag = False
+        nodeToEditTwo.messageFrom = -1
 
 def constructStrongRoute(graph, source, target):
     paths = nx.all_simple_paths(graph, source, target)
@@ -93,7 +90,6 @@ def constructStrongRoute(graph, source, target):
                     desiredPath = False
         if desiredPath:
             return i
-    print(f"No possible path found between node#{source} to node#{target}")
     return []
   
 def SSBRRouteSearchMessage(self, target):
@@ -127,7 +123,7 @@ def sendMessageToOtherNode(self, eventobj, nodeid):
 
     messageFrom = eventobj.eventcontent.header.messagefrom
     messageTo = eventobj.eventcontent.header.messageto
-
+    
     if int(self.componentinstancenumber) > int(nodeid):
         interfaceid = str(nodeid)+"-"+str(self.componentinstancenumber)
     else:
@@ -141,11 +137,11 @@ def sendMessageToOtherNode(self, eventobj, nodeid):
     if eventobj.eventcontent.header.messagetype == "ROUTEREPLY":
         if int(eventobj.eventcontent.header.sequencenumber) == 0:
             messagePayload = []
-        messagePayload.append(self.componentinstancenumber)
+        if self.componentinstancenumber not in messagePayload: messagePayload.append(self.componentinstancenumber)
         
     messageHeader = GenericMessageHeader(messageType, messageFrom, messageTo, nextHop, interfaceid, sequenceNumber)    
     message = GenericMessage(messageHeader, messagePayload)
-    #print(message)
+    #print(messageHeader)
     #print(f"{nextHop} got a {eventobj.eventcontent.header.messagetype} message from {self.componentid}.\n")
     return message
 
@@ -178,8 +174,8 @@ def SSBRUnicastMessage(self, destination, message=""):
 
 def SSBRUnicastMessageFPParser(self, eventobj):
     target = eventobj.eventcontent.header.messageto.split("-")[1]
-    nextHop = self.routingTable.get(int(target))
-    messageHeader = GenericMessageHeader(eventobj.eventcontent.header.messagetype, eventobj.eventcontent.header.messagefrom, eventobj.eventcontent.header.messageto,  nextHop, sequencenumber=eventobj.eventcontent.header.sequencenumber)
+    nextHop = self.routingTable.get(str(target))
+    messageHeader = GenericMessageHeader(eventobj.eventcontent.header.messagetype, eventobj.eventcontent.header.messagefrom, eventobj.eventcontent.header.messageto, nextHop, sequencenumber=eventobj.eventcontent.header.sequencenumber)
     message = GenericMessage(messageHeader, eventobj.eventcontent.payload)
 
     return message

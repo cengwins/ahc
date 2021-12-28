@@ -46,9 +46,11 @@ class SSBRNode(ComponentModel):
                     messageFrom = int(eventobj.eventcontent.header.interfaceid.split("-")[1])
                 self.messageFrom = messageFrom
         if eventobj.eventcontent.header.messagetype == "ROUTESEARCH":
+            
             for neigh in self.neighbors:
-                evt = Event(self, EventTypes.MFRT,sendMessageToOtherNode(self, eventobj, neigh))
-                self.send_down(evt)   # send incoming messages from upper components to a channel
+                if(int(self.messageFrom) != int(neigh)):
+                    evt = Event(self, EventTypes.MFRT,sendMessageToOtherNode(self, eventobj, neigh))
+                    self.send_down(evt)   # send incoming messages from upper components to a channel
         elif eventobj.eventcontent.header.messagetype == "ROUTEREPLY":
             messageTo = self.messageFrom
             evt = Event(self, EventTypes.MFRT,sendMessageToOtherNode(self, eventobj, messageTo))

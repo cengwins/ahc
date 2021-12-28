@@ -1,5 +1,5 @@
 from Routing.SSBR.HelperFunctions import messageParser
-from Ahc import ComponentModel, Event, EventTypes
+from Ahc import ComponentModel, Event, EventTypes, ComponentRegistry
 from Routing.SSBR.HelperFunctions import SSBRRouteReplyMessage, SSBRRouteCompletedMessage
 class DRP(ComponentModel):
     def __init__(self, componentname, componentid):
@@ -17,8 +17,11 @@ class DRP(ComponentModel):
         messageto = eventobj.eventcontent.header.messageto
         interfaceID = eventobj.eventcontent.header.interfaceid
         messageFromID = int(interfaceID.split("-")[1])
+        #selfFP = ComponentRegistry().get_component_by_key("FP",self.componentid)
+        #selfFP.routingTable.get()[int(messageto.split("-")[1])] != None
         if messageFromID == int(self.componentid):
             messageFromID = int(interfaceID.split("-")[0])
+
         if(eventobj.eventcontent.header.messagetype == "ROUTESEARCH"):
             if self.routingTableFlag == False:
                 tableVal = self.signalStabilityTable.get(messageFromID)
@@ -30,14 +33,12 @@ class DRP(ComponentModel):
                     else:
                         evt = Event(self, EventTypes.MFRP,messageParser(self, eventobj))
                         self.send_peer(evt)
+            
+
         elif(eventobj.eventcontent.header.messagetype == "ROUTEREPLY"):
-            if int(messageto.split("-")[1]) == int(self.componentid):
-                evt = Event(self, EventTypes.MFRP, SSBRRouteCompletedMessage(self, eventobj))
-                self.send_peer(evt)
-            else:
                 evt = Event(self, EventTypes.MFRP,messageParser(self, eventobj))
                 self.send_peer(evt)
-                  
+            
         else:
             evt = Event(self, EventTypes.MFRP,messageParser(self, eventobj))
             self.send_peer(evt)

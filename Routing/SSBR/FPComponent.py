@@ -21,28 +21,30 @@ class FP(ComponentModel):
             self.send_down(evt)
     
     def build_routing_table(self, target):
-        SelfDRP = ComponentRegistry().get_component_by_key("DRP",self.componentid)
+        SelfDRP = ComponentRegistry().get_component_by_key("DRP", self.componentid)
         SelfDRP.routingTableFlag = True
         evt = Event(self, EventTypes.MFRT, SSBRRouteSearchMessage(self, target))
         self.send_down(evt)
-
+        
     def on_message_from_peer(self, eventobj: Event):
-        leng = len(self.routingTable)
+        
         if eventobj.eventcontent.header.messagetype == "ROUTESEARCH":
             evt = Event(self, EventTypes.MFRT,messageParser(self,eventobj))
             self.send_down(evt)
-        elif eventobj.eventcontent.header.messagetype == "ROUTEREPLY":           
-            evt = Event(self, EventTypes.MFRT,messageParser(self,eventobj))
-            self.send_down(evt)
+
+        elif eventobj.eventcontent.header.messagetype == "ROUTEREPLY":
             payload = eventobj.eventcontent.payload
-            for el in reversed(payload):
-                self.routingTable[el] = payload[leng-1]
-        elif eventobj.eventcontent.header.messagetype == "ROUTECOMPLETED":           
-            payload = eventobj.eventcontent.payload
-            for el in reversed(payload):
-                self.routingTable[el] = payload[leng-1]
-            evt = Event(self, EventTypes.MFRB,messageParser(self,eventobj))
-            self.send_up(evt)
+            
+            for el in payload:
+                    self.routingTable[str(el)] = payload[len(payload)-1]
+
+            if int(eventobj.eventcontent.header.messageto.split("-")[1]) == self.componentid:
+                print("Routing table is completed....\n")
+
+            else:
+                evt = Event(self, EventTypes.MFRT,messageParser(self,eventobj))
+                self.send_down(evt)
+            
         else:
             evt = Event(self, EventTypes.MFRB,messageParser(self,eventobj))
             self.send_up(evt) # send incoming messages to upper components
