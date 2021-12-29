@@ -1,4 +1,3 @@
-import time
 import networkx as nx
 from Ahc import GenericMessage, GenericMessageHeader, ComponentRegistry, Topology
 
@@ -21,6 +20,10 @@ def messageParser(self, eventobj, destination = ""):
 def buildRoutingTable(sourceNode, target):
     myNode = ComponentRegistry().get_component_by_key("FP", sourceNode)
     myNode.build_routing_table(target)
+
+def benchmarkTest(nodeCount):
+    myNode = ComponentRegistry().get_component_by_key("FP", 0)
+    myNode.build_routing_table(nodeCount, 1, nodeCount)
 
 def findStrongConnectedLinksForSingleNode(labels, threshold, nodeCount):
 
@@ -70,13 +73,15 @@ def printSSTForANode(nodeCount):
         nodeToEditSST = ComponentRegistry().get_component_by_key("FP",x)
         print(nodeToEditSST.routingTable)
         
-        
 def resetRoutingState(nodeCount):
     for x in range (0, nodeCount):
         nodeToEdit = ComponentRegistry().get_component_by_key("DRP",x)
         nodeToEditTwo = ComponentRegistry().get_component_by_key("SSBRNode",x)
+        nodeToEditThree = ComponentRegistry().get_component_by_key("FP",x)
         nodeToEdit.routingTableFlag = False
         nodeToEditTwo.messageFrom = -1
+        nodeToEditThree.node = 0
+        nodeToEditThree.nodeCount = 0
 
 def constructStrongRoute(graph, source, target):
     paths = nx.all_simple_paths(graph, source, target)
@@ -123,7 +128,6 @@ def sendMessageToOtherNode(self, eventobj, nodeid):
 
     messageFrom = eventobj.eventcontent.header.messagefrom
     messageTo = eventobj.eventcontent.header.messageto
-    
     if int(self.componentinstancenumber) > int(nodeid):
         interfaceid = str(nodeid)+"-"+str(self.componentinstancenumber)
     else:
@@ -179,5 +183,5 @@ def SSBRUnicastMessageFPParser(self, eventobj):
     message = GenericMessage(messageHeader, eventobj.eventcontent.payload)
 
     return message
-#def sendSSBRMessage(table, source, target):
+
     
