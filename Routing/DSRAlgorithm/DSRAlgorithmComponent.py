@@ -1,156 +1,278 @@
 import enum
 import time
 
-from Ahc import ComponentModel, Event, GenericMessage, GenericMessageHeader, EventTypes, ComponentRegistry
+from Ahc import ComponentModel
+from Ahc import ComponentRegistry
+from Ahc import ConnectorTypes
+from Ahc import Event
+from Ahc import EventTypes
+from Ahc import GenericMessage
+from Ahc import GenericMessageHeader
+from Ahc import Thread
 
 
 class MessageTypes(enum.Enum):
-    ROUTE_REQUEST = "ROUTE_REQUEST"
-    ROUTE_REPLY = "ROUTE_REPLY"
+    ROUTE_FORWARDING = "ROUTE_FORWARDING"
     ROUTE_ERROR = "ROUTE_ERROR"
+    ROUTE_REPLY = "ROUTE_REPLY"
+    ROUTE_REQUEST = "ROUTE_REQUEST"
 
 
 class DSRAlgorithmComponent(ComponentModel):
-    hop_limit = 99
-    trial_number = 3
 
-    def __init__(self, component_name, componentinstancenumber):
+    def __init__(self, component_name: str, componentinstancenumber: int):
         super(DSRAlgorithmComponent, self).__init__(component_name, componentinstancenumber)
-        self.cache = {}
+        self.hop_limit = 9
+        self.uid = 0
+        self.trial_number = 3
+        self.route_cache = {}
+        self.route_req_cache = {}
 
-    # def on_init(self, event_obj: Event):
-    #     if self.componentinstancenumber == 0:
-    #         evt = Event(self, EventTypes.MFRP, "first node to all peers")
-    #         self.send_peer(evt)
+    def on_init(self, event_obj: Event):
+        if self.get_component_id() == 0:
+            dst = len(ComponentRegistry.components) - 1
+            thread = Thread(target=self.start_data_sending, args=[dst, "Data send by componentinstancenumber == 0"])
+            thread.start()
 
-    def on_message_from_peer(self, eventobj: Event):
-        message_type = eventobj.eventcontent.header.messagetype
+    def is_destination(self, dst: int) -> bool:
+        return dst == self.get_component_id()
 
-        src = eventobj.eventcontent.header.messagefrom
-        dst = eventobj.eventcontent.header.messageto
-        path = eventobj.eventcontent.payload
+    def is_destination_in_cache(self, dst: int) -> bool:
+        if dst in self.route_cache:
+            return True
 
-        if MessageTypes.ROUTE_REQUEST == message_type:
-            pass
-        elif MessageTypes.ROUTE_REPLY == message_type:
-            pass
-        elif MessageTypes.ROUTE_ERROR == message_type:
-            pass
+        return False
 
-    def get(self):
-        pass
+    def is_link_up(self, next_component_id: int) -> bool:
+        if next_component_id in self.connectors[ConnectorTypes.PEER]:
+            return True
+        return False
 
-    def send(self, data, path) -> bool:
-        # maintenance here
-        pass
+    def is_route_request_seen_before(self, src: int, uid: int) -> bool:
+        if src in self.route_req_cache:
+            if self.route_req_cache[src] >= uid:
+                return True
 
-    def send_route_req(self, src, dst, path, hop_limit):
+        self.route_req_cache[src] = uid
+        return False
 
-        message_header = GenericMessageHeader(MessageTypes.ROUTE_REQUEST,
-                                              src,
-                                              dst)
-        message_payload = path
-        message = GenericMessage(message_header, message_payload)
+    def is_source(self, src: int) -> bool:
+        return src == self.get_component_id()
 
-        event = Event(self, EventTypes.MFRP, message)
-        self.send_peer(event)
+    def get_component_id(self) -> int:
+        return self.componentinstancenumber
 
     @staticmethod
     def get_current_time_in_ms():
         return round(time.time() * 1000)
 
-    def is_reply_received(self) -> bool:
-        # when event triggered, this will be true
-        pass
+    def get_next_component_id(self, route: list):
+        try:
+            index_of_current_component = route.index(self.get_component_id())
+            index_of_next_component = index_of_current_component + 1
+            return route[index_of_next_component]
+        except ValueError:
+            print("[DSRAlgorithmComponent:get_next_component_id][Exception] ValueError")
+            print("component_id = " + str(self.get_component_id()))
+            str_route = ' '.join(map(str, route))
+            print("route = " + str_route)
+            return None
 
-    def wait_for_route_reply(self) -> list:
+    def get_prev_component_id(self, route: list):
+        try:
+            index_of_current_component = route.index(self.get_component_id())
+            index_of_prev_component = index_of_current_component - 1
+            return route[index_of_prev_component]
+        except ValueError:
+            print("[DSRAlgorithmComponent:get_prev_component_id][Exception] ValueError")
+            print("component_id = " + str(self.get_component_id()))
+            str_route = ' '.join(map(str, route))
+            print("route = " + str_route)
+            return None
+
+    def get_route_from_cache(self, dst: int) -> list:
+        return self.route_cache[dst]
+
+    def create_event(self, message_type, src: int, dst: int, route: list, data=None) -> Event:
+        message_header = GenericMessageHeader(message_type, src, dst)
+        message_payload = [route, data]
+        message = GenericMessage(message_header, message_payload)
+
+        return Event(self, EventTypes.MFRP, message)
+
+    def create_unique_id_for_req(self) -> int:
+        return self.uid + 1
+
+    def process_message(self, data: str) -> None:
+        print(f"I am {self.componentname} {self.componentinstancenumber}, data={data}\n")
+
+    def start_route_discovery(self, dst: int) -> None:
+        src = self.get_component_id()
+        route = [src]
+        uid = self.create_unique_id_for_req()
+
+        self.transmit_route_request(src, dst, route, uid)
+        self.wait_for_route_reply(dst)
+
+    def start_route_maintenance(self, dst: int) -> None:
+        self.start_route_discovery(dst)
+
+    def start_data_sending(self, dst: int, data) -> None:
+
+        for i in range(self.trial_number):
+
+            if self.is_destination_in_cache(dst):
+                src = self.get_component_id()
+                route = self.get_route_from_cache(dst)
+
+                self.transmit_route_forwarding(src, dst, route, data)
+                return
+
+            # waits in start_route_discovery
+            self.start_route_discovery(dst)
+
+    def wait_for_route_reply(self, dst: int) -> None:
 
         sleep_period_in_ms = 100
         sleep_period_in_sec = sleep_period_in_ms / 1000
 
         timeout_in_sec = 10
         timeout_in_ms = timeout_in_sec * 1000
-        start_time = self.get_current_time_in_ms()
-        end_time = start_time + timeout_in_ms
+        start_time_in_ms = self.get_current_time_in_ms()
+        end_time_in_ms = start_time_in_ms + timeout_in_ms
 
-        while end_time > self.get_current_time_in_ms():
-            if self.is_reply_received():
-                return ["add_reply_here"]
+        # overflow check in time
+        while end_time_in_ms > self.get_current_time_in_ms():
+            if self.is_destination_in_cache(dst):
+                return
 
             time.sleep(sleep_period_in_sec)
 
-        return []
+    def on_message_from_peer(self, event_obj: Event):
 
-    def start_route_discovery(self, dst) -> list:
-        path = [self.componentinstancenumber]
-        self.send_route_req(self.componentinstancenumber, dst, path, self.hop_limit)
-        return self.wait_for_route_reply()
+        src = event_obj.eventcontent.header.messagefrom
+        dst = event_obj.eventcontent.header.messageto
+        [route, data] = event_obj.eventcontent.payload
 
-    def send_data(self, data, dst):
+        uid = broken_link = data
 
-        for i in range(self.trial_number):
+        message_type = event_obj.eventcontent.header.messagetype
+        if MessageTypes.ROUTE_FORWARDING == message_type:
+            self.receive_route_forwarding(src, dst, route, data)
 
-            path = self.cache[dst]
-            if not path:
-                path = self.start_route_discovery(dst)
-                self.cache[dst] = path
+        elif MessageTypes.ROUTE_ERROR == message_type:
+            self.receive_route_error(src, dst, route, broken_link)
 
-            if path:
-                if self.send(data, path):
-                    return
-                else:
-                    self.cache[dst] = []
+        elif MessageTypes.ROUTE_REPLY == message_type:
+            self.receive_route_reply(src, dst, route)
 
-    def send_route_reply(self, src, dst, path: list):
+        elif MessageTypes.ROUTE_REQUEST == message_type:
+            self.receive_route_request(src, dst, route, uid)
 
-        nexthop = -1
-        for i in range(len(path)):
-            if path[i] == self.componentinstancenumber:
-                if i > 0:  # i cannot be zero bcs zero index for src
-                    nexthop = path[i - 1]
-
-        message_header = GenericMessageHeader(MessageTypes.ROUTE_REPLY,
-                                              src,
-                                              dst,
-                                              nexthop)
-        message_payload = path
-        message = GenericMessage(message_header, message_payload)
-
-        event = Event(self, EventTypes.MFRP, message)
-
-        component_to_send = ComponentRegistry.getComponentByKey(self.componentname, nexthop)
-        component_to_send.trigger_event(event)
-
-    def get_route_reply(self, src, dst, path):
-        if self.componentinstancenumber == src:
-            self.set_route_path
+    def receive_route_forwarding(self, src: int, dst: int, route: list, data) -> None:
+        if self.is_destination(dst):
+            self.process_message(data)
         else:
-            self.send_route_reply(src, dst, path)
+            self.transmit_route_forwarding(src, dst, route, data)
 
-    def get_route_req(self, src, dst, path):
+    def receive_route_error(self, src: int, dst: int, route: list, broken_link: list) -> None:
 
-        hop_limit = 2
-        if self.componentinstancenumber == dst:
-            path.append(self.componentinstancenumber)
+        # delete from cache
+        if self.is_destination(dst):
+            self.start_route_maintenance(dst)
+        else:
+            self.transmit_route_error(src, dst, route, broken_link)
+
+    def receive_route_reply(self, src: int, dst: int, route: list) -> None:
+        # cache
+        if not self.is_destination(dst):
+            self.transmit_route_reply(src, dst, route)
+
+    def receive_route_request(self, src: int, dst: int, route: list, uid: int) -> None:
+
+        if self.is_route_request_seen_before(src, uid):
+            pass
+        elif self.is_destination(dst):
+            route.append(self.get_component_id())
             new_src = dst
             new_dst = src
-            self.cache[new_dst] = path.reverse()
-            self.send_route_reply(new_src, new_dst, path)
+            # add to cache
+            self.transmit_route_reply(new_src, new_dst, route)
 
-        elif self.cache[dst]:
-            rest_of_the_path = self.cache[dst]
-            path.append(rest_of_the_path)
+        elif self.is_destination_in_cache(dst):
+            # add to cache
+            rest_of_the_route = self.get_route_from_cache(dst)
+            route.append(rest_of_the_route)
             new_src = dst
             new_dst = src
-            self.send_route_reply(new_src, new_dst, path)
+            self.transmit_route_reply(new_src, new_dst, route)
 
-        elif self.componentinstancenumber == src:
+        elif self.is_source(src):
             pass
+        elif self.get_component_id() in route:
+            pass
+        else:
+            if len(route) < self.hop_limit:
+                route.append(self.get_component_id())
+                # add to cache
+                self.transmit_route_request(src, dst, route, uid)
 
-        elif self.componentinstancenumber in path:
-            pass
+    def transmit_route_forwarding(self, src: int, dst: int, route: list, data) -> None:
+        next_component_id = self.get_next_component_id(route)
+
+        if (next_component_id is not None) and (self.is_link_up(next_component_id)):
+
+            event = self.create_event(MessageTypes.ROUTE_FORWARDING, src, dst, route, data)
+
+            next_component = ComponentRegistry.getComponentByKey(self.componentname, next_component_id)
+            if next_component:
+                next_component.trigger_event(event)
 
         else:
-            if hop_limit > 1:
-                path.append(self.componentinstancenumber)
-                self.send_route_req(src, dst, path, hop_limit - 1)
+            if self.is_source(src):
+                broken_link = route[0:1]
+                self.receive_route_error(src, src, route, broken_link)
+            else:
+                new_src = self.get_component_id()
+                new_dst = src
+
+                try:
+                    index_of_current_component = route.index(self.get_component_id())
+                    new_route = route[0: index_of_current_component]
+
+                    broken_link = [self.get_component_id(), next_component_id]
+                    self.transmit_route_error(new_src, new_dst, new_route, broken_link)
+
+                except ValueError:
+                    print("[DSRAlgorithmComponent:transmit_route_forwarding][Error] component_id not in the route")
+                    print("[DSRAlgorithmComponent:transmit_route_forwarding][Error] component_id = " +
+                          str(self.get_component_id()))
+                    str_route = ' '.join(map(str, route))
+                    print("[DSRAlgorithmComponent:transmit_route_forwarding][Error] route = " + str_route)
+
+    def transmit_route_error(self, src: int, dst: int, route: list, broken_link: list) -> None:
+        prev_component_id = self.get_prev_component_id(route)
+
+        if (prev_component_id is not None) and (self.is_link_up(prev_component_id)):
+
+            event = self.create_event(MessageTypes.ROUTE_ERROR, src, dst, route, broken_link)
+
+            prev_component = ComponentRegistry.getComponentByKey(self.componentname, prev_component_id)
+            if prev_component:
+                prev_component.trigger_event(event)
+
+    def transmit_route_reply(self, src: int, dst: int, route: list) -> None:
+        prev_component_id = self.get_prev_component_id(route)
+
+        if (prev_component_id is not None) and (self.is_link_up(prev_component_id)):
+
+            event = self.create_event(MessageTypes.ROUTE_REPLY, src, dst, route)
+
+            prev_component = ComponentRegistry.getComponentByKey(self.componentname, prev_component_id)
+            if prev_component:
+                prev_component.trigger_event(event)
+
+    def transmit_route_request(self, src: int, dst: int, route: list, uid: int) -> None:
+
+        event = self.create_event(MessageTypes.ROUTE_REQUEST, src, dst, route, uid)
+        self.send_peer(event)
