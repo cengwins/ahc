@@ -7,6 +7,7 @@
 - [Ozan Akın](https://github.com/oznakn)
 - [Ilyas Eren Yilmaz](https://github.com/ilyaserenyilmaz)
 - [İbrahim Koç]
+- [Alparslan Yesilkaya](https://github.com/aalparslan)
 - [Ege Uçak](https://github.com/egeucak)
 - [Mahmoud Alasmar](https://github.com/e212602)
 - [Yigit Sever](https://github.com/yigitsever)
