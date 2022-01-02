@@ -4,29 +4,10 @@ from helpers import *
 from generics import *
 from definitions import *
 from topology import *
-from enum import Enum
 from threading import Thread, Lock
 from random import sample
+from OSIModel import *
 import networkx as nx
-
-class LayerTypes(Enum):
-  NET = "network"
-  LINK = "link"
-  TRANS = "transport"
-  APP = "app"
-  PHY = "physical"
-class LayerOrder:
-  layerOrder = [
-    LayerTypes.APP,
-    LayerTypes.TRANS,
-    LayerTypes.NET,
-    LayerTypes.LINK
-  ]
-
-  def custom_layerization(self, layerOrder): 
-    self.layerOrder = layerOrder
-
-
 class ahc_wrapper:
 
   component_model = ComponentModel()

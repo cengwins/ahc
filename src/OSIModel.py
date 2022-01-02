@@ -8,6 +8,23 @@ from topology import ComponentModel
 from Layers.NetworkLayers.AllSeeingEyeNetworkLayer import *
 from Layers.LinkLayers.GenericLinkLayer import *
 from Layers.ApplicationLayers.GenericApplication import *
+class LayerTypes(Enum):
+  NET = "network"
+  LINK = "link"
+  TRANS = "transport"
+  APP = "app"
+  PHY = "physical"
+
+class LayerOrder:
+  layerOrder = [
+    LayerTypes.APP,
+    LayerTypes.TRANS,
+    LayerTypes.NET,
+    LayerTypes.LINK
+  ]
+
+  def custom_layerization(self, layerOrder): 
+    self.layerOrder = layerOrder
 
 class AdHocNode(ComponentModel):
 
@@ -20,11 +37,11 @@ class AdHocNode(ComponentModel):
   def on_message_from_bottom(self, eventobj: Event):
     self.send_up(Event(self, EventTypes.MFRB, eventobj.eventcontent))
 
-  def __init__(self, componentname, componentid):
-    # SUBCOMPONENTS
-    self.appllayer = ApplicationLayerComponent("ApplicationLayer", componentid)
-    self.netlayer = AllSeingEyeNetworkLayer("NetworkLayer", componentid)
-    self.linklayer = LinkLayer("LinkLayer", componentid)
+  def __init__(self, componentname, LlayerOrder):
+
+    self.appllayer = ApplicationLayerComponent("ApplicationLayer", self.componentinstancenumber)
+    self.netlayer = AllSeingEyeNetworkLayer("NetworkLayer", self.componentinstancenumber)
+    self.linklayer = LinkLayer("LinkLayer", self.componentinstancenumber)
     # self.failuredetect = GenericFailureDetector("FailureDetector", componentid)
 
     # CONNECTIONS AMONG SUBCOMPONENTS
