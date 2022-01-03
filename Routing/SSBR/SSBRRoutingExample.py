@@ -106,7 +106,7 @@ while(menuItem):
     elif menuItem == 5:
         nodeNumber = []
         time = []
-        for x in range (5,25):
+        for x in range (3,42):
             NODE_COUNT = x
             graph =  draw_random_graph(NODE_COUNT)
             for (u,v,w) in graph.edges(data=True):
@@ -123,6 +123,17 @@ while(menuItem):
             benchmarkTest(NODE_COUNT)
             nodeNumber.append(x)
             time.append(t.time()-start_time)
+            for y in range (0,x):
+                sourceNode = ComponentRegistry().get_component_by_key("SSBRNode", source)
+                sourceNode.terminate()
+                sourceNode = ComponentRegistry().get_component_by_key("ApplicationAndNetwork", source)
+                sourceNode.terminate()
+                sourceNode = ComponentRegistry().get_component_by_key("FP", source)
+                sourceNode.terminate()
+                sourceNode = ComponentRegistry().get_component_by_key("DRP", source)
+                sourceNode.terminate()
+                sourceNode = ComponentRegistry().get_component_by_key("NetworkInterface", source)
+                sourceNode.terminate()
 
         plt.plot(nodeNumber, time)
         plt.title('Node number vs Time')
