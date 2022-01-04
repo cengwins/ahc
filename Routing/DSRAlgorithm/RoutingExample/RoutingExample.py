@@ -2,7 +2,7 @@ from networkx import Graph
 
 from Ahc import Topology
 from Channels.Channels import P2PFIFOPerfectChannel
-from Routing.DSRAlgorithm.RoutingExample.AdhocNodeComponent import AdhocNodeComponent
+from Routing.DSRAlgorithm.AdhocNodeComponent import AdhocNodeComponent
 
 edges = [(0, 1, {"weight": 1}),
          (0, 2, {"weight": 1}),

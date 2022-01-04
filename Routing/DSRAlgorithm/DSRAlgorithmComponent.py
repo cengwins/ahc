@@ -10,12 +10,6 @@ from Ahc import GenericMessage
 from Ahc import GenericMessageHeader
 from Ahc import Thread
 
-import logging
-
-logging.basicConfig(filename="C:\\Users\\bsezgin\\Desktop\\newfile.log",
-                    format='%(asctime)s %(message)s',
-                    filemode='w')
-
 
 class MessageTypes(enum.Enum):
     ROUTE_FORWARDING = "ROUTE_FORWARDING"
@@ -82,8 +76,6 @@ class DSRAlgorithmComponent(ComponentModel):
         self.trial_number = 2
         self.route_cache = Cache(componentinstancenumber)
         self.route_request_table = Cache(componentinstancenumber)
-        self.logger = logging.getLogger()
-        self.logger.setLevel(logging.DEBUG)
 
     def is_destination(self, dst: int) -> bool:
         return dst == self.get_component_id()
@@ -165,12 +157,19 @@ class DSRAlgorithmComponent(ComponentModel):
         start_time_in_ms = self.get_current_time_in_ms()
         end_time_in_ms = start_time_in_ms + timeout_in_ms
 
-        # overflow check in time
+        # might overflow, check time
         while end_time_in_ms > self.get_current_time_in_ms():
             if self.route_cache.has(dst):
                 return
 
             time.sleep(sleep_period_in_sec)
+
+    def add_to_cache(self, src, route):
+        local_route = deepcopy(route)
+        if not self.route_cache.has(src):
+            self.route_cache.set_value(src, local_route)
+        elif len(local_route) < len(self.route_cache.get_value(src)):
+            self.route_cache.set_value(src, local_route)
 
     def on_message_from_top(self, eventobj: Event):
 
@@ -184,12 +183,8 @@ class DSRAlgorithmComponent(ComponentModel):
 
         src = int(eventobj.eventcontent.header.messagefrom.split("-")[1])
         dst = int(eventobj.eventcontent.header.messageto.split("-")[1])
-        # [route, data] = eventobj.eventcontent.payload[0]
-        route = eventobj.eventcontent.payload[0]
+        route = deepcopy(eventobj.eventcontent.payload[0])
         data = eventobj.eventcontent.payload[1]
-
-        self.logger.debug("[DSR::bottom] id = " + str(self.get_component_id()) + " eventid = " + str(
-            eventobj.eventid) + " route = " + str(route))
 
         uid = broken_link = data
 
@@ -223,83 +218,46 @@ class DSRAlgorithmComponent(ComponentModel):
             self.transmit_route_error(src, dst, deepcopy(route), deepcopy(broken_link))
 
     def receive_route_reply(self, src: int, dst: int, route: list) -> None:
+        local_route = deepcopy(route)
         try:
-            index_of_current_component = route.index(self.get_component_id())
-            new_route = route[index_of_current_component:]
+            index_of_current_component = local_route.index(self.get_component_id())
 
-
-
-            if not self.route_cache.has(src):
-                self.route_cache.set_value(src, new_route)
-            elif len(new_route) < len(self.route_cache.get_value(src)):
-                self.route_cache.set_value(src, new_route)
-
-            if self.get_component_id() == 0:
-                print("Cache : " + str(self.route_cache.get_value(src)))
+            self.add_to_cache(src, local_route[index_of_current_component:])
 
         except ValueError:
             print("[DSRAlgorithmComponent:receive_route_reply][Exception] ValueError")
-            print("component_id = " + str(self.get_component_id()))
-            str_route = ' '.join(map(str, route))
-            print("route = " + str_route)
+            print("[DSRAlgorithmComponent:receive_route_reply][Exception] comp_id = " + str(self.get_component_id()))
+            str_route = ' '.join(map(str, local_route))
+            print("[DSRAlgorithmComponent:receive_route_reply][Exception] route = " + str_route)
             return None
 
         if not self.is_destination(dst):
-            self.transmit_route_reply(src, dst, deepcopy(route))
+            self.transmit_route_reply(src, dst, local_route)
 
     def receive_route_request(self, src: int, dst: int, route: list, uid: int) -> None:
 
-        id = self.get_component_id()
-        self.logger.debug("[DSR::receive_route_request] id = " + str(id) + " route = " + str(route))
         if self.is_route_request_seen_before(src, uid):
-            pass
-        elif self.is_destination(dst):
-            new_route = deepcopy(route)
-            new_route.append(self.get_component_id())
-            new_src = dst
-            new_dst = src
+            return
+        elif self.is_source(src):
+            return
+        elif self.get_component_id() in route:
+            return
 
-            if not self.route_cache.has(src):
-                self.route_cache.set_value(src, new_route[::-1])
-            elif len(new_route) < len(self.route_cache.get_value(src)):
-                self.route_cache.set_value(src, new_route[::-1])
+        new_route = deepcopy(route)
+        new_route.append(self.get_component_id())
 
-            self.transmit_route_reply(new_src, new_dst, new_route)
+        self.add_to_cache(src, new_route[::-1])
+
+        if self.is_destination(dst):
+            self.transmit_route_reply(dst, src, new_route)
 
         elif self.route_cache.has(dst):
-            # buradaki routeları düzelt
-            if not self.route_cache.has(src):
-                new_route = route
-                new_route.append(self.get_component_id())
-                self.route_cache.set_value(src, new_route[::-1])
-            elif len(route) + 1 < len(self.route_cache.get_value(src)):
-                new_route = route
-                new_route.append(self.get_component_id())
-                self.route_cache.set_value(src, new_route[::-1])
+            rest_of_the_route = deepcopy(self.route_cache.get_value(dst)[1:])
+            new_route.append(rest_of_the_route)
+            self.transmit_route_reply(dst, src, new_route)
 
-            rest_of_the_route = deepcopy(self.route_cache.get_value(dst))
-            route.append(rest_of_the_route)
-            new_src = dst
-            new_dst = src
-            self.transmit_route_reply(new_src, new_dst, route)
-
-        elif self.is_source(src):
-            pass
-        elif self.get_component_id() in route:
-            pass
         else:
-            new_route = deepcopy(route)
-            self.logger.debug("[DSR::receive_route_request_2] id = " + str(id) + " route = " + str(new_route))
             if len(new_route) < self.hop_limit:
-                new_route.append(self.get_component_id())
-
-                self.logger.debug("[DSR::receive_route_request_3] id = " + str(id) + " route = " + str(new_route))
-
-                if not self.route_cache.has(src):
-                    self.route_cache.set_value(src, new_route[::-1])
-                elif len(new_route[::-1]) < len(self.route_cache.get_value(src)):
-                    self.route_cache.set_value(src, new_route[::-1])
-
                 self.transmit_route_request(src, dst, new_route, uid)
 
     def transmit_route_forwarding(self, src: int, dst: int, route: list, data) -> None:
@@ -315,9 +273,5 @@ class DSRAlgorithmComponent(ComponentModel):
         self.send_down(event)
 
     def transmit_route_request(self, src: int, dst: int, route: list, uid: int) -> None:
-        self.logger.debug(
-            "[DSR::transmit_route_request] id = " + str(self.get_component_id()) + " route = " + str(route))
-        print(str(Event.curr_event_id))
         event = self.create_route_event(MessageTypes.ROUTE_REQUEST, src, dst, deepcopy(route), uid)
-        print(str(Event.curr_event_id))
         self.send_down(event)
