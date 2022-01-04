@@ -53,18 +53,9 @@ def findStrongConnectedLinksForSingleNode(labels, threshold, nodeCount):
     
     return
     
-def findAllSimplePaths(graph): 
-    source = int(input("Enter source node id:\n"))
-    target = int(input("Enter target node id:\n"))
-    paths = nx.all_simple_paths(graph, source, target)
-    sortedPath = sorted(paths, key=len)
-    print(f"Possible paths between node#{source} to node#{target}")
-    print(list(sortedPath))
-    return sortedPath
-
-def printSSTForANode(nodeCount):
+def printSSTInfo(nodeCount):
     for x in range(nodeCount):
-        print("--------------------\n")
+        print("--------------------")
         print(f"Information of {x}:\n")
         nodeToEditSST = ComponentRegistry().get_component_by_key("DRP",x)
         print("Stability Table:")
