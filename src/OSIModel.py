@@ -1,4 +1,5 @@
 
+from networkx.algorithms import matching
 from Channels.Channels import P2PFIFOPerfectChanne
 from definitions import *
 from generics import *
@@ -16,15 +17,15 @@ class LayerTypes(Enum):
   PHY = "physical"
 
 class LayerOrder:
-  layerOrder = [
+  order = [
     LayerTypes.APP,
     LayerTypes.TRANS,
     LayerTypes.NET,
     LayerTypes.LINK
   ]
 
-  def custom_layerization(self, layerOrder): 
-    self.layerOrder = layerOrder
+  def custom_layerization(self, order): 
+    self.order = order
 
 class AdHocNode(ComponentModel):
 
@@ -37,23 +38,31 @@ class AdHocNode(ComponentModel):
   def on_message_from_bottom(self, eventobj: Event):
     self.send_up(Event(self, EventTypes.MFRB, eventobj.eventcontent))
 
-  def __init__(self, componentname, LlayerOrder):
+  def __init__(self, componentname, layerOrder: LayerOrder):
 
-    self.appllayer = ApplicationLayerComponent("ApplicationLayer", self.componentinstancenumber)
-    self.netlayer = AllSeingEyeNetworkLayer("NetworkLayer", self.componentinstancenumber)
-    self.linklayer = LinkLayer("LinkLayer", self.componentinstancenumber)
+    for i in layerOrder.order: 
+      match i: 
+        case LayerTypes.APP:
+          self.appllayer = ApplicationLayerComponent("ApplicationLayer", self.componentinstancenumber)
+        case LayerTypes.TRANS:
+            pass
+        case LayerTypes.NET: 
+          self.netlayer = AllSeingEyeNetworkLayer("NetworkLayer", self.componentinstancenumber)      
+        case LayerTypes.LINK: 
+          self.linklayer = LinkLayer("LinkLayer", self.componentinstancenumber) 
+          
     # self.failuredetect = GenericFailureDetector("FailureDetector", componentid)
 
     # CONNECTIONS AMONG SUBCOMPONENTS
     self.appllayer.connect_me_to_component(ConnectorTypes.DOWN, self.netlayer)
-    # self.failuredetect.connectMeToComponent(PortNames.DOWN, self.netlayer)
-    self.netlayer.connect_me_to_component(ConnectorTypes.UP, self.appllayer)
-    # self.netlayer.connectMeToComponent(PortNames.UP, self.failuredetect)
     self.netlayer.connect_me_to_component(ConnectorTypes.DOWN, self.linklayer)
     self.linklayer.connect_me_to_component(ConnectorTypes.UP, self.netlayer)
 
-    # Connect the bottom component to the composite component....
     self.linklayer.connect_me_to_component(ConnectorTypes.DOWN, self)
     self.connect_me_to_component(ConnectorTypes.UP, self.linklayer)
 
-    super().__init__(componentname, componentid)
+    super().__init__(componentname, self.componentinstancenumber)
+
+
+    def connect_layers(self, layer, last):
+      pass

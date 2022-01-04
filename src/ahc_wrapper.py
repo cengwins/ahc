@@ -7,7 +7,6 @@ from topology import *
 from threading import Thread, Lock
 from random import sample
 from OSIModel import *
-import networkx as nx
 class ahc_wrapper:
 
   component_model = ComponentModel()
@@ -20,6 +19,7 @@ class ahc_wrapper:
 
   def create_topology_by_graph(self, g: nx.Graph, nodetype, channeltype, context=None):
     self.topology.construct_from_graph(g, nodetype, channeltype, context)
+
 
   def create_network_by_topology(self, t: Topology):
     self.topology = t
@@ -34,5 +34,5 @@ class ahc_wrapper:
   def create_custom_network(self, layers: LayerOrder = LayerOrder):
     pass
 
-class Topology: 
+# class Topology: 
 
