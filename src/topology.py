@@ -279,10 +279,10 @@ class Topology:
           # self.ForwardingTable[i][j] = i  # There is a path but length = 1 (self)
 
   # all-seeing eye routing table contruction
-  def print_forwarding_table(self):
-    registry.print_components()
-    print('\n'.join([''.join(['{:4}'.format(item) for item in row])
-                     for row in list(self.ForwardingTable.values())]))
+  # def print_forwarding_table(self):
+  #   registry.print_components()
+  #   print('\n'.join([''.join(['{:4}'.format(item) for item in row])
+  #                    for row in list(self.ForwardingTable.values())]))
 
   # returns the all-seeing eye routing based next hop id
   def get_next_hop(self, fromId, toId):
