@@ -1,3 +1,4 @@
+import enum
 from setuptools import setup
 
 
@@ -11,6 +12,19 @@ setup(
   author_email='eronur@metu.edu.tr',
   license='BSD 2-clause',
   packages=['ahc'],
-  install_requires=[],
+  install_requires=[
+    'matplotlib',
+    'mnist',
+    'networkx',
+    'numpy',
+    'pandas',
+    'Pillow',
+    'pygraphviz',
+    'scikit_learn',
+    'seaborn',
+    'setuptools',
+    'torch',
+
+  ],
   classifiers=[],
 )
