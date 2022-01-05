@@ -231,8 +231,12 @@ class ComponentModel:
   def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1):
     self.context = context
     self.configurationparameters = configurationparameters
-    self.eventhandlers = {EventTypes.INIT: self.on_init, EventTypes.MFRB: self.on_message_from_bottom,
-                          EventTypes.MFRT: self.on_message_from_top, EventTypes.MFRP: self.on_message_from_peer}
+    self.eventhandlers = {
+                          EventTypes.INIT: self.on_init, 
+                          EventTypes.MFRB: self.on_message_from_bottom,
+                          EventTypes.MFRT: self.on_message_from_top, 
+                          EventTypes.MFRP: self.on_message_from_peer
+                        }
     # Add default handlers to all instantiated components.
     # If a component overwrites the __init__ method it has to call the super().__init__ method
     self.inputqueue = queue.Queue()
