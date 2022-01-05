@@ -239,6 +239,7 @@ class ComponentModel:
     self.componentname = componentname
     self.componentinstancenumber = componentinstancenumber
     self.num_worker_threads = num_worker_threads
+    
     try:
       if self.connectors:
         pass
