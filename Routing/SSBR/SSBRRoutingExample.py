@@ -2,6 +2,7 @@ import os
 import sys
 import random
 
+import numpy as np
 import matplotlib.pyplot as plt
 import time as t
 
@@ -138,10 +139,12 @@ while(menuItem):
                 resNode[i] += nodeNumber[k][i]
                 resControlTime[i] += controlTime[k][i]
                 resDataTime[i] += dataTime[k][i]
-            resTime[i] /= 9
-            resNode[i] /= 9
-            resControlTime[i] /= 9
-            resDataTime[i] /= 9
+
+        for i in range (0,10):
+            resTime[i] /= 10
+            resNode[i] /= 10
+            resControlTime[i] /= 10
+            resDataTime[i] /= 10
 
         plt.plot(resNode, resTime, label = "Overall Time")
         plt.plot(resNode, resControlTime, label = "Control Plane Time")
