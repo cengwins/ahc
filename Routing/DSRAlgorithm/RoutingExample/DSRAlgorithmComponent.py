@@ -149,10 +149,10 @@ class DSRAlgorithmComponent(ComponentModel):
 
     def wait_for_route_reply(self, dst: int) -> None:
 
-        sleep_period_in_ms = 100
+        sleep_period_in_ms = 10  # min for windows
         sleep_period_in_sec = sleep_period_in_ms / 1000
 
-        timeout_in_sec = 20
+        timeout_in_sec = 100
         timeout_in_ms = timeout_in_sec * 1000
         start_time_in_ms = self.get_current_time_in_ms()
         end_time_in_ms = start_time_in_ms + timeout_in_ms

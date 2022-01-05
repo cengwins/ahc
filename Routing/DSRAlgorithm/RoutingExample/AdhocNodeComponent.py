@@ -1,8 +1,8 @@
 from copy import deepcopy
 
-from Routing.DSRAlgorithm.ApplicationComponent import ApplicationComponent
-from Routing.DSRAlgorithm.DSRAlgorithmComponent import DSRAlgorithmComponent
-from Routing.DSRAlgorithm.DSRAlgorithmComponent import MessageTypes
+from Routing.DSRAlgorithm.RoutingExample.ApplicationComponent import ApplicationComponent
+from Routing.DSRAlgorithm.RoutingExample.DSRAlgorithmComponent import DSRAlgorithmComponent
+from Routing.DSRAlgorithm.RoutingExample.DSRAlgorithmComponent import MessageTypes
 
 from Ahc import ComponentModel
 from Ahc import ConnectorTypes
@@ -33,15 +33,15 @@ class AdhocNodeComponent(ComponentModel):
                                       interfaceid=src + "-" + dst)
 
         message = GenericMessage(header, payload)
-        event = Event(self, EventTypes.MFRT, message)
 
+        event = Event(self, EventTypes.MFRT, message)
         self.send_down(event)
 
     def send_broadcast_message(self, payload):
         for interface in self.connectors[ConnectorTypes.DOWN]:
-            next_hop = interface.componentinstancenumber.split("-")[1]
-            if int(next_hop) != self.get_component_id():
-                self.send_unicast_message(next_hop, payload)
+            for next_hop in interface.componentinstancenumber.split("-"):
+                if int(next_hop) != self.get_component_id():
+                    self.send_unicast_message(next_hop, payload)
 
     def send_message(self, next_hop, payload):
         if str("inf") == next_hop:
