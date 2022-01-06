@@ -98,8 +98,9 @@ class PeggyApplicationLayerComponent(BaseZkpAppLayerComponent):
             print("Attribute Error")
 
     def on_commit(self, eventobj: Event):
-        self.new_graph = self.permute_graph()
+        self.new_graph, self.node_mapping = self.permute_graph()
         print("Permuted\n", nx.to_numpy_matrix(self.new_graph, nodelist=[*range(0, 5)]))
+        print(self.node_mapping)
         self.send_message(ApplicationLayerMessageTypes.COMMIT, PublicGraph.convert_graph_to_string(self.new_graph),
                           self.destination)
 
@@ -124,12 +125,13 @@ class PeggyApplicationLayerComponent(BaseZkpAppLayerComponent):
         node_mapping = {}
         for i in range(5):
             node_mapping[i] = shuffled_nodes[i]
-        return nx.relabel_nodes(public_graph, node_mapping)
+        return nx.relabel_nodes(public_graph, node_mapping), node_mapping
 
     def __init__(self, componentname, componentinstancenumber):
         super().__init__(componentname, componentinstancenumber)
         self.destination = 1
         self.new_graph = None
+        self.node_mapping = None
         self.eventhandlers["commit"] = self.on_commit
         self.eventhandlers["challengereceived"] = self.on_challenge_received
         self.eventhandlers["timerexpired"] = self.on_timer_expired
