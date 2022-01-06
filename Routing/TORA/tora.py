@@ -3,7 +3,7 @@ import sys
 import time
 from enum import Enum
 from threading import Lock
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
 sys.path.insert(0, os.getcwd())
 
@@ -35,7 +35,7 @@ class ApplicationLayerMessageTypes(Enum):
 
 
 class Height:
-    def __init__(self, tau, oid, r, delta, i):
+    def __init__(self, tau: float, oid: int, r: int, delta: int, i: int):
         self.tau = tau
         self.oid = oid
         self.r = r
@@ -54,6 +54,13 @@ class ApplicationLayerMessagePayload(GenericMessagePayload):
 
 
 class ApplicationLayerQueryMessagePayload(GenericMessagePayload):
+    did: int
+
+    def __init__(self, did: int):
+        self.did = did
+
+
+class ApplicationLayerClearMessagePayload(GenericMessagePayload):
     did: int
 
     def __init__(self, did: int):
@@ -103,6 +110,8 @@ class TORAApplicationLayerComponent(ComponentModel):
                 self.handle_upd(
                     payload.did, hdr.messagefrom, payload.height, payload.link_reversal
                 )
+            elif hdr.messagetype == ApplicationLayerMessageTypes.CLR:
+                self.handle_clr(payload.did)
             # except AttributeError:
             # print("Attribute Error")
 
@@ -133,7 +142,43 @@ class TORAApplicationLayerComponent(ComponentModel):
         self.set_neighbour_height(from_id, height)
 
         if link_reversal:
-            pass
+            upstream_links: List[Tuple[Height, int]] = list(
+                self.get_upstream_links().items()
+            )
+            reference_level: Height = Height(-1, None, None, None, None)
+            same_reference_level = True
+
+            for t in upstream_links:
+                upstream_link = t[0]
+                if reference_level == (-1, None, None):
+                    reference_level = upstream_link
+                elif (
+                    upstream_link.tau != reference_level.tau
+                    or upstream_link.oid != reference_level.oid
+                    or upstream_link.r != reference_level.r
+                ):
+                    same_reference_level = False
+
+                if (reference_level.tau, reference_level.oid, reference_level.r) >= (
+                    upstream_link.tau,
+                    upstream_link.oid,
+                    upstream_link.r,
+                ):
+                    reference_level.tau = upstream_link.tau
+                    reference_level.oid = upstream_link.oid
+                    reference_level.r = upstream_link.r
+                    reference_level.delta = min(
+                        reference_level.delta, upstream_link.delta
+                    )
+
+            if not same_reference_level:
+                self.maintenance_case_2(did, reference_level)
+            elif reference_level[2] == 0:
+                self.maintenance_case_3(did, reference_level)
+            elif self.componentinstancenumber == reference_level[1]:
+                self.maintenance_case_4(did)
+            else:
+                self.maintenance_case_5(did)
         else:
             if self.rr == 1:
                 min_height = self.get_minimum_height_between_neighbours()
@@ -148,17 +193,26 @@ class TORAApplicationLayerComponent(ComponentModel):
                 self.broadcast_upd(did, False)
             else:
                 downstream_links = self.get_downstream_links()
-                if len(downstream_links) == 0:
+                if len(downstream_links) == 0 and self.componentinstancenumber != did:
                     self.maintenance_case_1(did)
-                    pass
+
+    def handle_clr(self, did: int):
+        self.height = Height(None, None, None, None, self.componentinstancenumber)
+        
+        for neighbour in self.N:
+            if neighbour == did:
+                continue
+            self.N[neighbour] = (None, None, None, None, self.componentinstancenumber)
+        
+        self.broadcast_clr(did)
 
     def maintenance_case_1(self, did: int):
         upstream_links = self.get_upstream_links()
 
         if len(upstream_links) == 0:
-            self.height = (None, None, None, None, self.componentinstancenumber)
+            self.height = Height(None, None, None, None, self.componentinstancenumber)
         else:
-            self.height = (
+            self.height = Height(
                 time.time(),
                 self.componentinstancenumber,
                 0,
@@ -168,23 +222,34 @@ class TORAApplicationLayerComponent(ComponentModel):
 
         self.broadcast_upd(did, True)
 
-    def maintenance_case_2(self, did: int):
-        upstream_links = self.get_upstream_links()
+    def maintenance_case_2(self, did: int, reference: Height):
+        self.height = Height(
+            reference.tau,
+            reference.oid,
+            reference.r,
+            reference.delta - 1,
+            self.componentinstancenumber,
+        )
+        self.broadcast_upd(did, True)
 
-        pass
-
-    def maintenance_case_3(self, did: int):
-        upstream_links = self.get_upstream_links()
-
-        pass
+    def maintenance_case_3(self, did: int, reference: Height):
+        self.height = Height(
+            reference.tau, reference.oid, 1, 0, self.componentinstancenumber
+        )
+        self.broadcast_upd(did, True)
 
     def maintenance_case_4(self, did: int):
-        self.height = Height(None, None, None, None, self.componentinstancenumber)
+        self.handle_clr(did)
 
     def maintenance_case_5(self, did: int):
-        upstream_links = self.get_upstream_links()
-
-        pass
+        self.height = Height(
+            time.time(),
+            self.componentinstancenumber,
+            0,
+            0,
+            self.componentinstancenumber,
+        )
+        self.broadcast_upd(did, True)
 
     def get_minimum_height_between_neighbours(self) -> Height:
         downstream_links = self.get_downstream_links()
@@ -209,7 +274,7 @@ class TORAApplicationLayerComponent(ComponentModel):
     def get_upstream_links(self):
         height_delta = -1 if self.height.delta is None else self.height.delta
         return dict(
-            filter(lambda link: link[1][0].delta > height_delta, list(self.N.items()))
+            filter(lambda link: link[1][0].delta >= height_delta, list(self.N.items()))
         )
 
     def broadcast_qry(self, did: int):
@@ -223,6 +288,12 @@ class TORAApplicationLayerComponent(ComponentModel):
         self.broadcast(
             ApplicationLayerUpdateMessagePayload(did, self.height, link_reversal),
             ApplicationLayerMessageTypes.UPD,
+        )
+
+    def broadcast_clr(self, did: int):
+        self.broadcast(
+            ApplicationLayerClearMessagePayload(did),
+            ApplicationLayerMessageTypes.CLR,
         )
 
     def broadcast(
@@ -296,7 +367,19 @@ def main():
     # G.add_edges_from([(1, 2)])
     # nx.draw(G, with_labels=True, font_weight='bold')
     # plt.draw()
-    G = nx.random_geometric_graph(5, 0.5)
+    G = nx.Graph()
+    G.add_nodes_from([0,7])
+    G.add_edge(0, 1)
+    G.add_edge(0, 2)
+    G.add_edge(0, 3)
+    G.add_edge(1, 4)
+    G.add_edge(1, 3)
+    G.add_edge(2, 6)
+    G.add_edge(3, 6)
+    G.add_edge(4, 5)
+    G.add_edge(5, 7)
+    G.add_edge(6, 7)
+
     nx.draw(G, with_labels=True, font_weight="bold")
     plt.draw()
 
@@ -304,15 +387,15 @@ def main():
     topo.construct_from_graph(G, TORANode, P2PFIFOPerfectChannel)
     topo.start()
 
-    destination_id = 2
-    source_id = 0
+    destination_id = 5
+    source_id = 2
 
     destination_height: Height = Height(0, 0, 0, 0, destination_id)
     topo.nodes[destination_id].set_height(destination_height)
 
     topo.nodes[source_id].init_route_creation(destination_id)
 
-    plt.show()
+    # plt.show()
 
     while True:
         pass
