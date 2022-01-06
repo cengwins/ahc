@@ -70,6 +70,7 @@ class AhcUhdUtils:
         self.usrp.set_tx_gain(self.hw_tx_gain, self.chan)
 
         #self.usrp.set_rx_agc(True, self.chan)
+        
 
         stream_args = uhd.usrp.StreamArgs('fc32', 'sc16')
         stream_args.channels = [self.chan]
