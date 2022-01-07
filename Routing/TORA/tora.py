@@ -1,17 +1,10 @@
-import os
-import sys
 import time
 from enum import Enum
 from threading import Lock
 from typing import Dict, List, Tuple
 
-sys.path.insert(0, os.getcwd())
-
-import matplotlib.pyplot as plt
-import networkx as nx
 from Ahc import (
     ComponentModel,
-    ComponentRegistry,
     ConnectorTypes,
     Event,
     EventTypes,
@@ -20,14 +13,10 @@ from Ahc import (
     GenericMessagePayload,
     Topology,
 )
-from Channels.Channels import P2PFIFOPerfectChannel
 from LinkLayers.GenericLinkLayer import LinkLayer
 from NetworkLayers.AllSeeingEyeNetworkLayer import AllSeingEyeNetworkLayer
 
-registry = ComponentRegistry()
 
-
-# define your own message types
 class ApplicationLayerMessageTypes(Enum):
     UPD = "UPDATE"
     CLR = "CLEAR"
@@ -81,7 +70,7 @@ class ApplicationLayerUpdateMessagePayload(GenericMessagePayload):
 class TORAApplicationLayerComponent(ComponentModel):
     def __init__(self, componentname, componentinstancenumber):
         super().__init__(componentname, componentinstancenumber)
-        self.neighbors = Topology().G.neighbors(componentinstancenumber)
+        self.neighbors = Topology().get_neighbors(componentinstancenumber)
 
         self.height: Height = Height(
             None, None, None, None, self.componentinstancenumber
@@ -101,9 +90,9 @@ class TORAApplicationLayerComponent(ComponentModel):
             applmessage = eventobj.eventcontent
             hdr = applmessage.header
             payload: GenericMessagePayload = applmessage.payload
-            print(
-                f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} has sent {hdr.messagetype} message"
-            )
+            # print(
+            #     f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} has sent {hdr.messagetype} message"
+            # )
             if hdr.messagetype == ApplicationLayerMessageTypes.QRY:
                 self.handle_qry(payload.did, hdr.messagefrom)
             elif hdr.messagetype == ApplicationLayerMessageTypes.UPD:
@@ -198,12 +187,12 @@ class TORAApplicationLayerComponent(ComponentModel):
 
     def handle_clr(self, did: int):
         self.height = Height(None, None, None, None, self.componentinstancenumber)
-        
+
         for neighbour in self.N:
             if neighbour == did:
                 continue
             self.N[neighbour] = (None, None, None, None, self.componentinstancenumber)
-        
+
         self.broadcast_clr(did)
 
     def maintenance_case_1(self, did: int):
@@ -299,6 +288,7 @@ class TORAApplicationLayerComponent(ComponentModel):
     def broadcast(
         self, payload: GenericMessagePayload, t: ApplicationLayerMessageTypes
     ):
+        print(f"Node-{self.componentinstancenumber} is broadcasting a {t} message")
         for destination in self.neighbors:
             hdr = ApplicationLayerMessageHeader(
                 t,
@@ -359,47 +349,3 @@ class TORANode(ComponentModel):
 
     def set_neighbour_height(self, j: int, height: Height):
         self.appllayer.set_neighbour_height(j, height)
-
-
-def main():
-    # G = nx.Graph()
-    # G.add_nodes_from([1, 2])
-    # G.add_edges_from([(1, 2)])
-    # nx.draw(G, with_labels=True, font_weight='bold')
-    # plt.draw()
-    G = nx.Graph()
-    G.add_nodes_from([0,7])
-    G.add_edge(0, 1)
-    G.add_edge(0, 2)
-    G.add_edge(0, 3)
-    G.add_edge(1, 4)
-    G.add_edge(1, 3)
-    G.add_edge(2, 6)
-    G.add_edge(3, 6)
-    G.add_edge(4, 5)
-    G.add_edge(5, 7)
-    G.add_edge(6, 7)
-
-    nx.draw(G, with_labels=True, font_weight="bold")
-    plt.draw()
-
-    topo = Topology()
-    topo.construct_from_graph(G, TORANode, P2PFIFOPerfectChannel)
-    topo.start()
-
-    destination_id = 5
-    source_id = 2
-
-    destination_height: Height = Height(0, 0, 0, 0, destination_id)
-    topo.nodes[destination_id].set_height(destination_height)
-
-    topo.nodes[source_id].init_route_creation(destination_id)
-
-    # plt.show()
-
-    while True:
-        pass
-
-
-if __name__ == "__main__":
-    main()
