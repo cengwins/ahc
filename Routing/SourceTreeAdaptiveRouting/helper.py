@@ -1,19 +1,90 @@
 import threading
+from enum import Enum
 
-from Ahc import singleton
+# total message count
+# lsu message count (routing overhead)
+# app message count
+# link change count
+# packet delivery ratio
+# path optimality
 
 
-@singleton
-class StatsCounter(object):
+class STARStatEvent(Enum):
+    MSG_SENT = "MessageSent"
+    LSU_MSG_SENT = "LSUMessageSent"
+    LSU_MSG_RECV = "LSUMessageSent"
+    APP_MSG_SENT = "AppMessageSent"
+    APP_MSG_RECV = "AppMessageReceived"
+    LINK_UPDATED = "LinkUpdated"
+
+    def __str__(self):
+        return self.value
+
+    def __repr__(self):
+        return str(self)
+
+
+class STARStats(object):
     def __init__(self):
-        self.value = 0
+        self.msg_sent = 0
+        self.lsu_sent = 0
+        self.lsu_recv = 0
+        self.app_sent = 0
+        self.app_recv = 0
+        self.link_updated = 0
+
         self._lock = threading.Lock()
+        self.handlers = {
+            STARStatEvent.LSU_MSG_SENT: self.on_lsu_sent,
+            STARStatEvent.LSU_MSG_RECV: self.on_lsu_recv,
+            STARStatEvent.APP_MSG_SENT: self.on_app_msg_sent,
+            STARStatEvent.APP_MSG_RECV: self.on_app_msg_recv,
+            STARStatEvent.LINK_UPDATED: self.on_link_updated
+        }
 
-    def increment(self):
-        with self._lock:
-            self.value += 1
+    def emit(self, event_type: STARStatEvent, data=None):
+        if event_type in self.handlers.keys():
+            self.handlers[event_type](data)
 
-    def get(self):
+    def on_lsu_sent(self, data):
         with self._lock:
-            val = self.value
-        return val
+            self.msg_sent += 1
+            self.lsu_sent += 1
+
+    def on_lsu_recv(self, data=1):
+        with self._lock:
+            self.msg_sent += 1
+            self.lsu_recv += data
+
+    def on_app_msg_sent(self, data):
+        with self._lock:
+            self.msg_sent += 1
+            self.app_sent += 1
+
+    def on_app_msg_recv(self, data):
+        with self._lock:
+            self.app_recv += 1
+
+    def on_link_updated(self, data):
+        with self._lock:
+            self.link_updated += 1
+
+    def get_stats(self):
+        with self._lock:
+            data = {
+                STARStatEvent.MSG_SENT: self.msg_sent,
+                STARStatEvent.LSU_MSG_SENT: self.lsu_sent,
+                STARStatEvent.LSU_MSG_RECV: self.lsu_recv,
+                STARStatEvent.APP_MSG_SENT: self.app_sent,
+                STARStatEvent.APP_MSG_RECV: self.app_recv,
+                STARStatEvent.LINK_UPDATED: self.link_updated,
+            }
+
+            self.msg_sent = 0
+            self.lsu_sent = 0
+            self.lsu_recv = 0
+            self.app_sent = 0
+            self.app_recv = 0
+            self.link_updated = 0
+
+        return data

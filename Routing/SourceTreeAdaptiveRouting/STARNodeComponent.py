@@ -8,9 +8,9 @@ from typing import Dict, List, Any, Tuple
 
 from Ahc import *
 from Routing.SourceTreeAdaptiveRouting.MinHeap import MinHeap, MinHeapNode
-from Routing.SourceTreeAdaptiveRouting.helper import StatsCounter
+from Routing.SourceTreeAdaptiveRouting.helper import STARStats, STARStatEvent
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(name)s [%(levelname)s] - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(name)s [%(levelname)s] - %(message)s')
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
@@ -58,6 +58,7 @@ class STARNodeComponent(ComponentModel):
             STARMessageTypes.LSU: self.on_lsu,
             STARMessageTypes.APP: self.on_app_message
         }
+        self.stats = STARStats()
 
     def on_init(self, eventobj: Event):
         """ Node tells its neighbors it is up """
@@ -81,9 +82,17 @@ class STARNodeComponent(ComponentModel):
         message_to = message.header.messageto
 
         if message_to == self.componentinstancenumber:
+            # incoming message is for me
             self.send_up(Event(self, EventTypes.MFRB, message))
         else:
-            next_hop = self.routing_table[message_to][0]
+            try:
+                next_hop = self.routing_table[message_to][0]
+            except KeyError:
+                # destination is existed in the routing table
+                # drop the message
+                logger.error(f'Destination {message_to} not found in node {self.componentinstancenumber}')
+                return
+
             message.header.nexthop = next_hop
             logger.debug(f"T{threading.get_native_id()} #{self.componentinstancenumber} Next hop: {next_hop}")
 
@@ -93,7 +102,14 @@ class STARNodeComponent(ComponentModel):
         message = eventobj.eventcontent
         message_to = message.header.messageto
 
-        next_hop = self.routing_table[message_to][0]
+        try:
+            next_hop = self.routing_table[message_to][0]
+        except KeyError:
+            # destination is existed in the routing table
+            # drop the message
+            logger.error(f'Destination {message_to} not found in node {self.componentinstancenumber}')
+            return
+
         message.header.nexthop = next_hop
         self.send_down(Event(self, EventTypes.MFRT, message))
 
@@ -112,6 +128,8 @@ class STARNodeComponent(ComponentModel):
             hdr = GenericMessageHeader(message_type, self.componentinstancenumber,
                                        MessageDestinationIdentifiers.NETWORKLAYERBROADCAST)
             payload = GenericMessagePayload(self.messages)
+
+            self.stats.emit(STARStatEvent.LSU_MSG_SENT, len(self.messages))
             self.send_down(Event(self, EventTypes.MFRT, GenericMessage(hdr, payload)))
 
         self.messages = []
@@ -155,7 +173,7 @@ class STARNodeComponent(ComponentModel):
             self.broadcast_messages()
 
     def on_lsu(self, eventobj: Event):
-        StatsCounter().increment()
+        self.stats.emit(STARStatEvent.LSU_MSG_RECV, 1)
         message_from = eventobj.eventcontent.header.messagefrom
         payload = eventobj.eventcontent.payload.messagepayload
 
