@@ -35,6 +35,11 @@ class PublicGraph:
         return PublicGraph.__GRAPH
 
     @staticmethod
+    def get_graph_matrix_size():
+        shape = nx.to_numpy_matrix(PublicGraph.__GRAPH).shape
+        return shape[0] * shape[1]
+
+    @staticmethod
     def convert_cypher_graph_to_bytes(graph):
         graph_bytes = b""
         for i in range(graph.shape[0]):
@@ -158,21 +163,38 @@ class PeggyApplicationLayerComponent(BaseZkpAppLayerComponent):
         for i in range(5):
             node_mapping[i] = shuffled_nodes[i]
         # return permuted graph with node mapping
-        return nx.relabel_nodes(public_graph, node_mapping), node_mapping
+        permuted_graph = nx.relabel_nodes(public_graph, node_mapping)
+        return permuted_graph, node_mapping
 
     def encrypt_graph(self, graph):
         permuted_matrix = nx.to_numpy_matrix(graph, nodelist=[*range(0, 5)])
+        print("Permuted Graph\n", permuted_matrix)
         encrypted_matrix = np.asmatrix(np.zeros_like(permuted_matrix, dtype=CipherContext))
         for i in range(permuted_matrix.shape[0]):
             for j in range(permuted_matrix.shape[1]):
-                cipher_text = self.crypto["encryptor"].update(struct.pack('f', permuted_matrix[i, j]))
+                cipher_text = self.crypto["encryptor"][i * permuted_matrix.shape[1] + j] \
+                    .update(struct.pack('f', permuted_matrix[i, j]))
                 encrypted_matrix[i, j] = cipher_text
+        print(encrypted_matrix)
         return encrypted_matrix
 
     def create_prove_graph_payload(self):
-        return self.secrets["key"] + \
-               self.secrets["iv"] + \
-               json.dumps(self.graph["node_mapping"]).encode('utf-8')
+        payload = self.secrets["key"]
+        for i in range(self.graph["graph_matrix_size"]):
+            payload += self.secrets["nonces"][i]
+        payload += json.dumps(self.graph["node_mapping"]).encode('utf-8')
+        return payload
+
+    def create_nonces_and_encryptors(self):
+        if len(self.secrets["nonces"]) > 0 or len(self.crypto["encryptor"]) > 0:
+            self.secrets["nonces"] = []
+            self.crypto["encryptor"] = []
+        for i in range(self.graph["graph_matrix_size"]):
+            # add nonces for each
+            self.secrets["nonces"].append(get_random_bytes(16))
+            self.crypto["encryptor"].append(Cipher(algorithms.AES(self.secrets["key"]),
+                                                   modes.CTR(self.secrets["nonces"][i]),
+                                                   default_backend()).encryptor())
 
     def __init__(self, componentname, componentinstancenumber):
         super().__init__(componentname, componentinstancenumber)
@@ -181,23 +203,22 @@ class PeggyApplicationLayerComponent(BaseZkpAppLayerComponent):
         self.graph = {
             # encrypted and permuted new graph
             "committed_graph": np.asmatrix([]),
-            "node_mapping": {}
+            "node_mapping": {},
+            "graph_matrix_size": PublicGraph.get_graph_matrix_size()
         }
         # secrets of component
         self.secrets = {
             # key is 32 byte as AES use 256 bits
             "key": get_random_bytes(32),
-            # IV is 16 byte as AES use block size 128 bits
-            "iv": get_random_bytes(16)
+            "nonces": []
         }
         # crypto tools
         self.crypto = {
             # AES has block size of 128 bits plain text block -> 128 bits cipher text block
-            "encryptor": Cipher(algorithms.AES(self.secrets["key"]), modes.CFB(self.secrets["iv"]),
-                                default_backend()).encryptor(),
-            "decryptor": Cipher(algorithms.AES(self.secrets["key"]), modes.CFB(self.secrets["iv"]),
-                                default_backend()).decryptor()
+            "encryptor": []
         }
+        # initialize nonces and encryptors
+        self.create_nonces_and_encryptors()
         self.eventhandlers["commit"] = self.on_commit
         self.eventhandlers["challengereceived"] = self.on_challenge_received
         self.eventhandlers["timerexpired"] = self.on_timer_expired
@@ -236,13 +257,23 @@ class VictorApplicationLayerComponent(BaseZkpAppLayerComponent):
     def on_response_received(self, eventobj: Event):
         message_payload = eventobj.eventcontent
         if self.verification["current_challenge_mode"] == ChallengeType.PROVE_GRAPH:
-            key = message_payload[0:32]
-            iv = message_payload[32: 48]
-            node_mapping = json.loads(message_payload[48:].decode('utf-8'))
-            if self.is_isomorphic(self.decrypt_graph(key, iv), node_mapping):
+            key, nonces, node_mapping = self.extract_prove_graph_reponse_payload(message_payload)
+            if self.are_equal_graphs(self.decrypt_graph(key, nonces), node_mapping):
                 self.send_self(Event(self, "correctresponse", None))
         elif self.verification["current_challenge_mode"] == ChallengeType.SHOW_CYCLE:
             pass
+
+    def extract_prove_graph_reponse_payload(self, message_payload):
+        key = message_payload[0:32]
+        nonces = []
+        for i in range(self.verification["graph_matrix_size"]):
+            nonces.append(message_payload[i * 16 + 32: i * 16 + 48])
+        node_mapping_json = json.loads(
+            message_payload[self.verification["graph_matrix_size"] * 16 + 32:].decode('utf-8'))
+        node_mapping = {}
+        for k in node_mapping_json:
+            node_mapping[int(k)] = node_mapping_json[k]
+        return key, nonces, node_mapping
 
     def on_correct_response(self, eventobj: Event):
         print("Correct Response Recieved")
@@ -255,21 +286,36 @@ class VictorApplicationLayerComponent(BaseZkpAppLayerComponent):
     def on_timer_expired(self, eventobj: Event):
         pass
 
-    def decrypt_graph(self, key, iv):
-        decryptor = Cipher(algorithms.AES(key), modes.CFB(iv), default_backend()).decryptor()
+    def decrypt_graph(self, key, nonces):
         decrypted_matrix = np.asmatrix(np.zeros_like(self.verification["committed_graph"], dtype=float))
+
+        print(nonces)
         for i in range(decrypted_matrix.shape[0]):
             for j in range(decrypted_matrix.shape[1]):
+                print("plain index", i, j)
+                decryptor = Cipher(algorithms.AES(key),
+                                   modes.CTR(nonces[i*decrypted_matrix.shape[1] + j]),
+                                   default_backend()).decryptor()
                 plain_text = struct.unpack('f', decryptor.update(self.verification["committed_graph"][i, j]))[0]
+                print("plain text", plain_text)
                 decrypted_matrix[i, j] = plain_text
         print("Decrypted Received Graph\n", decrypted_matrix)
         decrypted_graph = nx.from_numpy_matrix(decrypted_matrix)
         return decrypted_graph
 
-    def is_isomorphic(self, decrypted_graph, node_mapping):
+    def are_equal_graphs(self, decrypted_graph, node_mapping):
         public_graph = PublicGraph.get_graph()
         permuted_graph = nx.relabel_nodes(public_graph, node_mapping)
-        return nx.is_isomorphic(permuted_graph, decrypted_graph)
+        permuted_matrix = nx.to_numpy_matrix(permuted_graph, nodelist=[*range(0, 5)])
+        decrypted_matrix = nx.to_numpy_matrix(decrypted_graph, nodelist=[*range(0, 5)])
+        for i in range(permuted_matrix.shape[0]):
+            for j in range(permuted_matrix.shape[1]):
+                try:
+                    if permuted_matrix[i, j] != decrypted_matrix[i, j]:
+                        return False
+                except IndexError:
+                    return False
+        return True
 
     def __init__(self, componentname, componentinstancenumber):
         super().__init__(componentname, componentinstancenumber)
@@ -279,7 +325,8 @@ class VictorApplicationLayerComponent(BaseZkpAppLayerComponent):
             "current_trial_no": 0,
             "current_challenge_mode": ChallengeType.NONE,
             "max_trial_no": 1,
-            "committed_graph": np.asmatrix([])
+            "committed_graph": np.asmatrix([]),
+            "graph_matrix_size": PublicGraph.get_graph_matrix_size()
         }
         self.eventhandlers["challenge"] = self.on_challenge
         self.eventhandlers["responsereceived"] = self.on_response_received
