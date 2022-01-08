@@ -13,7 +13,7 @@ def main():
 
     topo.start()
     while True:
-        continue
+        pass
 
 
 if __name__ == "__main__":
