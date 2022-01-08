@@ -50,14 +50,6 @@ class Cache:
         with self.lock:
             self.cache.pop(key, None)
 
-    def has_same_value(self, key, value) -> bool:
-        with self.lock:
-
-            if self.has(key):
-                return value == self.cache[key]
-            else:
-                return False
-
     def delete_keys_with_link(self, link):
         with self.lock:
 
@@ -69,7 +61,6 @@ class Cache:
 
 
 class DSRAlgorithmComponent(ComponentModel):
-
     def __init__(self, component_name, componentinstancenumber):
         super(DSRAlgorithmComponent, self).__init__(component_name, componentinstancenumber)
         self.hop_limit = 50
@@ -78,52 +69,10 @@ class DSRAlgorithmComponent(ComponentModel):
         self.route_cache = Cache(componentinstancenumber)
         self.route_request_table = Cache(componentinstancenumber)
 
-    def is_destination(self, dst: int) -> bool:
-        return dst == self.get_component_id()
-
-    def is_route_request_seen_before(self, src: int, uid: int) -> bool:
-
-        if self.route_request_table.has(src):
-            latest_uid = self.route_request_table.get_value(src)
-            if latest_uid is not None and latest_uid >= uid:
-                return True
-
-        self.route_request_table.set_value(src, uid)
-        return False
-
-    def is_source(self, src: int) -> bool:
-        return src == self.get_component_id()
-
-    def get_component_id(self) -> int:
-        return self.componentinstancenumber
-
-    @staticmethod
-    def get_current_time_in_ms():
-        return round(time.time() * 1000)
-
-    def create_app_event(self, src: int, dst: int, data) -> Event:
-        message_header = GenericMessageHeader("", self.componentname + "-" + str(src),
-                                              self.componentname + "-" + str(dst))
-        message_payload = data
-        message = GenericMessage(message_header, message_payload)
-
-        return Event(self, EventTypes.MFRB, message)
-
-    def create_route_event(self, message_type, src: int, dst: int, route: list, data=None) -> Event:
-
-        message_header = GenericMessageHeader(message_type, self.componentname + "-" + str(src),
-                                              self.componentname + "-" + str(dst))
-
-        new_route = deepcopy(route)
-        message_payload = [new_route, data]
-        message = GenericMessage(message_header, message_payload)
-
-        return Event(self, EventTypes.MFRT, message)
-
-    def create_unique_id_for_req(self) -> int:
-        return self.uid + 1
-
     def start_data_sending(self, dst: int, data) -> None:
+
+        # send data if dest. route is cached
+        # if not try discovery by _trial_number_ times
 
         for i in range(self.trial_number):
 
@@ -141,6 +90,10 @@ class DSRAlgorithmComponent(ComponentModel):
             self.start_route_discovery(dst)
 
     def start_route_discovery(self, dst: int) -> None:
+
+        # starts route request phase
+        # and wait for reply
+
         src = self.get_component_id()
         route = [src]
         uid = self.create_unique_id_for_req()
@@ -151,34 +104,12 @@ class DSRAlgorithmComponent(ComponentModel):
         self.transmit_route_request(src, dst, route, uid)
         self.wait_for_route_reply(dst)
 
-    def start_route_maintenance(self, dst: int) -> None:
-        self.start_route_discovery(dst)
-
-    def wait_for_route_reply(self, dst: int) -> None:
-
-        sleep_period_in_ms = 10  # min for windows
-        sleep_period_in_sec = sleep_period_in_ms / 1000
-
-        timeout_in_sec = 100
-        timeout_in_ms = timeout_in_sec * 1000
-        start_time_in_ms = self.get_current_time_in_ms()
-        end_time_in_ms = start_time_in_ms + timeout_in_ms
-
-        # might overflow, check time
-        while end_time_in_ms > self.get_current_time_in_ms():
-            if self.route_cache.has(dst):
-                return
-
-            time.sleep(sleep_period_in_sec)
-
-    def add_to_cache(self, src, route):
-        local_route = deepcopy(route)
-        if not self.route_cache.has(src):
-            self.route_cache.set_value(src, local_route)
-        elif len(local_route) < len(self.route_cache.get_value(src)):
-            self.route_cache.set_value(src, local_route)
+    def start_route_maintenance(self, broken_link: list) -> None:
+        self.route_cache.delete_keys_with_link(deepcopy(broken_link))
 
     def on_message_from_top(self, eventobj: Event):
+
+        # creates a thread and starts data sending
 
         dst = int(eventobj.eventcontent.header.messageto.split("-")[1])
         data = eventobj.eventcontent.payload
@@ -187,6 +118,9 @@ class DSRAlgorithmComponent(ComponentModel):
         thread.start()
 
     def on_message_from_bottom(self, eventobj: Event):
+
+        # filters messages sent below by their message type
+        # dispatch them accordingly
 
         src = int(eventobj.eventcontent.header.messagefrom.split("-")[1])
         dst = int(eventobj.eventcontent.header.messageto.split("-")[1])
@@ -209,6 +143,12 @@ class DSRAlgorithmComponent(ComponentModel):
             self.receive_route_request(src, dst, route, uid)
 
     def receive_route_forwarding(self, src: int, dst: int, route: list, data) -> None:
+
+        # if destination
+        #   send data to above layer
+        # else
+        #   forward data to next hop
+
         if self.is_destination(dst):
 
             # MonteCarloAddition
@@ -224,36 +164,60 @@ class DSRAlgorithmComponent(ComponentModel):
 
     def receive_route_error(self, src: int, dst: int, route: list, broken_link: list) -> None:
 
-        self.route_cache.delete_keys_with_link(deepcopy(broken_link))
+        # if destination
+        #   start route maintenance
+        # else
+        #   send route error to next node
 
         if self.is_destination(dst):
-            self.start_route_maintenance(dst)
+            self.start_route_maintenance(deepcopy(broken_link))
         else:
             self.transmit_route_error(src, dst, deepcopy(route), deepcopy(broken_link))
 
     def receive_route_reply(self, src: int, dst: int, route: list) -> None:
+
+        # if destination
+        #   add to cache
+        # else
+        #   transmit reply packet to next node
+
         local_route = deepcopy(route)
-        try:
-            index_of_current_component = local_route.index(self.get_component_id())
-
-            self.add_to_cache(src, local_route[index_of_current_component:])
-
-        except ValueError:
-            print("[DSRAlgorithmComponent:receive_route_reply][Exception] ValueError")
-            print("[DSRAlgorithmComponent:receive_route_reply][Exception] comp_id = " + str(self.get_component_id()))
-            str_route = ' '.join(map(str, local_route))
-            print("[DSRAlgorithmComponent:receive_route_reply][Exception] route = " + str_route)
-            return None
 
         if not self.is_destination(dst):
             self.transmit_route_reply(src, dst, local_route)
         else:
+
+            try:
+                index_of_current_component = local_route.index(self.get_component_id())
+
+                self.add_to_cache(src, local_route[index_of_current_component:])
+
+            except ValueError:
+                print("[DSRAlgorithmComponent:receive_route_reply][Exception] ValueError")
+                print(
+                    "[DSRAlgorithmComponent:receive_route_reply][Exception] comp_id = " + str(self.get_component_id()))
+                str_route = ' '.join(map(str, local_route))
+                print("[DSRAlgorithmComponent:receive_route_reply][Exception] route = " + str_route)
+                return None
 
             # MonteCarloAddition
             DataCollector().end_reply_timer()
             print("reply : " + str(DataCollector().get_reply_time_in_us()))
 
     def receive_route_request(self, src: int, dst: int, route: list, uid: int) -> None:
+
+        # if route request seen before
+        #   drop packet
+        # else if source node
+        #   drop packet
+        # else if get_component_id is in route
+        #   drop packet
+        # else if destination node
+        #   add route to cache
+        #   start route reply
+        # else
+        #   if hop limit not exceeded
+        #       broadcast route request
 
         if self.is_route_request_seen_before(src, uid):
             return
@@ -265,9 +229,9 @@ class DSRAlgorithmComponent(ComponentModel):
         new_route = deepcopy(route)
         new_route.append(self.get_component_id())
 
-        self.add_to_cache(src, new_route[::-1])
-
         if self.is_destination(dst):
+
+            self.add_to_cache(src, new_route[::-1])
 
             # MonteCarloAddition
             DataCollector().end_request_timer()
@@ -275,13 +239,6 @@ class DSRAlgorithmComponent(ComponentModel):
             DataCollector().start_reply_timer()
 
             self.transmit_route_reply(dst, src, new_route)
-
-
-        # commented out bcs it makes implementation difficult
-        # elif self.route_cache.has(dst):
-        #     rest_of_the_route = deepcopy(self.route_cache.get_value(dst)[1:])
-        #     new_route.append(rest_of_the_route)
-        #     self.transmit_route_reply(dst, src, new_route)
 
         else:
             if len(new_route) < self.hop_limit:
@@ -302,3 +259,91 @@ class DSRAlgorithmComponent(ComponentModel):
     def transmit_route_request(self, src: int, dst: int, route: list, uid: int) -> None:
         event = self.create_route_event(MessageTypes.ROUTE_REQUEST, src, dst, deepcopy(route), uid)
         self.send_down(event)
+
+    def is_destination(self, dst: int) -> bool:
+        return dst == self.get_component_id()
+
+    def is_route_request_seen_before(self, src: int, uid: int) -> bool:
+
+        # if request seen before
+        #   return true
+        # else
+        #   set route_request_table with new UID
+
+        if self.route_request_table.has(src):
+            latest_uid = self.route_request_table.get_value(src)
+            if latest_uid is not None and latest_uid >= uid:
+                return True
+
+        self.route_request_table.set_value(src, uid)
+        return False
+
+    def is_source(self, src: int) -> bool:
+        return src == self.get_component_id()
+
+    def get_component_id(self) -> int:
+        return self.componentinstancenumber
+
+    @staticmethod
+    def get_current_time_in_ms():
+        return round(time.time() * 1000)
+
+    def create_app_event(self, src: int, dst: int, data) -> Event:
+
+        # Creates an event to send upper layer with given args
+
+        message_header = GenericMessageHeader("", self.componentname + "-" + str(src),
+                                              self.componentname + "-" + str(dst))
+        message_payload = data
+        message = GenericMessage(message_header, message_payload)
+
+        return Event(self, EventTypes.MFRB, message)
+
+    def create_route_event(self, message_type, src: int, dst: int, route: list, data=None) -> Event:
+
+        # Creates an event to send below layer with given args
+
+        message_header = GenericMessageHeader(message_type, self.componentname + "-" + str(src),
+                                              self.componentname + "-" + str(dst))
+
+        new_route = deepcopy(route)
+        message_payload = [new_route, data]
+        message = GenericMessage(message_header, message_payload)
+
+        return Event(self, EventTypes.MFRT, message)
+
+    def create_unique_id_for_req(self) -> int:
+        return self.uid + 1
+
+    def wait_for_route_reply(self, dst: int) -> None:
+
+        # sleeps in a for loop till cache is acquired
+        # or timeout occurred
+
+        sleep_period_in_ms = 10  # min for windows
+        sleep_period_in_sec = sleep_period_in_ms / 1000
+
+        timeout_in_sec = 100
+        timeout_in_ms = timeout_in_sec * 1000
+        start_time_in_ms = self.get_current_time_in_ms()
+        end_time_in_ms = start_time_in_ms + timeout_in_ms
+
+        while end_time_in_ms > self.get_current_time_in_ms():
+            if self.route_cache.has(dst):
+                return
+
+            time.sleep(sleep_period_in_sec)
+
+    def add_to_cache(self, dst, route):
+
+        # checks cache
+        # if dst not exist
+        #   add dst route to table
+        # else if new route shorter
+        #   add dst route to table
+
+        local_route = deepcopy(route)
+        if not self.route_cache.has(dst):
+            self.route_cache.set_value(dst, local_route)
+        elif len(local_route) < len(self.route_cache.get_value(dst)):
+            self.route_cache.set_value(dst, local_route)

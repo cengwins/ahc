@@ -55,33 +55,6 @@ class AdhocNodeComponent(ComponentModel):
         else:
             self.send_unicast_message(next_hop, payload)
 
-    def get_next_component_id(self, route: list):
-        try:
-            index_of_current_component = route.index(self.get_component_id())
-            index_of_next_component = index_of_current_component + 1
-            return route[index_of_next_component]
-        except ValueError:
-            print("[AdhocNodeComponent:get_next_component_id][Exception] ValueError")
-            print("[AdhocNodeComponent:get_next_component_id][Exception] comp_id = " + str(self.get_component_id()))
-            str_route = ' '.join(map(str, route))
-            print("[AdhocNodeComponent:get_next_component_id][Exception] route = " + str_route)
-            return None
-
-    def get_prev_component_id(self, route: list):
-        try:
-            index_of_current_component = route.index(self.get_component_id())
-            index_of_prev_component = index_of_current_component - 1
-            return route[index_of_prev_component]
-        except ValueError:
-            print("[AdhocNodeComponent:get_prev_component_id][Exception] ValueError")
-            print("[AdhocNodeComponent:get_prev_component_id][Exception] comp_id = " + str(self.get_component_id()))
-            str_route = ' '.join(map(str, route))
-            print("[AdhocNodeComponent:get_prev_component_id][Exception] route = " + str_route)
-            return None
-
-    def get_component_id(self) -> int:
-        return self.componentinstancenumber
-
     def on_message_from_bottom(self, eventobj: Event):
 
         message_type = eventobj.eventcontent.payload.header.messagetype
@@ -97,20 +70,6 @@ class AdhocNodeComponent(ComponentModel):
 
         event = Event(self, EventTypes.MFRB, message)
         self.send_up(event)
-
-    def is_link_up(self, next_hop) -> bool:
-
-        for interface in self.connectors[ConnectorTypes.DOWN]:
-            if interface.componentinstancenumber.split("-")[0] == str(self.componentinstancenumber):
-                interface_next_hop = interface.componentinstancenumber.split("-")[1]
-                if interface_next_hop == str(next_hop):
-                    return True
-            else:
-                interface_next_hop = interface.componentinstancenumber.split("-")[0]
-                if interface_next_hop == str(next_hop):
-                    return True
-
-        return False
 
     def on_message_from_top(self, eventobj: Event):
 
@@ -163,3 +122,44 @@ class AdhocNodeComponent(ComponentModel):
             print("[AdhocNodeComponent:send_route_error][Error] comp_id = " + str(self.get_component_id()))
             str_route = ' '.join(map(str, route))
             print("[AdhocNodeComponent:send_route_error][Error] route = " + str_route)
+
+    def is_link_up(self, next_hop) -> bool:
+
+        for interface in self.connectors[ConnectorTypes.DOWN]:
+            if interface.componentinstancenumber.split("-")[0] == str(self.componentinstancenumber):
+                interface_next_hop = interface.componentinstancenumber.split("-")[1]
+                if interface_next_hop == str(next_hop):
+                    return True
+            else:
+                interface_next_hop = interface.componentinstancenumber.split("-")[0]
+                if interface_next_hop == str(next_hop):
+                    return True
+
+        return False
+
+    def get_next_component_id(self, route: list):
+        try:
+            index_of_current_component = route.index(self.get_component_id())
+            index_of_next_component = index_of_current_component + 1
+            return route[index_of_next_component]
+        except ValueError:
+            print("[AdhocNodeComponent:get_next_component_id][Exception] ValueError")
+            print("[AdhocNodeComponent:get_next_component_id][Exception] comp_id = " + str(self.get_component_id()))
+            str_route = ' '.join(map(str, route))
+            print("[AdhocNodeComponent:get_next_component_id][Exception] route = " + str_route)
+            return None
+
+    def get_prev_component_id(self, route: list):
+        try:
+            index_of_current_component = route.index(self.get_component_id())
+            index_of_prev_component = index_of_current_component - 1
+            return route[index_of_prev_component]
+        except ValueError:
+            print("[AdhocNodeComponent:get_prev_component_id][Exception] ValueError")
+            print("[AdhocNodeComponent:get_prev_component_id][Exception] comp_id = " + str(self.get_component_id()))
+            str_route = ' '.join(map(str, route))
+            print("[AdhocNodeComponent:get_prev_component_id][Exception] route = " + str_route)
+            return None
+
+    def get_component_id(self) -> int:
+        return self.componentinstancenumber

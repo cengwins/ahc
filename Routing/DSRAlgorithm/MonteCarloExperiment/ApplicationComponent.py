@@ -13,17 +13,6 @@ class ApplicationComponent(ComponentModel):
     def __init__(self, component_name, component_id):
         super(ApplicationComponent, self).__init__(component_name, component_id)
 
-    def find_total_node_number(self) -> int:
-        count = 0
-        try:
-            while True:
-                ComponentRegistry().get_component_by_key(self.componentname, count)
-                count = count + 1
-        except KeyError:
-            pass
-
-        return count
-
     def send_data(self, dst):
 
         print("send_data...")

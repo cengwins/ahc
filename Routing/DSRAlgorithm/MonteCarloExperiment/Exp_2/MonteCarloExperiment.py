@@ -1,4 +1,5 @@
 import sys
+import threading
 import time
 import json
 from threading import Thread
@@ -11,6 +12,7 @@ from PIL import Image
 sys.path.append('..')
 sys.path.append('../..')
 sys.path.append('../../..')
+sys.path.append('../../../..')
 
 from Ahc import Topology, ComponentRegistry
 from Channels.Channels import P2PFIFOPerfectChannel
@@ -18,11 +20,16 @@ from Routing.DSRAlgorithm.MonteCarloExperiment.AdhocNodeComponent import AdhocNo
 from Routing.DSRAlgorithm.MonteCarloExperiment.DataCollector import DataCollector
 
 
-def create_connected_graph(node_number: int, prob: float):
+def create_connected_graph_with_length(node_number: int, prob: float, length: int, edge_count: int):
     while True:
-        nx_graph = networkx.erdos_renyi_graph(node_number, prob)
+        nx_graph = networkx.fast_gnp_random_graph(node_number, prob)
         if networkx.is_connected(nx_graph):
-            break
+            if networkx.shortest_path_length(nx_graph, 0, len(nx_graph.nodes()) - 1) != length:
+                continue
+            elif networkx.number_of_edges(nx_graph) != edge_count:
+                continue
+            else:
+                break
 
     return nx_graph
 
@@ -78,7 +85,7 @@ def log_result(total_node_number, prob_coefficient, simulation_number, nx_found_
     json_result = json.dumps(result, indent=4)
     json_file = open("Results\\Result_" +
                      str(total_node_number) + "_" +
-                     str(prob_coefficient) + "_" +
+                     str(len(nx_found_path) - 1) + "_" +
                      str(simulation_number) + ".json", "w")
     json_file.write(json_result)
     json_file.close()
@@ -86,16 +93,17 @@ def log_result(total_node_number, prob_coefficient, simulation_number, nx_found_
 
 # MonteCarloAddition
 node_number = int(sys.argv[1])
-prob_coef = int(sys.argv[2])
+route_len = int(sys.argv[2])
 sim_number = int(sys.argv[3])
 
-prob = prob_coef / node_number
+prob = 0.2
+prob_coef = int(node_number * prob)
 
-graph = create_connected_graph(node_number, prob)
+graph = create_connected_graph_with_length(node_number, prob, route_len, 10)
 
 networkx_found_path = draw_graph(graph, path="TopologyImages\\Topology_" +
                                              str(node_number) + "_" +
-                                             str(prob_coef) + "_" +
+                                             str(route_len) + "_" +
                                              str(sim_number) + ".png",
                                  open_img=False)
 
