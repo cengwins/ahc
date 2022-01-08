@@ -65,7 +65,7 @@ class DsdvService(ComponentModel):
         self.numberOfIncrementalUpdate = 0
         self.numberOfFullDumpUpdate = 0
         self.numberOfUpdateMessage = 0
-        self.printRoutingTableOnPeriodicUpdates = True
+        self.printRoutingTableOnPeriodicUpdates = False
         self.printNumberOfMessagesOnPeriodicUpdates = False
         self.printNumberOfMessagesOnEveryUpdate = False
 
@@ -316,7 +316,8 @@ class DsdvService(ComponentModel):
         msg = eventobj.eventcontent
         hdr = msg.header
         newMessage = self.RouteAppLayerMessage(hdr.messageto, msg.payload)
-        self.send_down(Event(self, EventTypes.MFRT, newMessage))
+        if(newMessage != -1):
+            self.send_down(Event(self, EventTypes.MFRT, newMessage))
 
     # This function routes a message according to self routing table.
     # The function takes destination address and payload information and regenerates the message
@@ -329,6 +330,7 @@ class DsdvService(ComponentModel):
         if entryIndex == -1:  # No match in self.routing table. Drop the packet
             print("I am: " + self.unique_name() + " Message is dropped")
             print(payload)
+            return -1
         else:
             nexthop = self.routingTable[entryIndex][RoutingTableColumn.nextHop.value]
             header = GenericMessageHeader(DataMessageTypes.appData, self.componentinstancenumber, destination,

@@ -33,7 +33,7 @@ class ApplicationLayer(ComponentModel):
 
   def __init__(self, componentname, componentinstancenumber):
     super().__init__(componentname, componentinstancenumber)
-    self.t = ApplicationLayerTimer(15, self.generate_and_send_message)
+    self.t = ApplicationLayerTimer(12, self.generate_and_send_message)
 
   def send_message(self, dataToSend, destination):
     payload = dataToSend
@@ -89,7 +89,7 @@ class AdHocNode(ComponentModel):
 
 def main():
 
-  # G = nx.random_geometric_graph(50, 0.2)
+  #G = nx.random_geometric_graph(5, 0.5)
 
   G = nx.Graph()
   G.add_nodes_from([0, 1, 2, 3, 4])
