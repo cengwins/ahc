@@ -9,14 +9,15 @@ from Ahc import \
     Thread, \
     Topology
 from GSRQueueElement import GSQQueueElement
+from Constants import GSR_COORDINATOR_NAME, \
+    GSR_ROUTER_NAME, \
+    UPDATE_MESSAGE_TYPE, \
+    TERMINATE_ROUTING_MESSAGE_TYPE, \
+    ROUTING_COMPLETED_MESSAGE_TYPE
 import time
 
 
 class RoutingGSRComponent(ComponentModel):
-    update_message_type = "GSRUPDATE"
-    terminate_routing_message_type = "GSRTERMINATEROUTING"
-    routing_completed_message_type = "GSRROUTINGCOMPLETED"
-
     sleep_duration = 0.1
 
     def __init__(self, component_name, component_id):
@@ -38,8 +39,8 @@ class RoutingGSRComponent(ComponentModel):
 
         self.n_nodes = self.componentinstancenumber
         for element in ComponentRegistry().components:
-            if "MachineLearningNode" in element:
-                component_id = int(element.split("RoutingGSRComponent")[1])
+            if RoutingGSRComponent.__name__ in element:
+                component_id = int(element.split(RoutingGSRComponent.__name__)[1])
                 self.n_nodes = max(self.n_nodes, component_id + 1)
 
         self.distances = {i: -1 for i in range(self.n_nodes)}
@@ -59,25 +60,22 @@ class RoutingGSRComponent(ComponentModel):
     def on_message_from_bottom(self, eventobj: Event):
         message_header = eventobj.eventcontent.header
         message_destination = message_header.messageto.split("-")[0]
-        if message_destination == RoutingGSRComponent.__name__:
+        if message_destination == GSR_ROUTER_NAME:
             message_source_id = message_header.messagefrom.split("-")[1]
             message_type = message_header.messagetype
             content = eventobj.eventcontent.payload
 
-            if message_type == self.update_message_type:
+            if message_type == UPDATE_MESSAGE_TYPE:
                 self.queue_lock.acquire()
                 self.message_queue.append(GSQQueueElement(message_source_id, content))
                 self.queue_lock.release()
-                print(
-                    "RECEIVED [" + message_header.messagefrom + " -> " + message_header.messageto + "]: " + str(content)
-                )
 
     def on_message_from_peer(self, eventobj: Event):
         message_header = eventobj.eventcontent.header
         message_destination = message_header.messageto.split("-")[0]
         message_type = message_header.messagetype
-        if message_destination == RoutingGSRComponent.__name__:
-            if message_type == self.terminate_routing_message_type:
+        if message_destination == GSR_ROUTER_NAME:
+            if message_type == TERMINATE_ROUTING_MESSAGE_TYPE:
                 self.terminated = True
 
     def job(self, *arg):
@@ -89,6 +87,8 @@ class RoutingGSRComponent(ComponentModel):
             self.queue_lock.release()
             self.find_shortest_paths()
             self.broadcast_routing_update()
+            if self.routing_completed:
+                self.report_route()
             time.sleep(self.sleep_duration)
 
     def pkt_process(self, pkt: GSQQueueElement):
@@ -100,7 +100,7 @@ class RoutingGSRComponent(ComponentModel):
 
     def broadcast_routing_update(self):
         self.sequence_numbers[self.componentinstancenumber] += 1
-        message_from = RoutingGSRComponent.__name__ + "-" + str(self.componentinstancenumber)
+        message_from = GSR_ROUTER_NAME + "-" + str(self.componentinstancenumber)
         payload = {
             "link_states": self.link_states,
             "sequence_numbers": self.sequence_numbers,
@@ -108,23 +108,22 @@ class RoutingGSRComponent(ComponentModel):
         }
 
         for neighbor_id in self.neighbors:
-            message_to = RoutingGSRComponent.__name__ + "-" + str(neighbor_id)
+            message_to = GSR_ROUTER_NAME + "-" + str(neighbor_id)
             interface_id = str(self.componentinstancenumber) + "-" + str(neighbor_id)
             message_header = GenericMessageHeader(
-                self.update_message_type,
+                UPDATE_MESSAGE_TYPE,
                 message_from,
                 message_to,
                 interfaceid=interface_id
             )
             message = GenericMessage(message_header, payload)
             event = Event(self, EventTypes.MFRT, message)
-            print("SENDING [" + message_from + " -> " + message_to + "]: " + str(payload))
             self.send_down(event)
 
     def report_route(self):
-        message_from = RoutingGSRComponent.__name__ + "-" + str(self.componentinstancenumber)
-        message_to = "Coordinator-" + str(self.componentinstancenumber)
-        message_header = GenericMessageHeader(self.routing_completed_message_type, message_from, message_to)
+        message_from = GSR_ROUTER_NAME + "-" + str(self.componentinstancenumber)
+        message_to = GSR_COORDINATOR_NAME + "-" + str(self.componentinstancenumber)
+        message_header = GenericMessageHeader(ROUTING_COMPLETED_MESSAGE_TYPE, message_from, message_to)
         payload = {"routing_table": self.next_hop}
         message = GenericMessage(message_header, payload)
         event = Event(self, EventTypes.MFRP, message)
@@ -146,7 +145,7 @@ class RoutingGSRComponent(ComponentModel):
             node_k = 0
             node_l = 0
             min_w = -1
-            for k in range(self.n_nodes + 1):
+            for k in range(self.n_nodes):
                 if k in processed_nodes:
                     continue
                 for l in processed_nodes:
@@ -161,6 +160,7 @@ class RoutingGSRComponent(ComponentModel):
                 break
             processed_nodes.append(node_k)
             self.distances[node_k] = min_w
-            self.next_hop[node_k] = self.next_hop[node_l]
+            self.next_hop[node_k] = self.next_hop[node_l] if node_l != self.componentinstancenumber else node_k
 
+        print("Next hops for node " + str(self.componentinstancenumber) + ": " + str(self.next_hop))
         self.routing_completed = len(processed_nodes) == self.n_nodes
