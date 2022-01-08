@@ -65,7 +65,7 @@ class DsdvService(ComponentModel):
         self.numberOfIncrementalUpdate = 0
         self.numberOfFullDumpUpdate = 0
         self.numberOfUpdateMessage = 0
-        self.printRoutingTableOnPeriodicUpdates = False
+        self.printRoutingTableOnPeriodicUpdates = True
         self.printNumberOfMessagesOnPeriodicUpdates = False
         self.printNumberOfMessagesOnEveryUpdate = False
 
