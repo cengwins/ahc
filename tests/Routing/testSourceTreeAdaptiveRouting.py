@@ -1,3 +1,5 @@
+import csv
+import logging
 import random
 import threading
 import time
@@ -40,22 +42,20 @@ class AdHocNode(ComponentModel):
 
 class TestBench:
     TERMINATED = False
-    NODE_COUNT = 20
-    AREA = (5000, 7000)  # meter
-    SPEED = (1, 20)  # m/s
-    PAUSE_TIME = 10  # s
+    SIMULATION_TIME = 60  # sec
+    NODE_COUNT = 10
+    DENSITY = 0.1
 
-    def draw_random_graph(self, n):
+    def draw_random_connected_graph(self, n):
         terminate = False
 
         while not terminate:
-            G = nx.gnp_random_graph(n, 0.5)
+            G = nx.gnp_random_graph(n, self.DENSITY)
             terminate = nx.is_connected(G)
 
         return G
 
     def draw_graph(self):
-        G = nx.Graph()
         # G.add_nodes_from([0, 1, 2, 3])
         # G.add_weighted_edges_from([(1, 2, 8),
         #                            (2, 1, 8),
@@ -81,10 +81,10 @@ class TestBench:
 
         # random.seed(5)
         # G = nx.random_geometric_graph(10, 0.5, seed=1)
-        G = self.draw_random_graph(10)
+        G = self.draw_random_connected_graph(self.NODE_COUNT)
 
         for (u, v, w) in G.edges(data=True):
-            w['weight'] = random.randint(1, 10)
+            w['weight'] = random.randint(1, 20)
 
         return G
 
@@ -146,7 +146,7 @@ class TestBench:
             return False
 
     def main(self):
-        threading.Timer(10, self.terminate_all).start()
+        threading.Timer(self.SIMULATION_TIME, self.terminate_all).start()
         graph = self.draw_graph()
         topology = Topology()
         topology.construct_from_graph(graph, AdHocNode, FIFOBroadcastPerfectChannel)
