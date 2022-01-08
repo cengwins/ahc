@@ -23,12 +23,12 @@ class GSRTestingApplicationComponent(ComponentModel):
                 source = message["src"]
                 content = message["content"]
                 print(f"App {self.componentinstancenumber} has received {content} from {source}")
-                self.send_info_message(source, "Kocaeli Tarcanlar Ekspertiz'den ben Sami herkese merhabalar")
+                self.send_info_message(source, "PING")
             elif message_type == ROUTING_COMPLETED_MESSAGE_TYPE:
                 self.end_time = timer()
                 print(f"App {self.componentinstancenumber} has received RoutingCompleted message")
                 for i in range(1, 5):
-                    payload = "Cumleten selamunaleykum komsu " + str(i)
+                    payload = "PONG " + str(i)
                     self.send_info_message(i, payload)
 
     def send_info_message(self, dest, payload):
