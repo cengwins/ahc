@@ -45,14 +45,22 @@ class UsrpApplicationLayer(ComponentModel):
     
     def on_message_from_bottom(self, eventobj: Event):
         evt = Event(self, EventTypes.MFRT, eventobj.eventcontent)
-        print(f"I am {self.componentname}.{self.componentinstancenumber}, received eventcontent=Component:{eventobj.eventcontent.header.messagefrom}{eventobj.eventcontent.payload}\n")    
-        evt.eventcontent.header.messagefrom = self.componentinstancenumber
+        print(f"I am Node.{self.componentinstancenumber}, received from Node.{eventobj.eventcontent.header.messagefrom} a message: {eventobj.eventcontent.payload}")    
+        if self.componentinstancenumber == 1:
+            evt.eventcontent.header.messageto = 0
+            evt.eventcontent.header.messagefrom = 1
+        else:
+            evt.eventcontent.header.messageto = 1
+            evt.eventcontent.header.messagefrom = 0
         evt.eventcontent.payload = eventobj.eventcontent.payload
         #print(f"I am {self.componentname}.{self.componentinstancenumber}, sending down eventcontent={eventobj.eventcontent.payload}\n")
         self.send_down(evt)  # PINGPONG
     
     def on_startbroadcast(self, eventobj: Event):
-        hdr = ApplicationLayerMessageHeader(ApplicationLayerMessageTypes.BROADCAST, 0, 1)
+        if self.componentinstancenumber == 1:
+            hdr = ApplicationLayerMessageHeader(ApplicationLayerMessageTypes.BROADCAST, 1, 0)
+        else:
+            hdr = ApplicationLayerMessageHeader(ApplicationLayerMessageTypes.BROADCAST, 0, 1)
         self.counter = self.counter + 1
         
         payload = "BMSG-" + str(self.counter)
@@ -60,7 +68,7 @@ class UsrpApplicationLayer(ComponentModel):
         evt = Event(self, EventTypes.MFRT, broadcastmessage)
         # time.sleep(3)
         self.send_down(evt)
-        print("Starting broadcast")
+        #print("Starting broadcast")
     
          
 class UsrpNode(ComponentModel):
@@ -97,7 +105,7 @@ def main():
     topo = Topology()
 # Note that the topology has to specific: usrp winslab_b210_0 is run by instance 0 of the component
 # Therefore, the usrps have to have names winslab_b210_x where x \in (0 to nodecount-1)
-    topo.construct_winslab_topology_without_channels(2, UsrpNode)
+    topo.construct_winslab_topology_without_channels(4, UsrpNode)
   # topo.construct_winslab_topology_with_channels(2, UsrpNode, FIFOBroadcastPerfectChannel)
   
   # time.sleep(1)
@@ -106,8 +114,8 @@ def main():
     topo.start()
     
     while(True):
-        topo.nodes[0].appl.send_self(Event(topo.nodes[0], UsrpApplicationLayerEventTypes.STARTBROADCAST, None))
-        time.sleep(1)
+        topo.nodes[1].appl.send_self(Event(topo.nodes[0], UsrpApplicationLayerEventTypes.STARTBROADCAST, None))
+        time.sleep(0.1)
 
 
 if __name__ == "__main__":

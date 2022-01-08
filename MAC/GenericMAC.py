@@ -13,6 +13,7 @@ class GenericMac(ComponentModel):
         super().__init__(componentname, componentinstancenumber)
         self.framequeue = queue.Queue()
         self.ahcuhd = framers.get_ahcuhd_by_id(self.componentinstancenumber)
+        print("I am Generic MAC my uhd instance id is ", self.ahcuhd.componentinstancenumber)
         self.eventhandlers[GenericMacEventTypes.HANDLEMACFRAME] = self.on_handlemacframe
     
     def on_init(self, eventobj: Event):
@@ -34,4 +35,4 @@ class GenericMac(ComponentModel):
         # print(f"I am {self.componentname}, eventcontent={eventobj.eventcontent}\n")
         # put message in queue and try accessing the channel
         self.framequeue.put_nowait(eventobj)
-        print("Mac put the frame in queueu", eventobj.eventcontent.payload)
+        #print("Mac put the frame in queueu", eventobj.eventcontent.payload)

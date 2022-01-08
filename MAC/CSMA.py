@@ -27,7 +27,7 @@ class MacCsmaPPersistent(GenericMac):
             randval = random.random()
             if randval < self.p: # TODO: Check if correct
                 clearmi, powerdb  = self.ahcuhd.ischannelclear(threshold=-35)
-                print("Component:", self.componentinstancenumber, "clear mi=", clearmi, " Power=", powerdb)
+                #print("Component:", self.componentinstancenumber, "clear mi=", clearmi, " Power=", powerdb)
                 if  clearmi == True:
                     try:
                         eventobj = self.framequeue.get()
@@ -38,11 +38,12 @@ class MacCsmaPPersistent(GenericMac):
                         print("MacCsmaPPersistent handle_frame exception, ", e)
                 else:
                     self.retrialcnt = self.retrialcnt + 1
-                    time.sleep(random.randrange(0,math.pow(2,self.retrialcnt))*0.01)
+                    time.sleep(random.randrange(0,math.pow(2,self.retrialcnt))*0.001)
+                    #print("Busy")
         else:
             #print("Queue size", self.framequeue.qsize())
             pass
-        time.sleep(0.000001) # TODO: Think about this otherwise we will only do cca
+        time.sleep(0.00001) # TODO: Think about this otherwise we will only do cca
         self.send_self(Event(self, GenericMacEventTypes.HANDLEMACFRAME, None)) #Continuously trigger handle_frame
         
             
