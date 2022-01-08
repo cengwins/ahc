@@ -1,24 +1,27 @@
 import logging
+import threading
 
 from Ahc import *
 from Routing.SourceTreeAdaptiveRouting.STARNodeComponent import STARMessageTypes
-from Routing.SourceTreeAdaptiveRouting.helper import STARStats, STARStatEvent
+from Routing.SourceTreeAdaptiveRouting.helper import MessageGenerator
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(name)s [%(levelname)s] - %(message)s')
-logging.getLogger("matplotlib").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 
 class ApplicationComponent(ComponentModel):
     def __init__(self, componentname, componentid):
         super(ApplicationComponent, self).__init__(componentname, componentid)
+        self.generator = MessageGenerator(mps=2, sender_fn=self.send_app_message)
 
-    def send_message(self, to, msg):
+    def on_init(self, eventobj: Event):
+        # if self.componentinstancenumber == 0:
+        threading.Timer(40, self.start_flow).start()
+
+    def send(self, to, msg):
         message_header = GenericMessageHeader(STARMessageTypes.APP, self.componentinstancenumber, to)
         message = GenericMessage(message_header, GenericMessagePayload(msg))
         kickstarter = Event(self, EventTypes.MFRT, message)
-        logger.info(f"AppLayer {self.componentinstancenumber} sends message to AppLayer {to}")
-        STARStats().emit(STARStatEvent.APP_MSG_SENT)
+        logger.debug(f"AppLayer {self.componentinstancenumber} sends message to AppLayer {to}")
 
         self.send_down(kickstarter)
 
@@ -26,5 +29,29 @@ class ApplicationComponent(ComponentModel):
         message_from = eventobj.eventcontent.header.messagefrom
         payload = eventobj.eventcontent.payload.messagepayload
 
-        logger.info(f"AppLayer {self.componentinstancenumber} got message: {payload} from {message_from}")
-        STARStats().emit(STARStatEvent.APP_MSG_RECV)
+        logger.debug(f"AppLayer {self.componentinstancenumber} got message: {payload} from {message_from}")
+
+    def start_flow(self):
+        self.generator.start()
+
+    def terminate(self):
+        super().terminate()
+        self.generator.terminate()
+
+    def send_app_message(self):
+        dest = self.componentinstancenumber
+        neighbors = Topology().get_neighbors(self.componentinstancenumber)
+
+        while dest == self.componentinstancenumber or dest in neighbors:
+            dest = Topology().get_random_node().componentinstancenumber
+
+        shortest_hop_count = len(Topology().allpairs_shortest_path()[self.componentinstancenumber][dest]) - 2
+        hop_count = 0
+
+        self.send(dest, {
+            'text': 'Hello, World!',
+            'from': self.componentinstancenumber,
+            'to': dest,
+            'shortest': shortest_hop_count,
+            'hop_count': hop_count
+        })

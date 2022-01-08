@@ -1,4 +1,6 @@
 import threading
+import time
+from collections import Counter
 from enum import Enum
 
 # total message count
@@ -88,3 +90,26 @@ class STARStats(object):
             self.link_updated = 0
 
         return data
+
+
+class MessageGenerator:
+    def __init__(self, mps=1, sender_fn=None):
+        """
+        mps: Number of messages per second
+        sender_fn: Function to be called
+        """
+        durations = [1, 2, 4, 8]
+        self.mps = mps if mps in durations else 1
+        self.sleep_time: float = 1.0 / self.mps
+        self.sender_fn = sender_fn
+        self.terminated = False
+
+    def terminate(self):
+        self.terminated = True
+
+    def start(self):
+        self.terminated = False
+
+        while not self.terminated:
+            self.sender_fn()
+            time.sleep(self.sleep_time)
