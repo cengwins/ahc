@@ -3,6 +3,7 @@ import os
 import sys
 import random
 import struct
+import json
 import networkx as nx
 from enum import Enum
 from cryptography.hazmat.backends import default_backend
@@ -34,7 +35,7 @@ class PublicGraph:
         return PublicGraph.__GRAPH
 
     @staticmethod
-    def convert_cypher_graph_to_string(graph):
+    def convert_cypher_graph_to_bytes(graph):
         graph_bytes = b""
         for i in range(graph.shape[0]):
             for j in range(graph.shape[1]):
@@ -43,7 +44,7 @@ class PublicGraph:
         return graph_bytes
 
     @staticmethod
-    def convert_string_to_cypher_graph(graph_bytes):
+    def convert_bytes_to_cypher_graph(graph_bytes):
         matrix = np.asmatrix(np.zeros((5, 5), dtype=CipherContext))
         tmp_graph_bytes = graph_bytes
         for i in range(matrix.shape[0]):
@@ -126,10 +127,10 @@ class PeggyApplicationLayerComponent(BaseZkpAppLayerComponent):
         # permute graph and get node mapping
         permuted_graph, self.graph["node_mapping"] = self.permute_graph()
         # encrypt permuted graph
-        self.graph["new_graph"] = self.encrypt_graph(permuted_graph)
+        self.graph["committed_graph"] = self.encrypt_graph(permuted_graph)
         # send encrypted and permuted graph to verifier
         self.send_message(ApplicationLayerMessageTypes.COMMIT,
-                          PublicGraph.convert_cypher_graph_to_string(self.graph["new_graph"]),
+                          PublicGraph.convert_cypher_graph_to_bytes(self.graph["committed_graph"]),
                           self.destination)
 
     def on_challenge_received(self, eventobj: Event):
@@ -137,11 +138,12 @@ class PeggyApplicationLayerComponent(BaseZkpAppLayerComponent):
         if challenge_type == ChallengeType.PROVE_GRAPH:
             print("Recieved", challenge_type)
             self.send_message(ApplicationLayerMessageTypes.RESPONSE,
-                              PublicGraph.convert_cypher_graph_to_string(self.graph["new_graph"]), self.destination)
+                              self.create_prove_graph_payload(), self.destination)
         elif challenge_type == ChallengeType.SHOW_CYCLE:
             print("Recieved", challenge_type)
             self.send_message(ApplicationLayerMessageTypes.RESPONSE,
-                              PublicGraph.convert_cypher_graph_to_string(self.graph["new_graph"]), self.destination)
+                              PublicGraph.convert_cypher_graph_to_bytes(self.graph["committed_graph"]),
+                              self.destination)
 
     def on_timer_expired(self, eventobj: Event):
         pass
@@ -159,13 +161,18 @@ class PeggyApplicationLayerComponent(BaseZkpAppLayerComponent):
         return nx.relabel_nodes(public_graph, node_mapping), node_mapping
 
     def encrypt_graph(self, graph):
-        matrix = nx.to_numpy_matrix(graph, nodelist=[*range(0, 5)])
-        encrypted_matrix = np.asmatrix(np.zeros_like(matrix, dtype=CipherContext))
-        for i in range(matrix.shape[0]):
-            for j in range(matrix.shape[1]):
-                cipher_text = self.crypto["encryptor"].update(struct.pack('f', matrix[i, j]))
+        permuted_matrix = nx.to_numpy_matrix(graph, nodelist=[*range(0, 5)])
+        encrypted_matrix = np.asmatrix(np.zeros_like(permuted_matrix, dtype=CipherContext))
+        for i in range(permuted_matrix.shape[0]):
+            for j in range(permuted_matrix.shape[1]):
+                cipher_text = self.crypto["encryptor"].update(struct.pack('f', permuted_matrix[i, j]))
                 encrypted_matrix[i, j] = cipher_text
         return encrypted_matrix
+
+    def create_prove_graph_payload(self):
+        return self.secrets["key"] + \
+               self.secrets["iv"] + \
+               json.dumps(self.graph["node_mapping"]).encode('utf-8')
 
     def __init__(self, componentname, componentinstancenumber):
         super().__init__(componentname, componentinstancenumber)
@@ -173,7 +180,7 @@ class PeggyApplicationLayerComponent(BaseZkpAppLayerComponent):
         # graph related info for prover
         self.graph = {
             # encrypted and permuted new graph
-            "new_graph": np.asmatrix([]),
+            "committed_graph": np.asmatrix([]),
             "node_mapping": {}
         }
         # secrets of component
@@ -205,7 +212,9 @@ class VictorApplicationLayerComponent(BaseZkpAppLayerComponent):
                 print(
                     f"Node-{self.componentinstancenumber} says "
                     f"Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
-                print(f"Graph-\n{PublicGraph.convert_string_to_cypher_graph(app_message.payload.messagepayload)}")
+                print(f"Graph-\n{PublicGraph.convert_bytes_to_cypher_graph(app_message.payload.messagepayload)}")
+                self.verification["committed_graph"] = \
+                    PublicGraph.convert_bytes_to_cypher_graph(app_message.payload.messagepayload)
                 self.send_self(Event(self, "challenge", None))
             elif hdr.messagetype == ApplicationLayerMessageTypes.RESPONSE:
                 print(
@@ -216,13 +225,27 @@ class VictorApplicationLayerComponent(BaseZkpAppLayerComponent):
             print("Attribute Error")
 
     def on_challenge(self, eventobj: Event):
-        self.send_message(ApplicationLayerMessageTypes.CHALLENGE, ChallengeType.PROVE_GRAPH, self.destination)
+        if random.uniform(0, 1) < 1.5:
+            self.verification["current_challenge_mode"] = ChallengeType.PROVE_GRAPH
+        else:
+            self.verification["current_challenge_mode"] = ChallengeType.SHOW_CYCLE
+        self.send_message(ApplicationLayerMessageTypes.CHALLENGE,
+                          self.verification["current_challenge_mode"],
+                          self.destination)
 
     def on_response_received(self, eventobj: Event):
-        self.send_self(Event(self, "correctresponse", None))
-        pass
+        message_payload = eventobj.eventcontent
+        if self.verification["current_challenge_mode"] == ChallengeType.PROVE_GRAPH:
+            key = message_payload[0:32]
+            iv = message_payload[32: 48]
+            node_mapping = json.loads(message_payload[48:].decode('utf-8'))
+            if self.is_isomorphic(self.decrypt_graph(key, iv), node_mapping):
+                self.send_self(Event(self, "correctresponse", None))
+        elif self.verification["current_challenge_mode"] == ChallengeType.SHOW_CYCLE:
+            pass
 
     def on_correct_response(self, eventobj: Event):
+        print("Correct Response Recieved")
         self.verification["current_trial_no"] += 1
         if self.verification["current_trial_no"] == self.verification["max_trial_no"]:
             self.send_message(ApplicationLayerMessageTypes.ACCEPT, None, self.destination)
@@ -232,6 +255,22 @@ class VictorApplicationLayerComponent(BaseZkpAppLayerComponent):
     def on_timer_expired(self, eventobj: Event):
         pass
 
+    def decrypt_graph(self, key, iv):
+        decryptor = Cipher(algorithms.AES(key), modes.CFB(iv), default_backend()).decryptor()
+        decrypted_matrix = np.asmatrix(np.zeros_like(self.verification["committed_graph"], dtype=float))
+        for i in range(decrypted_matrix.shape[0]):
+            for j in range(decrypted_matrix.shape[1]):
+                plain_text = struct.unpack('f', decryptor.update(self.verification["committed_graph"][i, j]))[0]
+                decrypted_matrix[i, j] = plain_text
+        print("Decrypted Received Graph\n", decrypted_matrix)
+        decrypted_graph = nx.from_numpy_matrix(decrypted_matrix)
+        return decrypted_graph
+
+    def is_isomorphic(self, decrypted_graph, node_mapping):
+        public_graph = PublicGraph.get_graph()
+        permuted_graph = nx.relabel_nodes(public_graph, node_mapping)
+        return nx.is_isomorphic(permuted_graph, decrypted_graph)
+
     def __init__(self, componentname, componentinstancenumber):
         super().__init__(componentname, componentinstancenumber)
         self.destination = 0
@@ -239,7 +278,8 @@ class VictorApplicationLayerComponent(BaseZkpAppLayerComponent):
         self.verification = {
             "current_trial_no": 0,
             "current_challenge_mode": ChallengeType.NONE,
-            "max_trial_no": 1
+            "max_trial_no": 1,
+            "committed_graph": np.asmatrix([])
         }
         self.eventhandlers["challenge"] = self.on_challenge
         self.eventhandlers["responsereceived"] = self.on_response_received
