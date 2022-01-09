@@ -1,36 +1,37 @@
-import os
-import sys
 import random
 import networkx as nx
 import numpy as np
 from cryptography.hazmat.primitives.ciphers import CipherContext
-from Ahc import ComponentRegistry
-
-sys.path.insert(0, os.getcwd())
-registry = ComponentRegistry()
 
 
 class PublicGraph:
     def __generate_graph_with_hamiltonian_cycle(self, graph_node_size, cycle_node_size):
+        # init public graph and its hamiltonian cycle
         public_graph = nx.Graph()
         hamiltonian_cycle = nx.Graph()
+        # calculate cycle start node
         cycle_start_node = int(np.ceil((graph_node_size - cycle_node_size) / 2))
+        # add all nodes to both graph and to cycle
         public_graph.add_nodes_from(range(0, graph_node_size))
         hamiltonian_cycle.add_nodes_from(range(cycle_start_node, cycle_start_node + cycle_node_size))
+        # loop through to form cycle
         for i in range(cycle_start_node, cycle_start_node + cycle_node_size - 1):
             public_graph.add_edge(i, i + 1, attr=True)
             hamiltonian_cycle.add_edge(i, i + 1, attr=True)
+        # connect last node with the starting node
         public_graph.add_edge(cycle_start_node + cycle_node_size - 1, cycle_start_node, attr=True)
         hamiltonian_cycle.add_edge(cycle_start_node + cycle_node_size - 1, cycle_start_node, attr=True)
+        # loop through to add confusion edges to form the public graph
         for i in range(graph_node_size):
-            for j in range(i+1, graph_node_size):
-                if (i, j) not in list(public_graph.edges) and random.uniform(0,1) > 0.5:
+            for j in range(i + 1, graph_node_size):
+                if (i, j) not in list(public_graph.edges) and random.uniform(0, 1) > 0.5:
+                    # add edge if edge is already not added and with probability
                     public_graph.add_edge(i, j, attr=True)
-        print(nx.to_numpy_matrix(hamiltonian_cycle,
+        print("Formed Hamiltonian Cycle\n", nx.to_numpy_matrix(hamiltonian_cycle,
                                  nodelist=[*range(cycle_start_node, cycle_start_node + cycle_node_size)]))
-        print(nx.to_numpy_matrix(public_graph,
+        print("Formed Public Graph\n", nx.to_numpy_matrix(public_graph,
                                  nodelist=[*range(0, 0 + graph_node_size)]))
-        print(hamiltonian_cycle.nodes)
+
         return public_graph, hamiltonian_cycle, cycle_start_node
 
     @staticmethod
