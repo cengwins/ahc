@@ -23,8 +23,6 @@ registry = ComponentRegistry()
 
 class AODVApplicationLayerEventType(Enum):
       PROPOSE = "PROPOSE"
-      ACCEPT = "ACCEPT"
-
 
 class AODVApplicationLayerComponent(ComponentModel):
     def on_init(self, eventobj: Event):
@@ -38,9 +36,6 @@ class AODVApplicationLayerComponent(ComponentModel):
         #print(f"On MSFRB Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
         if hdr.messagetype == AODVMessageTypes.RREP:
             self.send_self(Event(self,AODVApplicationLayerEventType.PROPOSE,eventobj.eventcontent))
-        elif hdr.messagetype == AODVMessageTypes.PROPOSE:
-            #print(f"Data is arrived from {hdr.messagefrom} to {hdr.messageto} successfully!!!")        
-            pass
         self.lock.release()
 
     def on_propose(self,eventobj:Event):

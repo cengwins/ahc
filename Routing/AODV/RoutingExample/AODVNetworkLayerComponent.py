@@ -20,7 +20,6 @@ class AODVNetworkLayerEventType(Enum):
 class AODVNetworkLayerComponent(ComponentModel):
 
   def on_message_from_top(self, eventobj: Event):
-    # Encapsulate the SDU in network layer PDU
     #print(f"On MSFRT {self.componentname}.{self.componentinstancenumber}")
     msg = eventobj.eventcontent
     hdr = msg.header
@@ -33,22 +32,6 @@ class AODVNetworkLayerComponent(ComponentModel):
         self.send_self(Event(self, AODVNetworkLayerEventType.RREQ, msg))
     else:
       print(f"Should not be in here {self.componentname}.{self.componentinstancenumber}")
-
-
-    #nexthop = Topology().get_next_hop(self.componentinstancenumber, destination)
-    #if nexthop != float('inf'):
-      # print(f"{self.componentinstancenumber} will SEND a message to {destination} over {nexthop}")
-      #hdr = NetworkLayerMessageHeader(NetworkLayerMessageTypes.NETMSG, self.componentinstancenumber, 
-      #              destination,nexthop)
-    #  hdr = NetworkLayerMessageHeader(applmsg.header.messagetype, self.componentinstancenumber, 
-    #                destination)
-      #hdr = applmsg.header
-    #  payload = eventobj.eventcontent
-    #  msg = GenericMessage(hdr, payload)
-    #  self.send_down(Event(self, EventTypes.MFRT, msg))
-    #else:
-    #  pass
-      # print(f"NO PATH: {self.componentinstancenumber} will NOTSEND a message to {destination} over {nexthop}")
 
   def on_message_from_bottom(self, eventobj: Event):
     self.lock.acquire()
