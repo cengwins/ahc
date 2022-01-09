@@ -54,6 +54,11 @@ class BaseZkpAppLayerComponent(ComponentModel):
         else:
             pass
 
+    def print_received_message_info(self, message_header):
+        print(
+            f"Node-{self.componentinstancenumber} says "
+            f"Node-{message_header.messagefrom} has sent {message_header.messagetype} message")
+
     def send_message(self, message_type, payload_data, destination):
         hdr = ApplicationLayerMessageHeader(message_type, self.componentinstancenumber, destination)
         payload = ApplicationLayerMessagePayload(payload_data)
@@ -61,27 +66,20 @@ class BaseZkpAppLayerComponent(ComponentModel):
         self.send_down(Event(self, EventTypes.MFRT, message))
 
 
-class PeggyApplicationLayerComponent(BaseZkpAppLayerComponent):
+class ProverApplicationLayerComponent(BaseZkpAppLayerComponent):
     def on_message_from_bottom(self, eventobj: Event):
         try:
             app_message = eventobj.eventcontent
             hdr = app_message.header
+            self.print_received_message_info(hdr)
             if hdr.messagetype == ApplicationLayerMessageTypes.CHALLENGE:
-                print(
-                    f"Node-{self.componentinstancenumber} says"
-                    f"Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
-                print(f"Challenge-{app_message.payload.messagepayload}")
                 self.send_self(Event(self, "challengereceived", app_message.payload.messagepayload))
             elif hdr.messagetype == ApplicationLayerMessageTypes.CORRECT_RESPONSE:
                 self.send_self(Event(self, "commit", app_message.payload.messagepayload))
             elif hdr.messagetype == ApplicationLayerMessageTypes.ACCEPT:
-                print(
-                    f"Node-{self.componentinstancenumber} says"
-                    f"Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
+                pass
             elif hdr.messagetype == ApplicationLayerMessageTypes.REJECT:
-                print(
-                    f"Node-{self.componentinstancenumber} says "
-                    f"Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
+                pass
         except AttributeError:
             print("Attribute Error")
 
@@ -99,12 +97,11 @@ class PeggyApplicationLayerComponent(BaseZkpAppLayerComponent):
 
     def on_challenge_received(self, eventobj: Event):
         challenge_type = eventobj.eventcontent
+        print(f"Received Challenge-{challenge_type}")
         if challenge_type == ChallengeType.PROVE_GRAPH:
-            print("Recieved", challenge_type)
             self.send_message(ApplicationLayerMessageTypes.RESPONSE,
                               self.create_prove_graph_payload(), self.destination)
         elif challenge_type == ChallengeType.SHOW_CYCLE:
-            print("Recieved", challenge_type)
             self.send_message(ApplicationLayerMessageTypes.RESPONSE,
                               self.create_show_cycle_payload(), self.destination)
 
@@ -113,14 +110,12 @@ class PeggyApplicationLayerComponent(BaseZkpAppLayerComponent):
 
     def encrypt_graph(self, graph):
         permuted_matrix = nx.to_numpy_matrix(graph, nodelist=[*range(0, self.graph["graph_node_size"])])
-        print("Permuted Graph\n", permuted_matrix)
         encrypted_matrix = np.asmatrix(np.zeros_like(permuted_matrix, dtype=CipherContext))
         for i in range(permuted_matrix.shape[0]):
             for j in range(permuted_matrix.shape[1]):
                 cipher_text = self.crypto["encryptor"][i * permuted_matrix.shape[1] + j] \
                     .update(struct.pack('f', permuted_matrix[i, j]))
                 encrypted_matrix[i, j] = cipher_text
-        print(encrypted_matrix)
         return encrypted_matrix
 
     def create_prove_graph_payload(self):
@@ -135,7 +130,6 @@ class PeggyApplicationLayerComponent(BaseZkpAppLayerComponent):
         payload = self.secrets["key"]
         payload += index_list
         payload += cycle_nonces
-        print("payload", payload)
         return payload
 
     def get_cycle_nonces_indexes_as_bytes(self):
@@ -196,23 +190,19 @@ class PeggyApplicationLayerComponent(BaseZkpAppLayerComponent):
         self.eventhandlers["timerexpired"] = self.on_timer_expired
 
 
-class VictorApplicationLayerComponent(BaseZkpAppLayerComponent):
+class VerifierApplicationLayerComponent(BaseZkpAppLayerComponent):
     def on_message_from_bottom(self, eventobj: Event):
         try:
             app_message = eventobj.eventcontent
             hdr = app_message.header
+            self.print_received_message_info(hdr)
             if hdr.messagetype == ApplicationLayerMessageTypes.COMMIT:
-                print(
-                    f"Node-{self.componentinstancenumber} says "
-                    f"Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
-                print(f"Graph-\n{PublicGraphHelper.convert_bytes_to_cypher_graph(app_message.payload.messagepayload)}")
+                print(f"Received Commitment Graph:\n"
+                      f"{PublicGraphHelper.convert_bytes_to_cypher_graph(app_message.payload.messagepayload)}")
                 self.verification["committed_graph"] = \
                     PublicGraphHelper.convert_bytes_to_cypher_graph(app_message.payload.messagepayload)
                 self.send_self(Event(self, "challenge", None))
             elif hdr.messagetype == ApplicationLayerMessageTypes.RESPONSE:
-                print(
-                    f"Node-{self.componentinstancenumber} says "
-                    f"Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
                 self.send_self(Event(self, "responsereceived", app_message.payload.messagepayload))
         except AttributeError:
             print("Attribute Error")
@@ -229,20 +219,20 @@ class VictorApplicationLayerComponent(BaseZkpAppLayerComponent):
     def on_response_received(self, eventobj: Event):
         message_payload = eventobj.eventcontent
         if self.verification["current_challenge_mode"] == ChallengeType.PROVE_GRAPH:
-            key, nonces, node_mapping = self.extract_prove_graph_reponse_payload(message_payload)
+            key, nonces, node_mapping = self.extract_prove_graph_response_payload(message_payload)
             if PublicGraphHelper.is_equal_to_public_graph(self.decrypt_graph(key, nonces), node_mapping):
                 self.send_self(Event(self, "correctresponse", None))
             else:
                 self.send_self(Event(self, "wrongresponse", None))
         elif self.verification["current_challenge_mode"] == ChallengeType.SHOW_CYCLE:
-            key, nonces, index_list = self.extract_show_cycle_reponse_payload(message_payload)
+            key, nonces, index_list = self.extract_show_cycle_response_payload(message_payload)
             if PublicGraphHelper.graph_has_cycle(self.decrypt_graph(key, nonces, index_list)):
                 self.send_self(Event(self, "correctresponse", None))
             else:
                 self.send_self(Event(self, "wrongresponse", None))
 
     def on_correct_response(self, eventobj: Event):
-        print("Correct Response Recieved")
+        print("Correct Response Received")
         self.verification["current_trial_no"] += 1
         if self.verification["current_trial_no"] == self.verification["max_trial_no"]:
             self.send_message(ApplicationLayerMessageTypes.ACCEPT, None, self.destination)
@@ -250,13 +240,13 @@ class VictorApplicationLayerComponent(BaseZkpAppLayerComponent):
         self.send_message(ApplicationLayerMessageTypes.CORRECT_RESPONSE, None, self.destination)
 
     def on_wrong_response(self, eventobj: Event):
-        print("Wrong Response Recieved")
+        print("Wrong Response Received")
         self.send_message(ApplicationLayerMessageTypes.REJECT, None, self.destination)
 
     def on_timer_expired(self, eventobj: Event):
         pass
 
-    def extract_prove_graph_reponse_payload(self, message_payload):
+    def extract_prove_graph_response_payload(self, message_payload):
         key = message_payload[0:32]
         nonces = []
         for i in range(self.verification["graph_matrix_size"]):
@@ -268,7 +258,7 @@ class VictorApplicationLayerComponent(BaseZkpAppLayerComponent):
             node_mapping[int(k)] = node_mapping_json[k]
         return key, nonces, node_mapping
 
-    def extract_show_cycle_reponse_payload(self, message_payload):
+    def extract_show_cycle_response_payload(self, message_payload):
         key = message_payload[0:32]
         indices_start_index = message_payload[32:].find(b"{") + 1 + 32
         indices_end_index = message_payload[32:].find(b"}") + 32
@@ -303,7 +293,7 @@ class VictorApplicationLayerComponent(BaseZkpAppLayerComponent):
                 plain_text = struct.unpack('f', decryptor.update(self.verification["committed_graph"]
                                                                  [current_i, current_j]))[0]
                 decrypted_matrix[current_i, current_j] = plain_text
-        print("Victor Decrypted Received Graph\n", decrypted_matrix)
+        print("Received Decrypted Graph:\n", decrypted_matrix)
         decrypted_graph = nx.from_numpy_matrix(decrypted_matrix)
         return decrypted_graph
 
@@ -325,7 +315,7 @@ class VictorApplicationLayerComponent(BaseZkpAppLayerComponent):
         self.eventhandlers["timerexpired"] = self.on_timer_expired
 
 
-class PeggyAdHocNode(ComponentModel):
+class ProverAdHocNode(ComponentModel):
 
     def on_init(self, eventobj: Event):
         print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
@@ -338,7 +328,7 @@ class PeggyAdHocNode(ComponentModel):
 
     def __init__(self, componentname, componentid):
         # SUBCOMPONENTS
-        self.appllayer = PeggyApplicationLayerComponent("PeggyApplicationLayer", componentid)
+        self.appllayer = ProverApplicationLayerComponent("ProverApplicationLayer", componentid)
         self.netlayer = AllSeingEyeNetworkLayer("NetworkLayer", componentid)
         self.linklayer = LinkLayer("LinkLayer", componentid)
 
@@ -355,7 +345,7 @@ class PeggyAdHocNode(ComponentModel):
         super().__init__(componentname, componentid)
 
 
-class VictorAdHocNode(ComponentModel):
+class VerifierAdHocNode(ComponentModel):
 
     def on_init(self, eventobj: Event):
         print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
@@ -368,7 +358,7 @@ class VictorAdHocNode(ComponentModel):
 
     def __init__(self, componentname, componentid):
         # SUBCOMPONENTS
-        self.appllayer = VictorApplicationLayerComponent("VictorApplicationLayer", componentid)
+        self.appllayer = VerifierApplicationLayerComponent("VerifierApplicationLayer", componentid)
         self.netlayer = AllSeingEyeNetworkLayer("NetworkLayer", componentid)
         self.linklayer = LinkLayer("LinkLayer", componentid)
 
