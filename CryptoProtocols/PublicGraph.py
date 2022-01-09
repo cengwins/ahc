@@ -77,6 +77,14 @@ class PublicGraph:
             return PublicGraph.__CYCLE_START_NODE
         return None
 
+    __GRAPH, __HAMILTONIAN_CYCLE, __CYCLE_START_NODE = __generate_graph_with_hamiltonian_cycle(self=None,
+                                                                                               graph_node_size=20,
+                                                                                               cycle_node_size=10)
+    # This keyword is abstract, it is used to give intuition that prover knows the cycle
+    __AUTH_KEYWORD = "BearsBeetsBattleStarGalactica"
+
+
+class PublicGraphHelper:
     @staticmethod
     def convert_cypher_graph_to_bytes(graph):
         graph_bytes = b""
@@ -141,7 +149,7 @@ class PublicGraph:
     def graph_has_cycle(graph):
         no_nodes = PublicGraph.get_graph_no_nodes()
         graph_matrix = nx.to_numpy_matrix(graph, nodelist=[*range(0, no_nodes)])
-        if not PublicGraph.is_symmetric_graph(graph_matrix):
+        if not PublicGraphHelper.is_symmetric_graph(graph_matrix):
             # first check if graph is symmetric, if not undirected return false
             return False
         no_nodes = len(graph.nodes)
@@ -179,9 +187,3 @@ class PublicGraph:
                         current_node = i
                         visited_nodes[current_node] = True
                         break
-
-    __GRAPH, __HAMILTONIAN_CYCLE, __CYCLE_START_NODE = __generate_graph_with_hamiltonian_cycle(self=None,
-                                                                                               graph_node_size=20,
-                                                                                               cycle_node_size=10)
-    # This keyword is abstract, it is used to give intuition that prover knows the cycle
-    __AUTH_KEYWORD = "BearsBeetsBattleStarGalactica"

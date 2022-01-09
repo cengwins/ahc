@@ -5,7 +5,7 @@ import random
 import struct
 import json
 import networkx as nx
-from CryptoProtocols.PublicGraph import PublicGraph
+from CryptoProtocols.PublicGraph import PublicGraph, PublicGraphHelper
 from enum import Enum
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes, CipherContext
@@ -89,12 +89,12 @@ class PeggyApplicationLayerComponent(BaseZkpAppLayerComponent):
         # (re)initialize nonces and encryptors
         self.create_nonces_and_encryptors()
         # permute graph and get node mapping
-        permuted_graph, self.graph["node_mapping"] = PublicGraph.permute_graph()
+        permuted_graph, self.graph["node_mapping"] = PublicGraphHelper.permute_graph()
         # encrypt permuted graph
         self.graph["committed_graph"] = self.encrypt_graph(permuted_graph)
         # send encrypted and permuted graph to verifier
         self.send_message(ApplicationLayerMessageTypes.COMMIT,
-                          PublicGraph.convert_cypher_graph_to_bytes(self.graph["committed_graph"]),
+                          PublicGraphHelper.convert_cypher_graph_to_bytes(self.graph["committed_graph"]),
                           self.destination)
 
     def on_challenge_received(self, eventobj: Event):
@@ -205,9 +205,9 @@ class VictorApplicationLayerComponent(BaseZkpAppLayerComponent):
                 print(
                     f"Node-{self.componentinstancenumber} says "
                     f"Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
-                print(f"Graph-\n{PublicGraph.convert_bytes_to_cypher_graph(app_message.payload.messagepayload)}")
+                print(f"Graph-\n{PublicGraphHelper.convert_bytes_to_cypher_graph(app_message.payload.messagepayload)}")
                 self.verification["committed_graph"] = \
-                    PublicGraph.convert_bytes_to_cypher_graph(app_message.payload.messagepayload)
+                    PublicGraphHelper.convert_bytes_to_cypher_graph(app_message.payload.messagepayload)
                 self.send_self(Event(self, "challenge", None))
             elif hdr.messagetype == ApplicationLayerMessageTypes.RESPONSE:
                 print(
@@ -230,13 +230,13 @@ class VictorApplicationLayerComponent(BaseZkpAppLayerComponent):
         message_payload = eventobj.eventcontent
         if self.verification["current_challenge_mode"] == ChallengeType.PROVE_GRAPH:
             key, nonces, node_mapping = self.extract_prove_graph_reponse_payload(message_payload)
-            if PublicGraph.is_equal_to_public_graph(self.decrypt_graph(key, nonces), node_mapping):
+            if PublicGraphHelper.is_equal_to_public_graph(self.decrypt_graph(key, nonces), node_mapping):
                 self.send_self(Event(self, "correctresponse", None))
             else:
                 self.send_self(Event(self, "wrongresponse", None))
         elif self.verification["current_challenge_mode"] == ChallengeType.SHOW_CYCLE:
             key, nonces, index_list = self.extract_show_cycle_reponse_payload(message_payload)
-            if PublicGraph.graph_has_cycle(self.decrypt_graph(key, nonces, index_list)):
+            if PublicGraphHelper.graph_has_cycle(self.decrypt_graph(key, nonces, index_list)):
                 self.send_self(Event(self, "correctresponse", None))
             else:
                 self.send_self(Event(self, "wrongresponse", None))
