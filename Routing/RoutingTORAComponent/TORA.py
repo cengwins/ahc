@@ -28,7 +28,7 @@ Link Reversal -> if a edge has downstream -> do nothing
 
 Attributes -> t -> time of update after link reversal
            -> oid -> who has the link reversal
-           -> r -> reflection bit -> sictim bildirimi
+           -> r -> reflection bit
            -> p -> height (dest 0)
            -> i -> unique id
 '''
