@@ -22,6 +22,10 @@ class PublicGraph:
             hamiltonian_cycle.add_edge(i, i + 1, attr=True)
         public_graph.add_edge(cycle_start_node + cycle_node_size - 1, cycle_start_node, attr=True)
         hamiltonian_cycle.add_edge(cycle_start_node + cycle_node_size - 1, cycle_start_node, attr=True)
+        for i in range(graph_node_size):
+            for j in range(i+1, graph_node_size):
+                if (i, j) not in list(public_graph.edges) and random.uniform(0,1) > 0.5:
+                    public_graph.add_edge(i, j, attr=True)
         print(nx.to_numpy_matrix(hamiltonian_cycle,
                                  nodelist=[*range(cycle_start_node, cycle_start_node + cycle_node_size)]))
         print(nx.to_numpy_matrix(public_graph,
