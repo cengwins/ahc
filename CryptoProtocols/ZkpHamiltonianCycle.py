@@ -9,7 +9,6 @@ from enum import Enum
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes, CipherContext
 from Crypto.Random import get_random_bytes
-from typing import Final
 from Ahc import \
     ComponentModel, Event, ConnectorTypes, ComponentRegistry, GenericMessagePayload, GenericMessageHeader, \
     GenericMessage, EventTypes
@@ -21,15 +20,23 @@ registry = ComponentRegistry()
 
 
 class PublicGraph:
-    def __generate_graph_with_hamiltonian_cycle(self):
+    def __generate_graph_with_hamiltonian_cycle(self, graph_node_size, cycle_node_size):
+        public_graph = nx.Graph()
         hamiltonian_cycle = nx.Graph()
-        hamiltonian_cycle.add_nodes_from(range(0, 5))
-        for i in range(4):
+        cycle_start_node = int(np.ceil((graph_node_size - cycle_node_size) / 2))
+        public_graph.add_nodes_from(range(0, graph_node_size))
+        hamiltonian_cycle.add_nodes_from(range(cycle_start_node, cycle_start_node + cycle_node_size))
+        for i in range(cycle_start_node, cycle_start_node + cycle_node_size - 1):
+            public_graph.add_edge(i, i + 1, attr=True)
             hamiltonian_cycle.add_edge(i, i + 1, attr=True)
-        hamiltonian_cycle.add_edge(4, 0, attr=True)
-        print(nx.to_numpy_matrix(hamiltonian_cycle, nodelist=[*range(0, 5)]))
-        public_graph = hamiltonian_cycle
-        return public_graph, hamiltonian_cycle
+        public_graph.add_edge(cycle_start_node + cycle_node_size - 1, cycle_start_node, attr=True)
+        hamiltonian_cycle.add_edge(cycle_start_node + cycle_node_size - 1, cycle_start_node, attr=True)
+        print(nx.to_numpy_matrix(hamiltonian_cycle,
+                                 nodelist=[*range(cycle_start_node, cycle_start_node + cycle_node_size)]))
+        print(nx.to_numpy_matrix(public_graph,
+                                 nodelist=[*range(0, 0 + graph_node_size)]))
+        print(hamiltonian_cycle.nodes)
+        return public_graph, hamiltonian_cycle, cycle_start_node
 
     @staticmethod
     def get_graph():
@@ -43,9 +50,37 @@ class PublicGraph:
         return None
 
     @staticmethod
+    def get_graph_no_nodes():
+        shape = nx.to_numpy_matrix(PublicGraph.__GRAPH).shape
+        return shape[0]
+
+    @staticmethod
     def get_graph_matrix_size():
         shape = nx.to_numpy_matrix(PublicGraph.__GRAPH).shape
         return shape[0] * shape[1]
+
+    @staticmethod
+    def get_hamiltonian_cycle_no_nodes(auth_keyword):
+        # This method is abstract, it is used to give intuition that prover knows the cycle
+        if auth_keyword == PublicGraph.__AUTH_KEYWORD:
+            shape = nx.to_numpy_matrix(PublicGraph.__HAMILTONIAN_CYCLE).shape
+            return shape[0]
+        return None
+
+    @staticmethod
+    def get_hamiltonian_cycle_matrix_size(auth_keyword):
+        # This method is abstract, it is used to give intuition that prover knows the cycle
+        if auth_keyword == PublicGraph.__AUTH_KEYWORD:
+            shape = nx.to_numpy_matrix(PublicGraph.__HAMILTONIAN_CYCLE).shape
+            return shape[0] * shape[1]
+        return None
+
+    @staticmethod
+    def get_hamiltonian_cycle_start_node(auth_keyword):
+        # This method is abstract, it is used to give intuition that prover knows the cycle
+        if auth_keyword == PublicGraph.__AUTH_KEYWORD:
+            return PublicGraph.__CYCLE_START_NODE
+        return None
 
     @staticmethod
     def convert_cypher_graph_to_bytes(graph):
@@ -58,7 +93,8 @@ class PublicGraph:
 
     @staticmethod
     def convert_bytes_to_cypher_graph(graph_bytes):
-        matrix = np.asmatrix(np.zeros((5, 5), dtype=CipherContext))
+        graph_no_nodes = PublicGraph.get_graph_no_nodes()
+        matrix = np.asmatrix(np.zeros((graph_no_nodes, graph_no_nodes), dtype=CipherContext))
         tmp_graph_bytes = graph_bytes
         for i in range(matrix.shape[0]):
             for j in range(matrix.shape[1]):
@@ -68,7 +104,9 @@ class PublicGraph:
         print("Graph Redesigned\n", matrix)
         return matrix
 
-    __GRAPH, __HAMILTONIAN_CYCLE = __generate_graph_with_hamiltonian_cycle(self=None)
+    __GRAPH, __HAMILTONIAN_CYCLE, __CYCLE_START_NODE = __generate_graph_with_hamiltonian_cycle(self=None,
+                                                                                               graph_node_size=20,
+                                                                                               cycle_node_size=10)
     # This keyword is abstract, it is used to give intuition that prover knows the cycle
     __AUTH_KEYWORD = "BearsBeetsBattleStarGalactica"
 
@@ -167,18 +205,18 @@ class PeggyApplicationLayerComponent(BaseZkpAppLayerComponent):
     def permute_graph(self):
         # get public graph
         public_graph = PublicGraph.get_graph()
-        nodes = [*range(0, 5)]
+        nodes = [*range(0, self.graph["graph_node_size"])]
         shuffled_nodes = random.sample(nodes, len(nodes))
         node_mapping = {}
         # form node mapping
-        for i in range(5):
+        for i in range(len(nodes)):
             node_mapping[i] = shuffled_nodes[i]
         # return permuted graph with node mapping
         permuted_graph = nx.relabel_nodes(public_graph, node_mapping)
         return permuted_graph, node_mapping
 
     def encrypt_graph(self, graph):
-        permuted_matrix = nx.to_numpy_matrix(graph, nodelist=[*range(0, 5)])
+        permuted_matrix = nx.to_numpy_matrix(graph, nodelist=[*range(0, self.graph["graph_node_size"])])
         print("Permuted Graph\n", permuted_matrix)
         encrypted_matrix = np.asmatrix(np.zeros_like(permuted_matrix, dtype=CipherContext))
         for i in range(permuted_matrix.shape[0]):
@@ -207,15 +245,17 @@ class PeggyApplicationLayerComponent(BaseZkpAppLayerComponent):
     def get_cycle_nonces_indexes_as_bytes(self):
         hamiltonian_cycle = PublicGraph.get_hamiltonian_cycle(self.graph["graph_auth_keyword"])
         permuted_hamiltonian_cycle = nx.relabel_nodes(hamiltonian_cycle, self.graph["node_mapping"])
-        permuted_hamiltonian_matrix = nx.to_numpy_matrix(permuted_hamiltonian_cycle, nodelist=[*range(0, 5)])
         cycle_nonces = b""
         index_list = b"{"
-        for i in range(permuted_hamiltonian_matrix.shape[0]):
-            for j in range(permuted_hamiltonian_matrix.shape[1]):
-                if permuted_hamiltonian_matrix[i, j] == 1:
-                    # if part of the permuted hamiltonian cycle, add nonce with indexes
-                    cycle_nonces += self.secrets["nonces"][i * permuted_hamiltonian_matrix.shape[1] + j]
-                    index_list += i.to_bytes(2, "little") + j.to_bytes(2, "little")
+        for edge in list(permuted_hamiltonian_cycle.edges):
+            cur_i = edge[0]
+            cur_j = edge[1]
+            # if part of the permuted hamiltonian cycle, add nonce with indexes
+            cycle_nonces += self.secrets["nonces"][cur_i * self.graph["graph_node_size"] + cur_j]
+            index_list += cur_i.to_bytes(2, "little") + cur_j.to_bytes(2, "little")
+            # also add the symmetric edge
+            cycle_nonces += self.secrets["nonces"][cur_j * self.graph["graph_node_size"] + cur_i]
+            index_list += cur_j.to_bytes(2, "little") + cur_i.to_bytes(2, "little")
         index_list += b"}"
         return cycle_nonces, index_list
 
@@ -238,6 +278,7 @@ class PeggyApplicationLayerComponent(BaseZkpAppLayerComponent):
             # encrypted and permuted new graph
             "committed_graph": np.asmatrix([]),
             "node_mapping": {},
+            "graph_node_size": PublicGraph.get_graph_no_nodes(),
             "graph_matrix_size": PublicGraph.get_graph_matrix_size(),
             # This keyword is abstract, it is used to give intuition that prover knows the cycle
             "graph_auth_keyword": "BearsBeetsBattleStarGalactica"
@@ -281,7 +322,7 @@ class VictorApplicationLayerComponent(BaseZkpAppLayerComponent):
             print("Attribute Error")
 
     def on_challenge(self, eventobj: Event):
-        if random.uniform(0, 1) < 0:
+        if random.uniform(0, 1) < 0.5:
             self.verification["current_challenge_mode"] = ChallengeType.PROVE_GRAPH
         else:
             self.verification["current_challenge_mode"] = ChallengeType.SHOW_CYCLE
@@ -296,11 +337,13 @@ class VictorApplicationLayerComponent(BaseZkpAppLayerComponent):
             if self.are_equal_graphs(self.decrypt_graph(key, nonces), node_mapping):
                 self.send_self(Event(self, "correctresponse", None))
             else:
-                self.send_self(Event(self, "correctresponse", None))
+                self.send_self(Event(self, "wrongresponse", None))
         elif self.verification["current_challenge_mode"] == ChallengeType.SHOW_CYCLE:
             key, nonces, index_list = self.extract_show_cycle_reponse_payload(message_payload)
             if self.graph_has_cycle(self.decrypt_graph(key, nonces, index_list)):
                 self.send_self(Event(self, "correctresponse", None))
+            else:
+                self.send_self(Event(self, "wrongresponse", None))
 
     def extract_prove_graph_reponse_payload(self, message_payload):
         key = message_payload[0:32]
@@ -320,14 +363,14 @@ class VictorApplicationLayerComponent(BaseZkpAppLayerComponent):
         indices_end_index = message_payload[32:].find(b"}") + 32
         nonce_start_index = indices_end_index + 1
         index_list_bytes = message_payload[indices_start_index: indices_end_index]
-        no_index = int((indices_end_index - indices_start_index)/4)
+        no_index = int((indices_end_index - indices_start_index) / 4)
         index_list = []
         nonces = []
         for i in range(no_index):
-            current_i = int.from_bytes(index_list_bytes[i*4: i*4 + 2], "little")
-            current_j = int.from_bytes(index_list_bytes[i*4 + 2: i*4 + 4], "little")
+            current_i = int.from_bytes(index_list_bytes[i * 4: i * 4 + 2], "little")
+            current_j = int.from_bytes(index_list_bytes[i * 4 + 2: i * 4 + 4], "little")
             index_list.append((current_i, current_j))
-            nonces.append(message_payload[i * 16 + nonce_start_index: (i+1) * 16 + nonce_start_index])
+            nonces.append(message_payload[i * 16 + nonce_start_index: (i + 1) * 16 + nonce_start_index])
         return key, nonces, index_list
 
     def on_correct_response(self, eventobj: Event):
@@ -338,6 +381,10 @@ class VictorApplicationLayerComponent(BaseZkpAppLayerComponent):
             return
         self.send_message(ApplicationLayerMessageTypes.CORRECT_RESPONSE, None, self.destination)
 
+    def on_wrong_response(self, eventobj: Event):
+        print("Wrong Response Recieved")
+        self.send_message(ApplicationLayerMessageTypes.REJECT, None, self.destination)
+
     def on_timer_expired(self, eventobj: Event):
         pass
 
@@ -347,7 +394,7 @@ class VictorApplicationLayerComponent(BaseZkpAppLayerComponent):
             for i in range(decrypted_matrix.shape[0]):
                 for j in range(decrypted_matrix.shape[1]):
                     decryptor = Cipher(algorithms.AES(key),
-                                       modes.CTR(nonces[i*decrypted_matrix.shape[1] + j]),
+                                       modes.CTR(nonces[i * decrypted_matrix.shape[1] + j]),
                                        default_backend()).decryptor()
                     plain_text = struct.unpack('f', decryptor.update(self.verification["committed_graph"][i, j]))[0]
                     decrypted_matrix[i, j] = plain_text
@@ -387,7 +434,8 @@ class VictorApplicationLayerComponent(BaseZkpAppLayerComponent):
         return True
 
     def graph_has_cycle(self, decrypted_graph):
-        decrypted_graph_matrix = nx.to_numpy_matrix(decrypted_graph, nodelist=[*range(0, 5)])
+        no_nodes = PublicGraph.get_graph_no_nodes()
+        decrypted_graph_matrix = nx.to_numpy_matrix(decrypted_graph, nodelist=[*range(0, no_nodes)])
         if not self.is_symetric_graph(decrypted_graph_matrix):
             # first check if graph is symmetric, if not undirected return false
             return False
@@ -434,13 +482,14 @@ class VictorApplicationLayerComponent(BaseZkpAppLayerComponent):
         self.verification = {
             "current_trial_no": 0,
             "current_challenge_mode": ChallengeType.NONE,
-            "max_trial_no": 1,
+            "max_trial_no": 10,
             "committed_graph": np.asmatrix([]),
             "graph_matrix_size": PublicGraph.get_graph_matrix_size()
         }
         self.eventhandlers["challenge"] = self.on_challenge
         self.eventhandlers["responsereceived"] = self.on_response_received
         self.eventhandlers["correctresponse"] = self.on_correct_response
+        self.eventhandlers["wrongresponse"] = self.on_wrong_response
         self.eventhandlers["timerexpired"] = self.on_timer_expired
 
 
