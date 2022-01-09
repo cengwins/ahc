@@ -56,9 +56,11 @@ class ApplicationLayerQueryMessagePayload(GenericMessagePayload):
 
 class ApplicationLayerClearMessagePayload(GenericMessagePayload):
     did: int
+    reference: Tuple[int, int, int]
 
-    def __init__(self, did: int):
+    def __init__(self, did: int, reference: Tuple[int, int, int]):
         self.did = did
+        self.reference = reference
 
 
 class ApplicationLayerUpdateMessagePayload(GenericMessagePayload):
@@ -109,10 +111,13 @@ class RoutingTORAApplicationLayerComponent(ComponentModel):
                     self.handle_qry(payload.did, hdr.messagefrom)
                 elif hdr.messagetype == ApplicationLayerMessageTypes.UPD:
                     self.handle_upd(
-                        payload.did, hdr.messagefrom, payload.height, payload.link_reversal
+                        payload.did,
+                        hdr.messagefrom,
+                        payload.height,
+                        payload.link_reversal,
                     )
                 elif hdr.messagetype == ApplicationLayerMessageTypes.CLR:
-                    self.handle_clr(payload.did)
+                    self.handle_clr(payload.did, payload.reference)
                 elif hdr.messagetype == ApplicationLayerMessageTypes.MSG:
                     self.handle_msg(payload.did, payload.message)
             except AttributeError:
@@ -137,12 +142,16 @@ class RoutingTORAApplicationLayerComponent(ComponentModel):
                 self.componentinstancenumber,
             )
             self.broadcast_upd(did, False)
-        elif fromid not in self.N or (fromid in self.N and self.N[fromid][1] > self.last_upd):
+        elif fromid not in self.N or (
+            fromid in self.N and self.N[fromid][1] > self.last_upd
+        ):
             self.broadcast_upd(did, False)
         else:
             pass
 
-    def handle_upd(self, did: int, from_id: int, height: TORAHeight, link_reversal: bool):
+    def handle_upd(
+        self, did: int, from_id: int, height: TORAHeight, link_reversal: bool
+    ):
         self.set_neighbour_height(from_id, height)
 
         if link_reversal:
@@ -200,13 +209,31 @@ class RoutingTORAApplicationLayerComponent(ComponentModel):
                 if len(downstream_links) == 0 and self.componentinstancenumber != did:
                     self.maintenance_case_1(did)
 
-    def handle_clr(self, did: int):
-        self.height = TORAHeight(None, None, None, None, self.componentinstancenumber)
+    def handle_clr(self, did: int, reference: Tuple[int, int, int]):
+        if reference == (self.height.tau, self.height.oid, self.height.r):
+            self.height = TORAHeight(
+                None, None, None, None, self.componentinstancenumber
+            )
 
         for neighbour in self.N:
             if neighbour == did:
                 continue
-            self.N[neighbour] = (None, None, None, None, self.componentinstancenumber)
+            if reference == (
+                self.height.tau,
+                self.height.oid,
+                self.height.r,
+            ) or reference == (
+                self.N[neighbour][0].tau,
+                self.N[neighbour][0].oid,
+                self.N[neighbour][0].r,
+            ):
+                self.N[neighbour] = (
+                    None,
+                    None,
+                    None,
+                    None,
+                    self.componentinstancenumber,
+                )
 
         self.broadcast_clr(did)
 
@@ -219,7 +246,9 @@ class RoutingTORAApplicationLayerComponent(ComponentModel):
             )
         else:
             min_neighbour = self.get_minimum_height_between_neighbours()
-            print(f"{self.componentinstancenumber} says: Forwarding a message: {message}")
+            print(
+                f"{self.componentinstancenumber} says: Forwarding a message: {message}"
+            )
             hdr = ApplicationLayerMessageHeader(
                 ApplicationLayerMessageTypes.MSG,
                 self.componentinstancenumber,
@@ -234,7 +263,9 @@ class RoutingTORAApplicationLayerComponent(ComponentModel):
         upstream_links = self.get_upstream_links()
 
         if len(upstream_links) == 0:
-            self.height = TORAHeight(None, None, None, None, self.componentinstancenumber)
+            self.height = TORAHeight(
+                None, None, None, None, self.componentinstancenumber
+            )
         else:
             self.height = TORAHeight(
                 time.time(),
@@ -314,9 +345,9 @@ class RoutingTORAApplicationLayerComponent(ComponentModel):
             ApplicationLayerMessageTypes.UPD,
         )
 
-    def broadcast_clr(self, did: int):
+    def broadcast_clr(self, did: int, reference: Tuple[int, int, int]):
         self.broadcast(
-            ApplicationLayerClearMessagePayload(did),
+            ApplicationLayerClearMessagePayload(did, reference),
             ApplicationLayerMessageTypes.CLR,
         )
 
@@ -354,7 +385,9 @@ class RoutingTORAApplicationLayerComponent(ComponentModel):
 class RoutingTORAComponent(ComponentModel):
     def __init__(self, componentname, componentid):
         # SUBCOMPONENTS
-        self.appllayer = RoutingTORAApplicationLayerComponent("ApplicationLayer", componentid)
+        self.appllayer = RoutingTORAApplicationLayerComponent(
+            "ApplicationLayer", componentid
+        )
         self.netlayer = AllSeingEyeNetworkLayer("NetworkLayer", componentid)
         self.linklayer = LinkLayer("LinkLayer", componentid)
         # self.failuredetect = GenericFailureDetector("FailureDetector", componentid)
@@ -394,8 +427,10 @@ class RoutingTORAComponent(ComponentModel):
     def set_neighbour_height(self, j: int, height: TORAHeight):
         self.appllayer.set_neighbour_height(j, height)
 
+
 ### Functions to get variables stored in nodes.
 ### Used in visiualization.
+
 
 def all_edges(topo: Topology):
     edges = []
@@ -404,8 +439,9 @@ def all_edges(topo: Topology):
 
         for i in list(downstream_links):
             edges.append((node, i))
-            
+
     return edges
+
 
 def heights(topo: Topology):
     heights = []
@@ -413,12 +449,15 @@ def heights(topo: Topology):
         heights.append((node, topo.nodes[node].appllayer.height.delta))
     return heights
 
-### Functions used in benchmark 
+
+### Functions used in benchmark
+
 
 def wait_for_action_to_complete():
-    while(time.time() - 0.25 < benchmark_time):
+    while time.time() - 0.25 < benchmark_time:
         time.sleep(0.25)
     return benchmark_time
+
 
 def set_benchmark_time():
     global benchmark_time

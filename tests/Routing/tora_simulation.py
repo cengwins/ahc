@@ -31,9 +31,7 @@ def test(n: int):
     G = nx.connected_watts_strogatz_graph(n, 4, 0.10)
     topo = Topology()
     topo.construct_from_graph(G, RoutingTORAComponent, P2PFIFOPerfectChannel)
-    source_id, destination_id = random.randint(0, n - 1), random.randint(
-        0, n - 1
-    )
+    source_id, destination_id = random.randint(0, n - 1), random.randint(0, n - 1)
     while destination_id == source_id:
         destination_id = random.randint(0, n - 1)
     destination_height: TORAHeight = TORAHeight(0, 0, 0, 0, destination_id)
