@@ -353,12 +353,24 @@ class Topology:
       self.nodes[i] = cc
 
 
+  def construct_winslab_topology_without_channels_for_docker(self, nodetype, id, context=None):
+    
+    self.G = nx.Graph()
+    self.G.add_nodes_from(range(1))  # TODO : Change depending on the 
+
+    nodes = list(self.G.nodes)
+    cc = nodetype(nodetype.__name__, id)
+    self.nodes[0] = cc
+
   def construct_from_graph(self, G: nx.Graph, nodetype, channeltype, context=None):
     self.G = G
-    nodes = list(G.nodes)
+    nodes = list(G.nodes('conf', None))
     edges = list(G.edges)
-    for i in nodes:
-      cc = nodetype(nodetype.__name__, i)
+    for (i, cf) in nodes:
+      if cf is None:
+        cc = nodetype(nodetype.__name__, i)
+      else:
+        cc = nodetype(nodetype.__name__, i, configurationparameters=cf)
       self.nodes[i] = cc
     for k in edges:
       ch = channeltype(channeltype.__name__, str(k[0]) + "-" + str(k[1]))
