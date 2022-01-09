@@ -4,6 +4,15 @@ from collections import Counter
 from enum import Enum
 
 
+class STARTestBenchConfig:
+    TERMINATED = False
+    SIMULATION_TIME = 10  # sec
+    NODE_COUNT = 10
+    DENSITY = 0.1  # probability of edge creation
+    WARM_UP = 5  # sec
+    MPS = 2  # message per second
+
+
 class STARStatEvent(Enum):
     MSG_SENT = "MessageSent"
     UPDATE_MSG_SENT = "UpdateMessageSent"

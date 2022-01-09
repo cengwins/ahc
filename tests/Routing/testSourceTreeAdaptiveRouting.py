@@ -1,9 +1,10 @@
 import csv
-import logging
 import random
 import threading
 import time
 from collections import Counter
+
+from Routing.SourceTreeAdaptiveRouting.helper import STARTestBenchConfig
 
 import networkx as nx
 
@@ -12,6 +13,7 @@ from Channels.Channels import FIFOBroadcastPerfectChannel
 from LinkLayers.GenericLinkLayer import LinkLayer
 from Routing.SourceTreeAdaptiveRouting.ApplicationComponent import ApplicationComponent
 from Routing.SourceTreeAdaptiveRouting.STARNodeComponent import STARNodeComponent
+
 
 class AdHocNode(ComponentModel):
 
@@ -41,47 +43,17 @@ class AdHocNode(ComponentModel):
 
 
 class TestBench:
-    TERMINATED = False
-    SIMULATION_TIME = 60  # sec
-    NODE_COUNT = 10
-    DENSITY = 0.1
-
     def draw_random_connected_graph(self, n):
         terminate = False
 
         while not terminate:
-            G = nx.gnp_random_graph(n, self.DENSITY)
+            G = nx.gnp_random_graph(n, STARTestBenchConfig.DENSITY)
             terminate = nx.is_connected(G)
 
         return G
 
     def draw_graph(self):
-        # G.add_nodes_from([0, 1, 2, 3])
-        # G.add_weighted_edges_from([(1, 2, 8),
-        #                            (2, 1, 8),
-        #                            (1, 3, 2),
-        #                            (3, 1, 2),
-        #                            (0, 2, 10),
-        #                            (2, 0, 10),
-        #                            (3, 0, 4),
-        #                            (0, 3, 4),
-        #                            (2, 3, 5),
-        #                            (3, 2, 5)])
-
-        # G.add_nodes_from([0, 1, 2, 3])
-        # G.add_weighted_edges_from([(1, 2, 8),
-        #                            (1, 3, 16),
-        #                            (0, 2, 10),
-        #                            (3, 0, 2),
-        #                            (3, 2, 5)])
-        # G.add_nodes_from([0, 1, 2])
-        # G.add_weighted_edges_from([(0, 1, 8),
-        #                            (1, 2, 4),
-        #                            (0, 2, 1)])
-
-        # random.seed(5)
-        # G = nx.random_geometric_graph(10, 0.5, seed=1)
-        G = self.draw_random_connected_graph(self.NODE_COUNT)
+        G = self.draw_random_connected_graph(STARTestBenchConfig.NODE_COUNT)
 
         for (u, v, w) in G.edges(data=True):
             w['weight'] = random.randint(1, 20)
@@ -94,7 +66,7 @@ class TestBench:
         for c in components:
             c.terminate()
 
-        self.TERMINATED = True
+        STARTestBenchConfig.TERMINATED = True
 
     def menu(self):
         print('\n---------------------------')
@@ -104,6 +76,7 @@ class TestBench:
         print('4- Build shortest path tree in node X')
         print('5- Send message to X')
         print('6- Show stats')
+        print('9- Quit')
         selection = int(input('Select: '))
 
         if selection == 1:
@@ -129,7 +102,7 @@ class TestBench:
             frm, to = list(map(int, input('From To:').split(' ')))
             msg = input('Message: ')
             comp: ApplicationComponent = ComponentRegistry().get_component_by_key("ApplicationLayer", frm)
-            comp.send_message(to, msg)
+            comp.send(to, msg)
             return True
         elif selection == 6:
             N = len(Topology().nodes)
@@ -146,14 +119,14 @@ class TestBench:
             return False
 
     def main(self):
-        threading.Timer(self.SIMULATION_TIME, self.terminate_all).start()
+        threading.Timer(STARTestBenchConfig.SIMULATION_TIME, self.terminate_all).start()
         graph = self.draw_graph()
         topology = Topology()
         topology.construct_from_graph(graph, AdHocNode, FIFOBroadcastPerfectChannel)
         topology.start()
         # topology.plot()
 
-        while not self.TERMINATED or self.menu():
+        while not STARTestBenchConfig.TERMINATED or self.menu():
             time.sleep(1)
 
 

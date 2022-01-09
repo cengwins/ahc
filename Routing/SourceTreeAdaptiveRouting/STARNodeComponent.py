@@ -10,7 +10,7 @@ from Ahc import *
 from Routing.SourceTreeAdaptiveRouting.MinHeap import MinHeap, MinHeapNode
 from Routing.SourceTreeAdaptiveRouting.helper import STARStats, STARStatEvent
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s %(name)s [%(levelname)s] - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s [%(levelname)s] - %(message)s')
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
@@ -94,7 +94,7 @@ class STARNodeComponent(ComponentModel):
                 message.payload.messagepayload['hop_count'] += 1
                 self.send_down(Event(self, EventTypes.MFRT, message))
             except KeyError:
-                # destination is existed in the routing table
+                # destination is not existed in the routing table
                 # drop the message
                 logger.error(f'Destination {message_to} not found in node {self.componentinstancenumber}')
 
@@ -107,7 +107,7 @@ class STARNodeComponent(ComponentModel):
             message.header.nexthop = next_hop
             self.send_down(Event(self, EventTypes.MFRT, message))
         except KeyError:
-            # destination is existed in the routing table
+            # destination is not existed in the routing table
             # drop the message
             logger.error(f'Destination {message_to} not found in node {self.componentinstancenumber}')
 
@@ -294,7 +294,6 @@ class STARNodeComponent(ComponentModel):
         if not edge_existed or lsu.time > my_tg[lsu.src][lsu.dest]['time']:
             if not edge_existed:
                 my_tg.add_edge(lsu.src, lsu.dest, weight=lsu.link_cost, time=lsu.time, dlt=False)
-                # my_tg.add_edge(lsu.dest, lsu.src, weight=lsu.link_cost, time=lsu.time, dlt=False)  # TODO ekstra
             else:
                 my_tg[lsu.src][lsu.dest]['weight'] = lsu.link_cost
                 my_tg[lsu.src][lsu.dest]['time'] = lsu.time
@@ -305,11 +304,9 @@ class STARNodeComponent(ComponentModel):
             for (r, s) in k_tg_edges:
                 if r != lsu.src and s == lsu.dest:
                     k_tg.remove_edge(r, s)
-                    # print(f"b Remove edge {r, s} from tg {k}")
 
             if not k_tg.has_edge(lsu.src, lsu.dest):
                 k_tg.add_edge(lsu.src, lsu.dest, weight=lsu.link_cost, time=lsu.time, dlt=False)
-                # k_tg.add_edge(lsu.dest, lsu.src, weight=lsu.link_cost, time=lsu.time, dlt=False)
             else:
                 k_tg[lsu.src][lsu.dest]['weight'] = lsu.link_cost
                 k_tg[lsu.src][lsu.dest]['time'] = lsu.time
@@ -317,7 +314,7 @@ class STARNodeComponent(ComponentModel):
         my_tg[lsu.src][lsu.dest]['dlt'] = False
 
     def process_void_update(self, k: int, lsu: LSUMessage):
-        # TODO
+        # TODO on link failure
         pass
 
     def init_single_source(self, k: int):
@@ -398,7 +395,7 @@ class STARNodeComponent(ComponentModel):
 
         for (u, v) in new_st.edges:
             if not old_st.has_edge(u, v) or \
-                    new_st[u][v]['time'] != old_st[u][v]['time']:  # TODO NSi var burada
+                    new_st[u][v]['time'] != old_st[u][v]['time']:
                 try:
                     l = my_tg[u][v]['weight']
                     t = my_tg[u][v]['time']

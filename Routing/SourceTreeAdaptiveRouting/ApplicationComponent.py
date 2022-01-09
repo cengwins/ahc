@@ -3,7 +3,7 @@ import threading
 
 from Ahc import *
 from Routing.SourceTreeAdaptiveRouting.STARNodeComponent import STARMessageTypes
-from Routing.SourceTreeAdaptiveRouting.helper import MessageGenerator
+from Routing.SourceTreeAdaptiveRouting.helper import MessageGenerator, STARTestBenchConfig
 
 logger = logging.getLogger(__name__)
 
@@ -11,11 +11,10 @@ logger = logging.getLogger(__name__)
 class ApplicationComponent(ComponentModel):
     def __init__(self, componentname, componentid):
         super(ApplicationComponent, self).__init__(componentname, componentid)
-        self.generator = MessageGenerator(mps=2, sender_fn=self.send_app_message)
+        self.generator = MessageGenerator(mps=STARTestBenchConfig.MPS, sender_fn=self.send_app_message)
 
     def on_init(self, eventobj: Event):
-        # if self.componentinstancenumber == 0:
-        threading.Timer(40, self.start_flow).start()
+        threading.Timer(STARTestBenchConfig.WARM_UP, self.start_flow).start()
 
     def send(self, to, msg):
         message_header = GenericMessageHeader(STARMessageTypes.APP, self.componentinstancenumber, to)
