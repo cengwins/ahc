@@ -153,8 +153,13 @@ class RoutingTORAApplicationLayerComponent(ComponentModel):
         self, did: int, from_id: int, height: TORAHeight, link_reversal: bool
     ):
         self.set_neighbour_height(from_id, height)
+        downstream_links = self.get_downstream_links()
 
         if link_reversal:
+            
+            if len(downstream_links):
+                return
+
             upstream_links: List[Tuple[TORAHeight, int]] = list(
                 self.get_upstream_links().items()
             )
@@ -205,7 +210,6 @@ class RoutingTORAApplicationLayerComponent(ComponentModel):
                 self.rr = 0
                 self.broadcast_upd(did, False)
             else:
-                downstream_links = self.get_downstream_links()
                 if len(downstream_links) == 0 and self.componentinstancenumber != did:
                     self.maintenance_case_1(did)
 
@@ -234,8 +238,8 @@ class RoutingTORAApplicationLayerComponent(ComponentModel):
                     None,
                     self.componentinstancenumber,
                 )
-
-        self.broadcast_clr(did)
+        if reference == (self.height.tau, self.height.oid, self.height.r):
+            self.broadcast_clr(did, reference)
 
     def handle_msg(self, did: int, message: str):
         if did == self.componentinstancenumber:
@@ -294,7 +298,20 @@ class RoutingTORAApplicationLayerComponent(ComponentModel):
         self.broadcast_upd(did, True)
 
     def maintenance_case_4(self, did: int):
-        self.handle_clr(did)
+        self.height = TORAHeight(None, None, None, None, self.componentinstancenumber)
+
+        for neighbour in self.N:
+            if neighbour == did:
+                continue
+            self.N[neighbour] = (
+                None,
+                None,
+                None,
+                None,
+                self.componentinstancenumber,
+            )
+
+        self.broadcast_clr(did, (self.height.tau, self.height.oid, 1))
 
     def maintenance_case_5(self, did: int):
         self.height = TORAHeight(
