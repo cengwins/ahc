@@ -4,7 +4,8 @@ from Constants import TERMINATE_MESSAGE_TYPE, \
     ROUTING_COMPLETED_MESSAGE_TYPE, \
     GSR_COORDINATOR_NAME, \
     GSR_ROUTER_NAME, \
-    GSR_APPLICATION_NAME
+    GSR_APPLICATION_NAME, \
+    ENABLE_NETWORK_LEVEL_LOGGING
 
 
 class GSRCoordinator(ComponentModel):
@@ -18,7 +19,8 @@ class GSRCoordinator(ComponentModel):
         message_to = event_header.messageto.split("-")[0]
         message_type = event_header.messagetype
         message = eventobj.eventcontent.payload
-        print(f"Coordinator {self.componentinstancenumber} receives message from top")
+        if ENABLE_NETWORK_LEVEL_LOGGING:
+            print(f"Coordinator {self.componentinstancenumber} receives message from top")
         if message_to == GSR_COORDINATOR_NAME:
             if sender == GSR_APPLICATION_NAME and message_type == TERMINATE_MESSAGE_TYPE:
                 self.terminate_routing()
@@ -33,13 +35,14 @@ class GSRCoordinator(ComponentModel):
         if message_to == GSR_COORDINATOR_NAME:
             if sender == GSR_ROUTER_NAME:
                 self.routing_table = message["routing_table"]
-                print(f"Coordinator {self.componentinstancenumber} has received Routing Table")
+                if ENABLE_NETWORK_LEVEL_LOGGING:
+                    print(f"Coordinator {self.componentinstancenumber} has received Routing Table")
                 if self.componentinstancenumber == 0:
                     message_header = GenericMessageHeader(
                         ROUTING_COMPLETED_MESSAGE_TYPE,
                         GSR_COORDINATOR_NAME + "-0",
                         GSR_APPLICATION_NAME + "-0")
-                    message = GenericMessage(message_header, "")
+                    message = GenericMessage(message_header, {"n_nodes": len(self.routing_table)})
                     kickstarter = Event(self, EventTypes.MFRB, message)
                     self.send_up(kickstarter)
 
@@ -56,7 +59,8 @@ class GSRCoordinator(ComponentModel):
             if sender == GSR_COORDINATOR_NAME and message_type == INFO_MESSAGE_TYPE:
                 dest = message["dest"]
                 src = message["src"]
-                print(f"Coordinator {self.componentinstancenumber} has received info message from {src} to {dest}")
+                if ENABLE_NETWORK_LEVEL_LOGGING:
+                    print(f"Coordinator {self.componentinstancenumber} has received info message from {src} to {dest}")
 
                 if dest == self.componentinstancenumber:
                     message_header = GenericMessageHeader(
@@ -72,7 +76,7 @@ class GSRCoordinator(ComponentModel):
                     self.route_message(message)
 
     def terminate_routing(self):
-        message_from = GSR_COORDINATOR_NAME + "-" + self.componentinstancenumber
+        message_from = GSR_COORDINATOR_NAME + "-" + str(self.componentinstancenumber)
         message_to = GSR_ROUTER_NAME + "-" + str(self.componentinstancenumber)
         message_header = GenericMessageHeader(TERMINATE_MESSAGE_TYPE,
                                               message_from,
@@ -80,7 +84,8 @@ class GSRCoordinator(ComponentModel):
         message = GenericMessage(message_header, "")
         event = Event(self, EventTypes.MFRP, message)
         self.send_peer(event)
-        print("SENDING [" + message_from + " -> " + message_to + "]: TERMINATE")
+        if ENABLE_NETWORK_LEVEL_LOGGING:
+            print("SENDING [" + message_from + " -> " + message_to + "]: TERMINATE")
 
     def route_message(self, message_to_route):
         if len(self.routing_table) > 0:
@@ -99,4 +104,5 @@ class GSRCoordinator(ComponentModel):
 
             event = Event(self, EventTypes.MFRT, message)
             self.send_down(event)
-            print("ROUTING [" + message_from + " -> " + message_to + "]: " + str(message.payload))
+            if ENABLE_NETWORK_LEVEL_LOGGING:
+                print("ROUTING [" + message_from + " -> " + message_to + "]: " + str(message.payload))

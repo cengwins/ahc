@@ -13,13 +13,13 @@ from Constants import GSR_COORDINATOR_NAME, \
     GSR_ROUTER_NAME, \
     UPDATE_MESSAGE_TYPE, \
     TERMINATE_ROUTING_MESSAGE_TYPE, \
-    ROUTING_COMPLETED_MESSAGE_TYPE
+    ROUTING_COMPLETED_MESSAGE_TYPE, \
+    ROUTER_UPDATE_PERIOD_SECS, \
+    ENABLE_NETWORK_LEVEL_LOGGING
 import time
 
 
 class RoutingGSRComponent(ComponentModel):
-    sleep_duration = 0.1
-
     def __init__(self, component_name, component_id):
         super(RoutingGSRComponent, self).__init__(component_name, component_id)
         self.terminated = False
@@ -89,7 +89,7 @@ class RoutingGSRComponent(ComponentModel):
             self.broadcast_routing_update()
             if self.routing_completed:
                 self.report_route()
-            time.sleep(self.sleep_duration)
+            time.sleep(ROUTER_UPDATE_PERIOD_SECS)
 
     def pkt_process(self, pkt: GSQQueueElement):
         self.link_states[self.componentinstancenumber][pkt.source_id] = pkt.transfer_duration
@@ -127,7 +127,8 @@ class RoutingGSRComponent(ComponentModel):
         payload = {"routing_table": self.next_hop}
         message = GenericMessage(message_header, payload)
         event = Event(self, EventTypes.MFRP, message)
-        print("SENDING [" + message_from + " -> " + message_to + "]: " + str(payload))
+        if ENABLE_NETWORK_LEVEL_LOGGING:
+            print("SENDING [" + message_from + " -> " + message_to + "]: " + str(payload))
         self.send_peer(event)
 
     def find_shortest_paths(self):
@@ -162,5 +163,6 @@ class RoutingGSRComponent(ComponentModel):
             self.distances[node_k] = min_w
             self.next_hop[node_k] = self.next_hop[node_l] if node_l != self.componentinstancenumber else node_k
 
-        print("Next hops for node " + str(self.componentinstancenumber) + ": " + str(self.next_hop))
+        if ENABLE_NETWORK_LEVEL_LOGGING:
+            print("Next hops for node " + str(self.componentinstancenumber) + ": " + str(self.next_hop))
         self.routing_completed = len(processed_nodes) == self.n_nodes
