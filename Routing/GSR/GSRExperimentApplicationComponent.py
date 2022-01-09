@@ -12,7 +12,7 @@ from Routing.GSR.Constants import GSR_APPLICATION_NAME, \
     TOMBALA_PLAYER_PERIOD_SECS, \
     TOMBALA_MAX_NUMBER, \
     TOMBALA_N_NUMBERS_IN_HAND
-
+from GSRExperimentDataCollector import GSRExperimentCollector
 
 class GSRExperimentApplicationComponent(ComponentModel):
     tombala_message_kind = "TOMBALA"
@@ -21,8 +21,6 @@ class GSRExperimentApplicationComponent(ComponentModel):
 
     def __init__(self, componentname, componentid):
         super(GSRExperimentApplicationComponent, self).__init__(componentname, componentid)
-        self.start_time = None
-        self.end_time = None
         self.n_nodes = 0
         self.game_completed = False
         self.winner = 0
@@ -80,9 +78,6 @@ class GSRExperimentApplicationComponent(ComponentModel):
         event = Event(self, EventTypes.MFRT, message)
         self.send_down(event)
 
-    def get_duration(self):
-        return self.end_time - self.start_time
-
     def job(self, *arg):
         if self.componentinstancenumber == 0:
             while not self.game_completed:
@@ -104,6 +99,9 @@ class GSRExperimentApplicationComponent(ComponentModel):
                 print(f"Player {self.componentinstancenumber} congratulates Player {self.winner}! "
                       f"Numbers left in hand: {self.numbers}")
         self.send_terminate_message()
+        GSRExperimentCollector().completion_lock.acquire()
+        GSRExperimentCollector().completion.append(self.componentinstancenumber)
+        GSRExperimentCollector().completion_lock.release()
 
     def check_messages_master(self):
         self.queue_lock.acquire()

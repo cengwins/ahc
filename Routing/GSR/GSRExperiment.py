@@ -2,6 +2,7 @@ from Ahc import Topology
 from Channels.Channels import P2PFIFOPerfectChannel
 import networkx as nx
 from GSRExperimentNodeComponent import GSRExperimentNode
+from GSRExperimentDataCollector import GSRExperimentCollector
 from Routing.GSR.RoutingGSRComponent import RoutingGSRComponent
 from Constants import N_NODES
 
@@ -29,5 +30,10 @@ if __name__ == "__main__":
     topology.construct_from_graph(graph, GSRExperimentNode, P2PFIFOPerfectChannel)
     topology.start()
 
-    while True:
+    while len(GSRExperimentCollector().completion) < N_NODES:
         pass
+
+    n_control_messages = GSRExperimentCollector().n_control_messages
+    first_routing_completion = GSRExperimentCollector().first_routing_completion
+    print(f"Game completed. Total number of messages until first routing calculation: {n_control_messages}")
+    print(f"Total time elapsed until first routing calculation: {first_routing_completion} seconds")

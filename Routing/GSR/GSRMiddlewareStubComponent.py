@@ -1,5 +1,6 @@
 from Ahc import ComponentModel, Event
 from Constants import GSR_ROUTER_NAME, GSR_COORDINATOR_NAME
+from GSRExperimentDataCollector import GSRExperimentCollector
 
 
 class GSRMiddlewareMessageStub(ComponentModel):
@@ -18,4 +19,9 @@ class GSRMiddlewareMessageStub(ComponentModel):
             print(f"VVVVVVVVVVVV******** {message_target}")
 
     def on_message_from_top(self, eventobj: Event):
+        if self.componentinstancenumber not in GSRExperimentCollector().MESSAGE_COUNT:
+            GSRExperimentCollector().MESSAGE_COUNT[self.componentinstancenumber] = 1
+        else:
+            GSRExperimentCollector().MESSAGE_COUNT[self.componentinstancenumber] += 1
+
         self.send_down(eventobj)

@@ -9,6 +9,7 @@ from Ahc import \
     Thread, \
     Topology
 from GSRQueueElement import GSQQueueElement
+from GSRExperimentDataCollector import GSRExperimentCollector
 from Constants import GSR_COORDINATOR_NAME, \
     GSR_ROUTER_NAME, \
     UPDATE_MESSAGE_TYPE, \
@@ -22,6 +23,8 @@ import time
 class RoutingGSRComponent(ComponentModel):
     def __init__(self, component_name, component_id):
         super(RoutingGSRComponent, self).__init__(component_name, component_id)
+        self.start_time = 0
+        self.n_control_messages = 0
         self.terminated = False
         self.routing_completed = False
         self.neighbors = []
@@ -54,6 +57,7 @@ class RoutingGSRComponent(ComponentModel):
         self.sequence_numbers[self.componentinstancenumber] = 0
         self.next_hop[self.componentinstancenumber] = self.componentinstancenumber
 
+        self.start_time = time.time()
         thread = Thread(target=self.job, args=[14, 23])
         thread.start()
 
@@ -68,6 +72,7 @@ class RoutingGSRComponent(ComponentModel):
             if message_type == UPDATE_MESSAGE_TYPE:
                 self.queue_lock.acquire()
                 self.message_queue.append(GSQQueueElement(message_source_id, content))
+                self.n_control_messages += 1
                 self.queue_lock.release()
 
     def on_message_from_peer(self, eventobj: Event):
@@ -130,6 +135,11 @@ class RoutingGSRComponent(ComponentModel):
         if ENABLE_NETWORK_LEVEL_LOGGING:
             print("SENDING [" + message_from + " -> " + message_to + "]: " + str(payload))
         self.send_peer(event)
+        if self.componentinstancenumber == 0:
+            if GSRExperimentCollector().first_routing_completion == 0:
+                time_passed = time.time() - self.start_time
+                GSRExperimentCollector().first_routing_completion = time_passed
+                GSRExperimentCollector().n_control_messages = self.n_control_messages
 
     def find_shortest_paths(self):
         processed_nodes = [self.componentinstancenumber]
