@@ -12,4 +12,3 @@
 - [Yigit Sever](https://github.com/yigitsever)
 - [Ali Atlı](https://github.com/aliatli)
 - [Saidu Sokoto](https://github.com/bibo7086)
-- [Simge Koçtaş](https://github.com/Simge-Koctas)
