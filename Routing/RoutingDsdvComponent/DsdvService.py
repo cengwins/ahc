@@ -59,9 +59,10 @@ class DsdvService(ComponentModel):
         self.scheduleFullDumpUpdate = DsdvTimer()
         self.scheduleIncrementalUpdate = DsdvTimer()
         # Decide interval of the periodic update messages. No hard limitation
-        self.periodicUpdateMessageInterval = 10 + self.componentinstancenumber % 2
+        self.periodicUpdateMessageInterval = 10
 
         # Added only to debug. The variables can be removed
+        self.schedulePrintRoutingTable = DsdvTimer()
         self.numberOfIncrementalUpdate = 0
         self.numberOfFullDumpUpdate = 0
         self.numberOfUpdateMessage = 0
@@ -84,7 +85,7 @@ class DsdvService(ComponentModel):
     # @param routingTable is the self routing table to broadcast
     #
     def send_full_dump_update(self, routingTable):
-        payload = routingTable
+        payload = routingTable.copy()
         destination = MessageDestinationIdentifiers.LINKLAYERBROADCAST
         nexthop = MessageDestinationIdentifiers.LINKLAYERBROADCAST
         header = GenericMessageHeader(DsdvMessageTypes.fullDumpUpdate, self.componentinstancenumber, destination,
@@ -104,7 +105,7 @@ class DsdvService(ComponentModel):
     # @param routingTableEntry is an entry of the self routing table to broadcast
     #
     def send_incremental_update(self, routingTableEntry):
-        payload = routingTableEntry
+        payload = routingTableEntry.copy()
         destination = MessageDestinationIdentifiers.LINKLAYERBROADCAST
         nexthop = MessageDestinationIdentifiers.LINKLAYERBROADCAST
         header = GenericMessageHeader(DsdvMessageTypes.incrementalUpdate, self.componentinstancenumber, destination,
@@ -120,7 +121,6 @@ class DsdvService(ComponentModel):
         if self.printNumberOfMessagesOnEveryUpdate:
             print(self.unique_name() + " Number Of Update Message: " + str(self.numberOfUpdateMessage))
 
-
     # This function provides a periodic call of the send_full_dump_update() function with the help of a timer thread
     #
     def send_periodic_update(self):
@@ -130,7 +130,7 @@ class DsdvService(ComponentModel):
 
         # added to debug purpose only
         if self.printRoutingTableOnPeriodicUpdates:
-            self.print_self_routing_table()
+            self.schedulePrintRoutingTable.start(self.componentinstancenumber, self.print_self_routing_table)
         elif self.printNumberOfMessagesOnPeriodicUpdates:
             print(self.unique_name() + " Number Of Update Message: " + str(self.numberOfUpdateMessage))
 
@@ -183,9 +183,12 @@ class DsdvService(ComponentModel):
         # Process every entry in the incoming message
         for rowInPayload in payload:
             singleEntry = rowInPayload.copy()
+            # Increment the metric value by 1, since the distance information was according to my neighbor
+            singleEntry[RoutingTableColumn.metric.value] = singleEntry[RoutingTableColumn.metric.value] + 1
+
             isRoutingTableUpdated = self.process_single_entry_in_message(singleEntry, messageFrom)
             if isRoutingTableUpdated == True:
-                updatedRows.append(rowInPayload)
+                updatedRows.append(singleEntry)
 
         if len(updatedRows) > 1:   # More than 1 entry changed. Invoke to schedule full dump update message
             self.schedule_full_dump_update()
@@ -200,6 +203,8 @@ class DsdvService(ComponentModel):
     #
     def process_incremental_update_message(self, payload, messageFrom):
         singleEntry = payload.copy()
+        # Increment the metric value by 1, since the distance information was according to my neighbor
+        singleEntry[RoutingTableColumn.metric.value] = singleEntry[RoutingTableColumn.metric.value] + 1
         isRoutingTableUpdated = self.process_single_entry_in_message(singleEntry, messageFrom)
 
         if isRoutingTableUpdated == True:
@@ -217,11 +222,10 @@ class DsdvService(ComponentModel):
         metricColumnIndex = RoutingTableColumn.metric.value
         crucialUpdateExist = False
 
+
         # -----Update the entry of the incoming message according to self component---
         # Next hop information will be sender of the message
         singleEntry[nextHopColumnIndex] = messageFrom
-        # Increment the metric value by 1, since the distance information was according to my neighbor
-        singleEntry[RoutingTableColumn.metric.value] = singleEntry[RoutingTableColumn.metric.value] + 1
         # ------------------
 
         # If the entry is not about myself, continue the process
@@ -233,6 +237,7 @@ class DsdvService(ComponentModel):
                 self.routingTable.append(singleEntry)
                 self.routingTable.sort()
                 crucialUpdateExist = True
+
             else:
                 # If the entry in the message has a bigger sequence number, update the information
                 if singleEntry[seqNumberColumnIndex] > self.routingTable[rowIndex][seqNumberColumnIndex]:
