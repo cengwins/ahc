@@ -9,19 +9,22 @@ import numpy as np
 
 class FisheyeZoneRoutingProtocolComponent(ComponentModel):
     def __init__(self, componentname, componentid):
+        print("Hello World1")
         super(FisheyeZoneRoutingProtocolComponent, self).__init__(componentname, componentid)
+        print("Hello World2")
         self.queue_lock = Lock()
         self.message_queue = []
-        if self.componentinstancenumber == 0:
-            self.is_initiator = True
-        else:
-            self.is_initiator = False
+        print("Hello World3")
 
         self.basicZone = []
         self.extendedZone = []
+        print("Hello World4")
 
     def on_init(self, eventobj: Event):
+        print("Hello World5")
         super(FisheyeZoneRoutingProtocolComponent, self).on_init(eventobj)
-        if not self.is_initiator:
-            thread = Thread(target=self.job, args=[45, 54, 123])
-            thread.start()
+        print("Hello World6")
+
+        thread = Thread(target=self.job, args=[45, 54, 123])
+        thread.start()
+        print("Hello World7")
