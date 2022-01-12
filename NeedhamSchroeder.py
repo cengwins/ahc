@@ -33,8 +33,7 @@ class BobStates(Enum):
 
 # Trent/Server does not need states as it only receives one message from alice and sends back
 
-Key_A = Fernet.generate_key()
-Key_B = Fernet.generate_key()
+
 
 alice_componentname = "Alice"
 bob_componentname = "Bob"
@@ -43,8 +42,10 @@ B = bob_componentname[0].upper()
 
 class Trent(ComponentModel):
 
-    alice_fernet = Fernet(Key_A)
-    bob_fernet = Fernet(Key_B)
+    def __init__(self, componentname, componentid, alice_key, bob_key):
+        self.alice_fernet = Fernet(alice_key)
+        self.bob_fernet = Fernet(bob_key)
+        super().__init__(componentname, componentid)
 
     """
     Trent receives a request from Alice to connect to Bob, (Step 1)
@@ -69,10 +70,13 @@ class Trent(ComponentModel):
         print(f"I am {self.componentname}, BOTTOM eventcontent={eventobj.eventcontent}\n", flush=True)
 
 class Alice(ComponentModel):
-    alice_fernet = Fernet(Key_A)
-    session_fernet = Fernet(Key_A)
-    state = AliceStates.INIT
-    random_number = 0
+
+    def __init__(self, componentname, componentid, alice_key):
+        self.alice_fernet = Fernet(alice_key)
+        self.session_fernet = Fernet(Fernet.generate_key())
+        self.state = AliceStates.INIT
+        self.random_number = 0
+        super().__init__(componentname, componentid)
 
     """
     Alice on Topology start, sends a request to Trent to connect to Bob. (step 1)
@@ -141,11 +145,14 @@ class Alice(ComponentModel):
 
 
 class Bob(ComponentModel):
-    bob_fernet = Fernet(Key_B)
-    session_fernet = Fernet(Key_B)
-    state = BobStates.WAITING_SESSION_KEY
-    connected_to = ""
-    random_number = 0
+
+    def __init__(self, componentname, componentid, bob_key):
+        self.bob_fernet = Fernet(bob_key)
+        self.session_fernet = Fernet(Fernet.generate_key())
+        self.state = BobStates.WAITING_SESSION_KEY
+        self.random_number = 0
+        self.connected_to = ""
+        super().__init__(componentname, componentid)
 
     """
     Bob also has 3 states to handle steps.
@@ -201,9 +208,12 @@ Topology here is manually created instead of using already existing functions. T
 def main():
     topo = Topology()
 
-    topo.nodes["T"] = Trent("Trent", 0)
-    topo.nodes[A] = Alice(alice_componentname, 1)
-    topo.nodes[B] = Bob(bob_componentname, 2)
+    Key_A = Fernet.generate_key()
+    Key_B = Fernet.generate_key()
+
+    topo.nodes["T"] = Trent("Trent", 0, Key_A, Key_B)
+    topo.nodes[A] = Alice(alice_componentname, 1, Key_A)
+    topo.nodes[B] = Bob(bob_componentname, 2, Key_B)
     
     topo.channels["T-" + A] = Channel("T-" + A, 3)
     topo.nodes["T"].connect_me_to_channel(ConnectorTypes.DOWN, topo.channels["T-" + A])
