@@ -77,15 +77,20 @@ class ProverApplicationLayerComponent(BaseZkpAppLayerComponent):
         try:
             app_message = eventobj.eventcontent
             hdr = app_message.header
+            """
+            # uncomment to view message info
             self.print_received_message_info(hdr)
+            """
             if hdr.messagetype == ApplicationLayerMessageTypes.CHALLENGE:
                 self.send_self(Event(self, "challengereceived", app_message.payload.messagepayload))
             elif hdr.messagetype == ApplicationLayerMessageTypes.CORRECT_RESPONSE:
                 self.send_self(Event(self, "commit", app_message.payload.messagepayload))
             elif hdr.messagetype == ApplicationLayerMessageTypes.ACCEPT:
-                pass
+                self.print_end_result(message_type=hdr.messagetype)
+                return
             elif hdr.messagetype == ApplicationLayerMessageTypes.REJECT:
-                pass
+                self.print_end_result(message_type=hdr.messagetype)
+                return
         except AttributeError:
             print("Attribute Error")
 
@@ -94,6 +99,34 @@ class ProverApplicationLayerComponent(BaseZkpAppLayerComponent):
         self.create_nonces_and_encryptors()
         # permute graph and get node mapping
         public_graph = PublicGraph.get_graph()
+        no_nodes = PublicGraph.get_graph_no_nodes()
+        permuted_graph, self.graph["node_mapping"] = PublicGraphHelper.permute_graph(public_graph, no_nodes)
+        # encrypt permuted graph
+        self.graph["committed_graph"] = self.encrypt_graph(permuted_graph)
+        # send encrypted and permuted graph to verifier
+        self.send_message(ApplicationLayerMessageTypes.COMMIT,
+                          PublicGraphHelper.convert_cypher_graph_to_bytes(self.graph["committed_graph"]),
+                          self.destination)
+
+    def on_fake_graph_commit(self, eventobj: Event):
+        # (re)initialize nonces and encryptors
+        self.create_nonces_and_encryptors()
+        # permute graph and get node mapping
+        fake_public_graph, self.secrets["hamiltonian_cycle"], _ = FakeGraphHelper.get_fake_public_graph()
+        no_nodes = PublicGraph.get_graph_no_nodes()
+        permuted_graph, self.graph["node_mapping"] = PublicGraphHelper.permute_graph(fake_public_graph, no_nodes)
+        # encrypt permuted graph
+        self.graph["committed_graph"] = self.encrypt_graph(permuted_graph)
+        # send encrypted and permuted graph to verifier
+        self.send_message(ApplicationLayerMessageTypes.COMMIT,
+                          PublicGraphHelper.convert_cypher_graph_to_bytes(self.graph["committed_graph"]),
+                          self.destination)
+
+    def on_fake_cycle_commit(self, eventobj: Event):
+        # (re)initialize nonces and encryptors
+        self.create_nonces_and_encryptors()
+        # permute graph and get node mapping
+        public_graph, self.secrets["hamiltonian_cycle"], _ = FakeGraphHelper.get_public_graph_with_fake_cycle()
         no_nodes = PublicGraph.get_graph_no_nodes()
         permuted_graph, self.graph["node_mapping"] = PublicGraphHelper.permute_graph(public_graph, no_nodes)
         # encrypt permuted graph
@@ -168,37 +201,22 @@ class ProverApplicationLayerComponent(BaseZkpAppLayerComponent):
                                                    modes.CTR(self.secrets["nonces"][i]),
                                                    default_backend()).encryptor())
 
-    def on_fake_graph_commit(self, eventobj: Event):
-        # (re)initialize nonces and encryptors
-        self.create_nonces_and_encryptors()
-        # permute graph and get node mapping
-        fake_public_graph, self.secrets["hamiltonian_cycle"], _ = FakeGraphHelper.get_fake_public_graph()
-        no_nodes = PublicGraph.get_graph_no_nodes()
-        permuted_graph, self.graph["node_mapping"] = PublicGraphHelper.permute_graph(fake_public_graph, no_nodes)
-        # encrypt permuted graph
-        self.graph["committed_graph"] = self.encrypt_graph(permuted_graph)
-        # send encrypted and permuted graph to verifier
-        self.send_message(ApplicationLayerMessageTypes.COMMIT,
-                          PublicGraphHelper.convert_cypher_graph_to_bytes(self.graph["committed_graph"]),
-                          self.destination)
-
-    def on_fake_cycle_commit(self, eventobj: Event):
-        # (re)initialize nonces and encryptors
-        self.create_nonces_and_encryptors()
-        # permute graph and get node mapping
-        public_graph, self.secrets["hamiltonian_cycle"], _ = FakeGraphHelper.get_public_graph_with_fake_cycle()
-        no_nodes = PublicGraph.get_graph_no_nodes()
-        permuted_graph, self.graph["node_mapping"] = PublicGraphHelper.permute_graph(public_graph, no_nodes)
-        # encrypt permuted graph
-        self.graph["committed_graph"] = self.encrypt_graph(permuted_graph)
-        # send encrypted and permuted graph to verifier
-        self.send_message(ApplicationLayerMessageTypes.COMMIT,
-                          PublicGraphHelper.convert_cypher_graph_to_bytes(self.graph["committed_graph"]),
-                          self.destination)
+    def print_end_result(self, message_type: ApplicationLayerMessageTypes):
+        if message_type == ApplicationLayerMessageTypes.ACCEPT:
+            if self.type == ProverType.HONEST:
+                print(f"ACCEPTED -> TRUE ACCEPT")
+            else:
+                print(f"ACCEPTED -> FALSE ACCEPT")
+        elif message_type == ApplicationLayerMessageTypes.REJECT:
+            if self.type == ProverType.HONEST:
+                print(f"REJECTED -> FALSE REJECT")
+            else:
+                print(f"REJECTED -> TRUE REJECT")
 
     def __init__(self, componentname, componentinstancenumber, prover_type):
         super().__init__(componentname, componentinstancenumber)
         self.destination = 1
+        self.type = prover_type
         # graph related info for prover
         self.graph = {
             # encrypted and permuted new graph
@@ -239,10 +257,16 @@ class VerifierApplicationLayerComponent(BaseZkpAppLayerComponent):
         try:
             app_message = eventobj.eventcontent
             hdr = app_message.header
+            """
+            # uncomment to view message info
             self.print_received_message_info(hdr)
+            """
             if hdr.messagetype == ApplicationLayerMessageTypes.COMMIT:
-                print(f"Received Commitment Graph:\n"
+                """
+                # uncomment to view the graph
+                print(f"Received Commitment Graph:\n" 
                       f"{PublicGraphHelper.convert_bytes_to_cypher_graph(app_message.payload.messagepayload)}")
+                """
                 self.verification["committed_graph"] = \
                     PublicGraphHelper.convert_bytes_to_cypher_graph(app_message.payload.messagepayload)
                 self.send_self(Event(self, "challenge", None))
@@ -276,8 +300,9 @@ class VerifierApplicationLayerComponent(BaseZkpAppLayerComponent):
                 self.send_self(Event(self, "wrongresponse", None))
 
     def on_correct_response(self, eventobj: Event):
-        print("Correct Response Received")
+        print(f"Correct Response Received")
         self.verification["current_trial_no"] += 1
+        self.print_trial_info()
         if self.verification["current_trial_no"] == self.verification["max_trial_no"]:
             self.send_message(ApplicationLayerMessageTypes.ACCEPT, None, self.destination)
             return
@@ -337,9 +362,17 @@ class VerifierApplicationLayerComponent(BaseZkpAppLayerComponent):
                 plain_text = struct.unpack('f', decryptor.update(self.verification["committed_graph"]
                                                                  [current_i, current_j]))[0]
                 decrypted_matrix[current_i, current_j] = plain_text
+        """
+        # uncomment to view the graph
         print("Received Decrypted Graph:\n", decrypted_matrix)
+        """
         decrypted_graph = nx.from_numpy_matrix(decrypted_matrix)
         return decrypted_graph
+
+    def print_trial_info(self):
+        current_trial_no = self.verification["current_trial_no"]
+        print(f"Trial No: {current_trial_no}\n"
+              f"Probability for a Dishonest Prover: {0.5 ** current_trial_no}")
 
     def __init__(self, componentname, componentinstancenumber, max_trial_no, challenge_probability):
         super().__init__(componentname, componentinstancenumber)

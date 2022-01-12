@@ -27,11 +27,14 @@ class PublicGraph:
                 if (i, j) not in list(public_graph.edges) and random.uniform(0, 1) > 0.5:
                     # add edge if edge is already not added and with probability
                     public_graph.add_edge(i, j, attr=True)
+        """
+        # uncomment to view graph and hamiltonian cycle
         print("Formed Hamiltonian Cycle\n", nx.to_numpy_matrix(hamiltonian_cycle,
                                                                nodelist=[*range(cycle_start_node,
                                                                                 cycle_start_node + cycle_node_size)]))
         print("Formed Public Graph\n", nx.to_numpy_matrix(public_graph,
                                                           nodelist=[*range(0, 0 + graph_node_size)]))
+        """
 
         return public_graph, hamiltonian_cycle, cycle_start_node
 
@@ -93,7 +96,10 @@ class PublicGraphHelper:
         for i in range(graph.shape[0]):
             for j in range(graph.shape[1]):
                 graph_bytes += graph[i, j]
+        """
+        # uncomment to view graph and hamiltonian cycle
         print("Str graph", graph_bytes)
+        """
         return graph_bytes
 
     @staticmethod
@@ -106,7 +112,10 @@ class PublicGraphHelper:
                 tmp_edge_bytes = tmp_graph_bytes[0:4]
                 tmp_graph_bytes = tmp_graph_bytes[4:]
                 matrix[i, j] = tmp_edge_bytes
+        """
+        # uncomment to view graph and hamiltonian cycle
         print("Graph Redesigned\n", matrix)
+        """
         return matrix
 
     @staticmethod
@@ -208,11 +217,14 @@ class FakeGraphHelper:
         # remove random edge from hamiltonian cycle
         removed_edge = list(fake_hamiltonian_cycle.edges)[0]
         fake_hamiltonian_cycle.remove_edge(removed_edge[0], removed_edge[1])
+        """
+        # uncomment to view graph and hamiltonian cycle
         print("Formed Hamiltonian Cycle\n", nx.to_numpy_matrix(fake_hamiltonian_cycle,
                                                                nodelist=[*range(cycle_start_node,
                                                                                 cycle_start_node + cycle_node_size)]))
         print("Formed Public Graph\n", nx.to_numpy_matrix(public_graph,
                                                           nodelist=[*range(0, 0 + graph_node_size)]))
+        """
 
         return public_graph, fake_hamiltonian_cycle, cycle_start_node
 
@@ -237,11 +249,14 @@ class FakeGraphHelper:
                         break
             if counter >= FakeGraphHelper.__MAX_FAKE_EDGE_NO:
                 break
+        """
+        # uncomment to view graph and hamiltonian cycle
         print("Formed Hamiltonian Cycle\n", nx.to_numpy_matrix(fake_hamiltonian_cycle,
                                                                nodelist=[*range(cycle_start_node,
                                                                                 cycle_start_node + cycle_node_size)]))
         print("Formed Public Graph\n", nx.to_numpy_matrix(public_graph,
                                                           nodelist=[*range(0, 0 + graph_node_size)]))
+        """
 
         return public_graph, fake_hamiltonian_cycle, cycle_start_node
 
