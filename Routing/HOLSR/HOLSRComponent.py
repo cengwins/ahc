@@ -424,4 +424,3 @@ class HOLSRComponent(OLSRComponent):
             self.broadcast_msg(HOLSRMessageTypes.HTC, OLSRMessagePayload(payload))
 
 
-
