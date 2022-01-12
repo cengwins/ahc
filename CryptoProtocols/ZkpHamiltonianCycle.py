@@ -5,7 +5,7 @@ import random
 import struct
 import json
 import networkx as nx
-from CryptoProtocols.PublicGraph import PublicGraph, PublicGraphHelper
+from CryptoProtocols.PublicGraph import PublicGraph, PublicGraphHelper, FakeGraphHelper
 from enum import Enum
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes, CipherContext
@@ -34,6 +34,12 @@ class ChallengeType(Enum):
     NONE = -1
     PROVE_GRAPH = 0
     SHOW_CYCLE = 1
+
+
+class ProverType(Enum):
+    HONEST = 0
+    DISHONEST_FAKE_GRAPH = 1
+    DISHONEST_FAKE_CYCLE = 2
 
 
 # define your own message header structure
@@ -87,7 +93,9 @@ class ProverApplicationLayerComponent(BaseZkpAppLayerComponent):
         # (re)initialize nonces and encryptors
         self.create_nonces_and_encryptors()
         # permute graph and get node mapping
-        permuted_graph, self.graph["node_mapping"] = PublicGraphHelper.permute_graph()
+        public_graph = PublicGraph.get_graph()
+        no_nodes = PublicGraph.get_graph_no_nodes()
+        permuted_graph, self.graph["node_mapping"] = PublicGraphHelper.permute_graph(public_graph, no_nodes)
         # encrypt permuted graph
         self.graph["committed_graph"] = self.encrypt_graph(permuted_graph)
         # send encrypted and permuted graph to verifier
@@ -133,7 +141,7 @@ class ProverApplicationLayerComponent(BaseZkpAppLayerComponent):
         return payload
 
     def get_cycle_nonces_indexes_as_bytes(self):
-        hamiltonian_cycle = PublicGraph.get_hamiltonian_cycle(self.graph["graph_auth_keyword"])
+        hamiltonian_cycle = self.secrets["hamiltonian_cycle"]
         permuted_hamiltonian_cycle = nx.relabel_nodes(hamiltonian_cycle, self.graph["node_mapping"])
         cycle_nonces = b""
         index_list = b"{"
@@ -160,7 +168,35 @@ class ProverApplicationLayerComponent(BaseZkpAppLayerComponent):
                                                    modes.CTR(self.secrets["nonces"][i]),
                                                    default_backend()).encryptor())
 
-    def __init__(self, componentname, componentinstancenumber):
+    def on_fake_graph_commit(self, eventobj: Event):
+        # (re)initialize nonces and encryptors
+        self.create_nonces_and_encryptors()
+        # permute graph and get node mapping
+        fake_public_graph, self.secrets["hamiltonian_cycle"], _ = FakeGraphHelper.get_fake_public_graph()
+        no_nodes = PublicGraph.get_graph_no_nodes()
+        permuted_graph, self.graph["node_mapping"] = PublicGraphHelper.permute_graph(fake_public_graph, no_nodes)
+        # encrypt permuted graph
+        self.graph["committed_graph"] = self.encrypt_graph(permuted_graph)
+        # send encrypted and permuted graph to verifier
+        self.send_message(ApplicationLayerMessageTypes.COMMIT,
+                          PublicGraphHelper.convert_cypher_graph_to_bytes(self.graph["committed_graph"]),
+                          self.destination)
+
+    def on_fake_cycle_commit(self, eventobj: Event):
+        # (re)initialize nonces and encryptors
+        self.create_nonces_and_encryptors()
+        # permute graph and get node mapping
+        public_graph, self.secrets["hamiltonian_cycle"], _ = FakeGraphHelper.get_public_graph_with_fake_cycle()
+        no_nodes = PublicGraph.get_graph_no_nodes()
+        permuted_graph, self.graph["node_mapping"] = PublicGraphHelper.permute_graph(public_graph, no_nodes)
+        # encrypt permuted graph
+        self.graph["committed_graph"] = self.encrypt_graph(permuted_graph)
+        # send encrypted and permuted graph to verifier
+        self.send_message(ApplicationLayerMessageTypes.COMMIT,
+                          PublicGraphHelper.convert_cypher_graph_to_bytes(self.graph["committed_graph"]),
+                          self.destination)
+
+    def __init__(self, componentname, componentinstancenumber, prover_type):
         super().__init__(componentname, componentinstancenumber)
         self.destination = 1
         # graph related info for prover
@@ -171,23 +207,31 @@ class ProverApplicationLayerComponent(BaseZkpAppLayerComponent):
             "graph_node_size": PublicGraph.get_graph_no_nodes(),
             "graph_matrix_size": PublicGraph.get_graph_matrix_size(),
             # This keyword is abstract, it is used to give intuition that prover knows the cycle
-            "graph_auth_keyword": "BearsBeetsBattleStarGalactica"
+            "graph_auth_keyword": "BearsBeetsBattleStarGalactica",
         }
         # secrets of component
         self.secrets = {
             # key is 32 byte as AES use 256 bits key - updated at each commit
             "key": get_random_bytes(32),
             # nonce is 16 byte as AES use 128 bits block - updated at each commit
-            "nonces": []
+            "nonces": [],
+            # hamiltonian cycle which is kept as a secret
+            "hamiltonian_cycle": PublicGraph.get_hamiltonian_cycle(self.graph["graph_auth_keyword"])
         }
         # crypto tools
         self.crypto = {
             # AES has block size of 128 bits plain text block -> 128 bits cipher text block, holds list of encryptors
             "encryptor": []
         }
-        self.eventhandlers["commit"] = self.on_commit
         self.eventhandlers["challengereceived"] = self.on_challenge_received
         self.eventhandlers["timerexpired"] = self.on_timer_expired
+        # set on commit method according to prover type
+        if prover_type == ProverType.HONEST:
+            self.eventhandlers["commit"] = self.on_commit
+        elif prover_type == ProverType.DISHONEST_FAKE_GRAPH:
+            self.eventhandlers["commit"] = self.on_fake_graph_commit
+        elif prover_type == ProverType.DISHONEST_FAKE_CYCLE:
+            self.eventhandlers["commit"] = self.on_fake_cycle_commit
 
 
 class VerifierApplicationLayerComponent(BaseZkpAppLayerComponent):
@@ -208,7 +252,7 @@ class VerifierApplicationLayerComponent(BaseZkpAppLayerComponent):
             print("Attribute Error")
 
     def on_challenge(self, eventobj: Event):
-        if random.uniform(0, 1) < 0.5:
+        if random.uniform(0, 1) < self.verification["probability"]:
             self.verification["current_challenge_mode"] = ChallengeType.PROVE_GRAPH
         else:
             self.verification["current_challenge_mode"] = ChallengeType.SHOW_CYCLE
@@ -297,14 +341,15 @@ class VerifierApplicationLayerComponent(BaseZkpAppLayerComponent):
         decrypted_graph = nx.from_numpy_matrix(decrypted_matrix)
         return decrypted_graph
 
-    def __init__(self, componentname, componentinstancenumber):
+    def __init__(self, componentname, componentinstancenumber, max_trial_no, challenge_probability):
         super().__init__(componentname, componentinstancenumber)
         self.destination = 0
         # verification related data
         self.verification = {
             "current_trial_no": 0,
             "current_challenge_mode": ChallengeType.NONE,
-            "max_trial_no": 10,
+            "max_trial_no": max_trial_no,
+            "probability": challenge_probability,
             "committed_graph": np.asmatrix([]),
             "graph_matrix_size": PublicGraph.get_graph_matrix_size()
         }
@@ -326,9 +371,15 @@ class ProverAdHocNode(ComponentModel):
     def on_message_from_bottom(self, eventobj: Event):
         self.send_up(Event(self, EventTypes.MFRB, eventobj.eventcontent))
 
+    # this function is used to set properties which are testable
+    @staticmethod
+    def set_properties(prover_type: ProverType):
+        ProverAdHocNode.__PROVER_TYPE = prover_type
+
     def __init__(self, componentname, componentid):
         # SUBCOMPONENTS
-        self.appllayer = ProverApplicationLayerComponent("ProverApplicationLayer", componentid)
+        self.appllayer = ProverApplicationLayerComponent("ProverApplicationLayer", componentid,
+                                                         ProverAdHocNode.__PROVER_TYPE)
         self.netlayer = AllSeingEyeNetworkLayer("NetworkLayer", componentid)
         self.linklayer = LinkLayer("LinkLayer", componentid)
 
@@ -343,6 +394,8 @@ class ProverAdHocNode(ComponentModel):
         self.connect_me_to_component(ConnectorTypes.UP, self.linklayer)
 
         super().__init__(componentname, componentid)
+
+    __PROVER_TYPE = ProverType.HONEST
 
 
 class VerifierAdHocNode(ComponentModel):
@@ -356,9 +409,17 @@ class VerifierAdHocNode(ComponentModel):
     def on_message_from_bottom(self, eventobj: Event):
         self.send_up(Event(self, EventTypes.MFRB, eventobj.eventcontent))
 
+    # this function is used to set properties which are testable
+    @staticmethod
+    def set_properties(max_trial_no, challenge_probability):
+        VerifierAdHocNode.__MAX_TRIAL_NO = max_trial_no
+        VerifierAdHocNode.__CHALLENGE_PROBABILITY = challenge_probability
+
     def __init__(self, componentname, componentid):
         # SUBCOMPONENTS
-        self.appllayer = VerifierApplicationLayerComponent("VerifierApplicationLayer", componentid)
+        self.appllayer = VerifierApplicationLayerComponent("VerifierApplicationLayer", componentid,
+                                                           VerifierAdHocNode.__MAX_TRIAL_NO,
+                                                           VerifierAdHocNode.__CHALLENGE_PROBABILITY)
         self.netlayer = AllSeingEyeNetworkLayer("NetworkLayer", componentid)
         self.linklayer = LinkLayer("LinkLayer", componentid)
 
@@ -373,3 +434,6 @@ class VerifierAdHocNode(ComponentModel):
         self.connect_me_to_component(ConnectorTypes.UP, self.linklayer)
 
         super().__init__(componentname, componentid)
+
+    __MAX_TRIAL_NO = 10
+    __CHALLENGE_PROBABILITY = 0.5
