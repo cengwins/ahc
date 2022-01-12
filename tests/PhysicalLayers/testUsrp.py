@@ -112,10 +112,11 @@ def main():
   # topo.nodes[0].send_self(Event(topo.nodes[0], UsrpNodeEventTypes.STARTBROADCAST, None))
 
     topo.start()
-    
-    while(True):
+    i = 0
+    while(i < 10):
         topo.nodes[1].appl.send_self(Event(topo.nodes[0], UsrpApplicationLayerEventTypes.STARTBROADCAST, None))
-        time.sleep(0.1)
+        time.sleep(1)
+        i = i + 1
 
 
 if __name__ == "__main__":
