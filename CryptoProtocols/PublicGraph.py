@@ -173,6 +173,7 @@ class PublicGraphHelper:
             return False
         # loop through to check cycle
         while True:
+            is_connected = False
             for i in range(no_nodes):
                 if i != prev_node and graph_matrix[current_node, i] == 1:
                     # if edge found and not to the previous node
@@ -184,7 +185,65 @@ class PublicGraphHelper:
                         return False
                     else:
                         # if new node, update prev node and current node, mark as visited
+                        is_connected = True
                         prev_node = current_node
                         current_node = i
                         visited_nodes[current_node] = True
                         break
+            if not is_connected:
+                # if the selected node is not connected to any node, no cycle possible
+                return False
+
+
+class FakeGraphHelper:
+    @staticmethod
+    def get_public_graph_with_fake_cycle():
+        # init public graph and with no hamiltonian cycle
+        public_graph = PublicGraph.get_graph().copy()
+        fake_hamiltonian_cycle = PublicGraph.get_hamiltonian_cycle(FakeGraphHelper.__AUTH_KEYWORD).copy()
+        graph_node_size = PublicGraph.get_graph_no_nodes()
+        cycle_node_size = PublicGraph.get_hamiltonian_cycle_no_nodes(FakeGraphHelper.__AUTH_KEYWORD)
+        # calculate cycle start node
+        cycle_start_node = PublicGraph.get_hamiltonian_cycle_start_node(FakeGraphHelper.__AUTH_KEYWORD)
+        # remove random edge from hamiltonian cycle
+        removed_edge = list(fake_hamiltonian_cycle.edges)[0]
+        fake_hamiltonian_cycle.remove_edge(removed_edge[0], removed_edge[1])
+        print("Formed Hamiltonian Cycle\n", nx.to_numpy_matrix(fake_hamiltonian_cycle,
+                                                               nodelist=[*range(cycle_start_node,
+                                                                                cycle_start_node + cycle_node_size)]))
+        print("Formed Public Graph\n", nx.to_numpy_matrix(public_graph,
+                                                          nodelist=[*range(0, 0 + graph_node_size)]))
+
+        return public_graph, fake_hamiltonian_cycle, cycle_start_node
+
+    @staticmethod
+    def get_fake_public_graph():
+        # init fake public graph and its hamiltonian cycle
+        public_graph = PublicGraph.get_graph().copy()
+        fake_hamiltonian_cycle = PublicGraph.get_hamiltonian_cycle(FakeGraphHelper.__AUTH_KEYWORD).copy()
+        graph_node_size = PublicGraph.get_graph_no_nodes()
+        cycle_node_size = PublicGraph.get_hamiltonian_cycle_no_nodes(FakeGraphHelper.__AUTH_KEYWORD)
+        # calculate cycle start node
+        cycle_start_node = PublicGraph.get_hamiltonian_cycle_start_node(FakeGraphHelper.__AUTH_KEYWORD)
+        counter = 0
+        # loop through to add confusion edges to form the public graph
+        for i in range(graph_node_size):
+            for j in range(i + 1, graph_node_size):
+                if (i, j) not in list(public_graph.edges):
+                    # add edge if edge is already not added and with probability
+                    counter += 1
+                    public_graph.add_edge(i, j, attr=True)
+                    if counter >= FakeGraphHelper.__MAX_FAKE_EDGE_NO:
+                        break
+            if counter >= FakeGraphHelper.__MAX_FAKE_EDGE_NO:
+                break
+        print("Formed Hamiltonian Cycle\n", nx.to_numpy_matrix(fake_hamiltonian_cycle,
+                                                               nodelist=[*range(cycle_start_node,
+                                                                                cycle_start_node + cycle_node_size)]))
+        print("Formed Public Graph\n", nx.to_numpy_matrix(public_graph,
+                                                          nodelist=[*range(0, 0 + graph_node_size)]))
+
+        return public_graph, fake_hamiltonian_cycle, cycle_start_node
+
+    __MAX_FAKE_EDGE_NO = 10
+    __AUTH_KEYWORD = "BearsBeetsBattleStarGalactica"
