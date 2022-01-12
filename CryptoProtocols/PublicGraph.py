@@ -28,9 +28,10 @@ class PublicGraph:
                     # add edge if edge is already not added and with probability
                     public_graph.add_edge(i, j, attr=True)
         print("Formed Hamiltonian Cycle\n", nx.to_numpy_matrix(hamiltonian_cycle,
-                                 nodelist=[*range(cycle_start_node, cycle_start_node + cycle_node_size)]))
+                                                               nodelist=[*range(cycle_start_node,
+                                                                                cycle_start_node + cycle_node_size)]))
         print("Formed Public Graph\n", nx.to_numpy_matrix(public_graph,
-                                 nodelist=[*range(0, 0 + graph_node_size)]))
+                                                          nodelist=[*range(0, 0 + graph_node_size)]))
 
         return public_graph, hamiltonian_cycle, cycle_start_node
 
@@ -109,17 +110,16 @@ class PublicGraphHelper:
         return matrix
 
     @staticmethod
-    def permute_graph():
+    def permute_graph(graph, no_nodes):
         # get public graph
-        public_graph = PublicGraph.get_graph()
-        nodes = [*range(0, PublicGraph.get_graph_no_nodes())]
+        nodes = [*range(0, no_nodes)]
         shuffled_nodes = random.sample(nodes, len(nodes))
         node_mapping = {}
         # form node mapping
         for i in range(len(nodes)):
             node_mapping[i] = shuffled_nodes[i]
         # return permuted graph with node mapping
-        permuted_graph = nx.relabel_nodes(public_graph, node_mapping)
+        permuted_graph = nx.relabel_nodes(graph, node_mapping)
         return permuted_graph, node_mapping
 
     @staticmethod
