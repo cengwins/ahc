@@ -1,9 +1,11 @@
 from setuptools import setup, find_packages
 
+from ahc.Ahc import __version__
+
 
 setup(
     name='ahc',
-    version='0.0.1',
+    version=__version__,
 
     url='https://github.com/cengwins/ahc',
     author='Ertan Onur',
