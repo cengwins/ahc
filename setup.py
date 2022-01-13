@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='adhocomputing',
-    version='0.0.3',
+    version='0.0.4',
 
     url='https://github.com/cengwins/ahc',
     author='Ertan Onur',
