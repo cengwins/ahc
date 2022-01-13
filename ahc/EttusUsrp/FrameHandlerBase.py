@@ -1,6 +1,6 @@
 from ahc.Ahc import ComponentModel, FramerObjects
-from EttusUsrp.UhdUtils import AhcUhdUtils 
-from EttusUsrp.LiquidDspUtils import *
+from ahc.EttusUsrp.UhdUtils import AhcUhdUtils 
+from ahc.EttusUsrp.LiquidDspUtils import *
 from enum import Enum
 from ahc.Ahc import Event, EventTypes, GenericMessage, GenericMessageHeader, GenericMessagePayload,MessageDestinationIdentifiers
 from ctypes import *

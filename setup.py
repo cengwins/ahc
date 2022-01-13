@@ -2,8 +2,8 @@ from setuptools import setup, find_packages
 
 
 setup(
-    name='ahc',
-    version='0.0.1',
+    name='adhocomputing',
+    version='0.0.3',
 
     url='https://github.com/cengwins/ahc',
     author='Ertan Onur',

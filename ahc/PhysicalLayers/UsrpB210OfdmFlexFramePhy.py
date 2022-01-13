@@ -1,7 +1,7 @@
 import sys
 from ahc.Ahc import Event, EventTypes, GenericMessage, GenericMessageHeader, GenericMessagePayload,MessageDestinationIdentifiers, FramerObjects
-from EttusUsrp.LiquidDspUtils import *
-from EttusUsrp.FrameHandlerBase import FrameHandlerBase, framers, UsrpB210PhyEventTypes
+from ahc.EttusUsrp.LiquidDspUtils import *
+from ahc.EttusUsrp.FrameHandlerBase import FrameHandlerBase, framers, UsrpB210PhyEventTypes
 from ctypes import *
 import numpy as np
 sys.path.append('/usr/local/lib')

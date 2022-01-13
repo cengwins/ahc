@@ -24,14 +24,7 @@ class AhcUhdUtils:
     #hw_tx_gain = 70.0           # hardware tx antenna gain
     #hw_rx_gain = 20.0           # hardware rx antenna gain
     duration = 1
-    waveforms = {
-        "sine": lambda n, tone_offset, rate: np.exp(n * 2j * np.pi * tone_offset / rate),
-        "square": lambda n, tone_offset, rate: np.sign(self.waveforms["sine"](n, tone_offset, rate)),
-        "const": lambda n, tone_offset, rate: 1 + 1j,
-        "ramp": lambda n, tone_offset, rate:
-                2*(n*(tone_offset/rate) - np.floor(float(0.5 + n*(tone_offset/rate))))
-    }
-    waveform = "sine"
+    
     
     def __init__(self, componentinstancenumber):
         self.mutex = Lock()

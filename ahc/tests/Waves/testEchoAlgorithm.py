@@ -4,8 +4,8 @@ import time
 
 sys.path.insert(0, os.getcwd())
 
-from Channels.Channels import Channel
-from WaveAlgorithms.EchoAlgorithm import *
+from ahc.Channels.Channels import Channel
+from ahc.Waves.EchoAlgorithm import *
 
 def main():
 

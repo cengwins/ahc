@@ -1,5 +1,5 @@
 from ahc.Ahc import Event, EventTypes, ComponentConfigurationParameters
-from MAC.GenericMAC import GenericMac, GenericMacEventTypes
+from ahc.MAC.GenericMAC import GenericMac, GenericMacEventTypes
 import time, random, math
 
 class MacCsmaPPersistentConfigurationParameters (ComponentConfigurationParameters):
