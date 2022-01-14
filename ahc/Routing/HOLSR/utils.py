@@ -3,7 +3,7 @@ import networkx as nx
 from threading import Thread, Event
 from datetime import datetime
 
-from Ahc import singleton
+from ahc.Ahc import singleton
 
 
 def random_undirected_graph(n):

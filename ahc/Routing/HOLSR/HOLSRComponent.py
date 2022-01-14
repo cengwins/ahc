@@ -1,14 +1,14 @@
 import time
 import traceback
 
-from Ahc import ComponentModel, Event, GenericMessage, Lock, \
+from ahc.Ahc import ComponentModel, Event, GenericMessage, Lock, \
     GenericMessageHeader, GenericMessagePayload, Topology, EventTypes
 from enum import Enum
 from datetime import datetime
 import uuid
 
-from Routing.HOLSR.mpr import obtain_mpr
-from Routing.HOLSR.utils import RepeatDeltaTimer, Tracing, keys_to_set
+from ahc.Routing.HOLSR.mpr import obtain_mpr
+from ahc.Routing.HOLSR.utils import RepeatDeltaTimer, Tracing, keys_to_set
 
 
 class HOLSRMessageTypes(Enum):
