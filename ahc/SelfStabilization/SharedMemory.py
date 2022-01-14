@@ -5,7 +5,7 @@ from threading import Thread
 import matplotlib.pyplot as plt
 import networkx as nx
 
-from SelfStabilization.RWLock import *
+from ahc.SelfStabilization.RWLock import *
 
 class SharedMemoryNode:
   def __init__(self, topology, node_index, K):

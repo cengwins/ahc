@@ -1,4 +1,4 @@
-from SelfStabilization.SharedMemory import *
+from ahc.SelfStabilization.SharedMemory import *
 
 class RequestDirection:
   ASK = 1

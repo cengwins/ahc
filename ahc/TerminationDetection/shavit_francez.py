@@ -4,8 +4,8 @@ import random
 from enum import Enum
 from datetime import datetime as dt
 
-from LinkLayers.GenericLinkLayer import LinkLayer
-from NetworkLayers.AllSeeingEyeNetworkLayer import AllSeingEyeNetworkLayer
+from ahc.LinkLayers.GenericLinkLayer import LinkLayer
+from ahc.Routing.AllSeeingEyeNetworkLayer import AllSeingEyeNetworkLayer
 from ahc.Ahc import (ComponentModel, Event, ConnectorTypes, ComponentRegistry, GenericMessagePayload, GenericMessageHeader,
                  GenericMessage, EventTypes)
 

@@ -10,8 +10,8 @@ from datetime import datetime as dt
 
 from ahc.Ahc import Topology
 from graph import ERG, Grid, Star
-from dijkstra_scholten import DijkstraScholtenAdHocNode, DSAHCNodeSimulationStatus
-from Channels.Channels import P2PFIFOPerfectChannel
+from ahc.TerminationDetection.dijkstra_scholten import DijkstraScholtenAdHocNode, DSAHCNodeSimulationStatus
+from ahc.Channels.Channels import P2PFIFOPerfectChannel
 
 import glob
 from PIL import Image
