@@ -362,14 +362,15 @@ class Topology:
     cc = nodetype(nodetype.__name__, id)
     self.nodes[0] = cc
 
-
-
   def construct_from_graph(self, G: nx.Graph, nodetype, channeltype, context=None):
     self.G = G
-    nodes = list(G.nodes)
+    nodes = list(G.nodes('conf', None))
     edges = list(G.edges)
-    for i in nodes:
-      cc = nodetype(nodetype.__name__, i)
+    for (i, cf) in nodes:
+      if cf is None:
+        cc = nodetype(nodetype.__name__, i)
+      else:
+        cc = nodetype(nodetype.__name__, i, configurationparameters=cf)
       self.nodes[i] = cc
     for k in edges:
       ch = channeltype(channeltype.__name__, str(k[0]) + "-" + str(k[1]))
