@@ -7,7 +7,6 @@ from enum import Enum
 import matplotlib.pyplot as plt
 import networkx as nx
 from networkx.drawing.nx_agraph import graphviz_layout, to_agraph
-import pygraphviz as pgv
 
 from ahc.Ahc import ComponentModel, Event, GenericMessageHeader, GenericMessagePayload, GenericMessage, Topology, \
   MessageDestinationIdentifiers, EventTypes, Topology
