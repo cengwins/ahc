@@ -9,12 +9,12 @@ sys.path.insert(0, os.getcwd())
 import networkx as nx
 import matplotlib.pyplot as plt
 
-from Ahc import ComponentModel, Event, ConnectorTypes, Lock, Thread, Topology, MessageDestinationIdentifiers
-from Ahc import ComponentRegistry
-from Ahc import GenericMessagePayload, GenericMessageHeader, GenericMessage, EventTypes
-from Channels.Channels import P2PFIFOPerfectChannel
-from Routing.LabeledDistanceRouting.GenericLinkLayer import LinkLayer
-from Routing.LabeledDistanceRouting.AllSeeingEyeNetworkLayer import AllSeingEyeNetworkLayer
+from ahc.Ahc import ComponentModel, Event, ConnectorTypes, Lock, Thread, Topology, MessageDestinationIdentifiers
+from ahc.Ahc import ComponentRegistry
+from ahc.Ahc import GenericMessagePayload, GenericMessageHeader, GenericMessage, EventTypes
+from ahc.Channels.Channels import P2PFIFOPerfectChannel
+from ahc.LinkLayers.GenericLinkLayer import LinkLayer
+from ahc.Routing.AllSeeingEyeNetworkLayer import AllSeingEyeNetworkLayer
 
 registry = ComponentRegistry()
 
