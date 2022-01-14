@@ -48,6 +48,6 @@ class ExperimentLogger:
 
   def storeResult(self):
     elapsed_time = self.finish_time - self.start_time 
-    with open(os.getcwd()+"/Routing/ARA/Results/30/30_"+str(timer())+".exp", "wb") as handle:
+    with open(os.getcwd()+".30_"+str(timer())+".exp", "wb") as handle:
       pickle.dump((10, elapsed_time, self.total_hops), handle, protocol=pickle.HIGHEST_PROTOCOL)
 

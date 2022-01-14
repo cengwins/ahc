@@ -4,15 +4,18 @@ from typing import List, Set, Tuple
 from uuid import uuid4
 import time
 
-from Ahc import ComponentModel, Event, GenericMessage, GenericMessageHeader, EventTypes,Topology
+from ahc.Ahc import ComponentModel, Event, GenericMessage, GenericMessageHeader, EventTypes,Topology
 
-from Routing.ARA.ARAConfiguration import ARAConfiguration
-from Routing.ARA.ARAEventTypes import ARAEventTypes
-from Routing.ARA.ARARoutingEntry import ARARoutingEntry
-from Routing.ARA.ExperimentLogger import ExperimentLogger
+from ahc.Routing.ARA.ARAConfiguration import ARAConfiguration
+from ahc.Routing.ARA.ARAEventTypes import ARAEventTypes
+from ahc.Routing.ARA.ARARoutingEntry import ARARoutingEntry
 
+"""
+  implementation of "ARA-the ant-colony based routing algorithm for MANETs"
+  [online] https://www.researchgate.net/publication/3971279_ARA-the_ant-colony_based_routing_algorithm_for_MANETs
+"""
 
-class ARATestComponent(ComponentModel):
+class RoutingARAComponent(ComponentModel):
   def __init__(self, componentname, componentid):
     super().__init__(componentname, componentid)
 
@@ -23,30 +26,14 @@ class ARATestComponent(ComponentModel):
     self.visitedAnts: Set = set() # use set for unique tuples
     self.sequenceNums = []
     self.msgCache = [] # to cache the message and send them when route is found
-    self.logger = ExperimentLogger() # logging for the testing
 
 
   def on_init(self, eventobj: Event):
-      super(ARATestComponent, self).on_init(eventobj)
+      super(RoutingARAComponent, self).on_init(eventobj)
       self.neighbors = Topology().get_neighbors(self.componentinstancenumber)
-
-      if (self.componentId == 0):
-        print("Start ARA Testing")
-        time.sleep(1)
-        random_node = rand.randint(1,29)
-        msg = GenericMessage(GenericMessageHeader(
-          messagetype=ARAEventTypes.REGULAR,
-          messagefrom="RoutingARAComponent"+"-"+str(self.componentId),
-          messageto="RoutingARAComponent"+"-"+str(random_node),
-          sequencenumber=uuid4(),
-          interfaceid=str(self.componentId)+"-"+str(random_node)),
-          "TEST")
-        self.logger.set_start_time(time.time())
-        self.ARA(Event(self, EventTypes.MFRT, msg))
 
   def on_message_from_bottom(self, eventobj: Event):
     if (int(eventobj.eventcontent.header.interfaceid.split("-")[1]) == self.componentId):
-      # print("Component->", self.componentId, " got msg from->",eventobj.eventcontent.header.interfaceid.split("-")[0], " type->", eventobj.eventcontent.header.messagetype )
       self.ARA(eventobj)
 
   def ARA(self, eventobj: Event):
@@ -83,12 +70,10 @@ class ARATestComponent(ComponentModel):
       entries = self.find_destination_entries(int(messageto))
       
       if(len(entries) == 0):
-        print("Node: ", self.componentId, "Does not know send packet to ", messageto)
         return False
       else:
         if (eventobj.eventcontent.header.sequencenumber in self.sequenceNums):
           # means that we have seen this data package and we are in a loop situation for regular packet
-          # print("Component: ", self.componentId, " got seq duplicate ")
           self.pass_loop_packet(eventobj)
         else: 
           self.sequenceNums.append(eventobj.eventcontent.header.sequencenumber)
@@ -98,9 +83,6 @@ class ARATestComponent(ComponentModel):
     else:
       if (int(eventobj.eventcontent.header.messagefrom.split("-")[1]) != self.componentId):
         if (eventobj.eventcontent.header.sequencenumber not in self.sequenceNums):
-          colors = ['\033[95m', '\033[96m', '\033[36m', '\033[94m', '\033[92m', '\033[93m', '\033[91m']
-          print(colors[rand.randint(0,6)]+"Packet reached destination address to ",self.componentId)
-
           self.sequenceNums.append(eventobj.eventcontent.header.sequencenumber)
 
     return True
@@ -122,8 +104,6 @@ class ARATestComponent(ComponentModel):
     if(self.do_add_to_set(s = self.visitedAnts, added=(eventobj.eventcontent.header.sequencenumber, int(previous_address)))):
       if (int(messageto) == self.componentId):
         if (eventobj.eventcontent.header.messagetype == ARAEventTypes.FANT):
-          # print("Got sequence: ", eventobj.eventcontent.header.sequencenumber)
-          self.logger.set_total_hops(eventobj.eventcontent.header.nexthop)
           backward_ant_msg = self.make_ant_packet(
             source=self.componentId,
             destination= int(messagefrom),
@@ -136,15 +116,9 @@ class ARATestComponent(ComponentModel):
             # deep copy the element since we are going to delete it
             cp_cached_event = self.copy_event(cached_event)
             self.msgCache.remove(cached_event)
-            self.logger.set_finish_time(time.time())
-            self.logger.set_total_hops(self.logger.get_total_hops() + eventobj.eventcontent.header.nexthop)
-            self.logger.set_finished()
-            print("Route is found")
             self.ARA(cp_cached_event) 
       else:
         # send to all neightbors except previous address
-        # update the hop count
-        eventobj.eventcontent.header.nexthop += 1 
         self.send_to_neighbors(eventobj.eventcontent, previous_address)
     else:
       # ignore the packet
@@ -170,14 +144,10 @@ class ARATestComponent(ComponentModel):
 
     if (int(target) == self.componentId):
       # delete the looping route
-      # print("remove msg was to me ", self.componentId)
-      # print(eventobj.eventcontent.header)
       for entry in self.entryTable:
-        # print(entry.destination, entry.nextHopAddress, " --- ", messageto, messagefrom)
         if (entry.destination == int(messagefrom) 
             and 
             entry.nextHopAddress == int(messageto)):
-          # print("Removing entry for destination: ", messagefrom , " nexthopaddress: ", messageto)
           self.entryTable.remove(entry)
 
       # handle to previous packet but change its id so fresh start
@@ -244,7 +214,6 @@ class ARATestComponent(ComponentModel):
     if (neighbor not in self.neighbors):
       print("ERROR, neighbor ", neighbor, " is not a neighbor of ", self.componentId)
     else:
-      # print("C->", self.componentId, " sendingto->", neighbor, " packet->",packet.header.messagetype)
       new_packet = self.create_new_packet_with_interface(packet, self.componentId, neighbor)    
 
       self.send_down(Event(self, EventTypes.MFRT, new_packet))
@@ -254,7 +223,6 @@ class ARATestComponent(ComponentModel):
       if (len(exceptions) == 0):
         # create new packet with interface
         new_packet = self.create_new_packet_with_interface(packet, self.componentId, n)
-        # print("C->", self.componentId, " sendingto->", n, " packet->",new_packet.header.messagetype)
         self.send_down(Event(self, EventTypes.MFRT, new_packet))
 
       else:
@@ -262,7 +230,6 @@ class ARATestComponent(ComponentModel):
           if (n != int(e)):
             # set interface id for channels
             new_packet = self.create_new_packet_with_interface(packet, self.componentId, n)
-            # print("C->", self.componentId, " sendingto->", n, " packet->",new_packet.header.messagetype)
             self.send_down(Event(self, EventTypes.MFRT, new_packet))
 
   def create_new_packet_with_interface(self, packet: GenericMessage, from_node, to_node) -> GenericMessage:

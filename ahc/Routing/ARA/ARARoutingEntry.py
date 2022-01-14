@@ -1,4 +1,4 @@
-from Routing.ARA.ARAConfiguration import ARAConfiguration
+from ahc.Routing.ARA.ARAConfiguration import ARAConfiguration
 
 class ARARoutingEntry:
   def __init__(self, destination, nextHopAddress):
