@@ -1,4 +1,4 @@
-from Ahc import ComponentModel, Event, GenericMessage, GenericMessageHeader, EventTypes, Thread, Lock
+from ahc.Ahc import ComponentModel, Event, GenericMessage, GenericMessageHeader, EventTypes, Thread, Lock
 
 
 # where the machine learning model is loaded... The top entity for the Node...

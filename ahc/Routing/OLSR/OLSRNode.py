@@ -1,8 +1,8 @@
-from Ahc import ComponentModel, Event, GenericMessage, ConnectorTypes, GenericMessageHeader, EventTypes, \
+from ahc.Ahc import ComponentModel, Event, GenericMessage, ConnectorTypes, GenericMessageHeader, EventTypes, \
     ComponentRegistry, Lock, Thread, Topology
-from OLSRSimplifiedComponent import OLSRSimplifiedRouter
-from OLSRPacketSender import OLSRPacketSender
-from OLSRMessageGenerator import OLSRControlComponent
+from ahc.Routing.OLSR.OLSRSimplifiedComponent import OLSRSimplifiedRouter
+from ahc.Routing.OLSR.OLSRPacketSender import OLSRPacketSender
+from ahc.Routing.OLSR.OLSRMessageGenerator import OLSRControlComponent
 
 class OLSRNode(ComponentModel):
     def on_init(self, eventobj: Event):

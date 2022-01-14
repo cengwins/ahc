@@ -1,9 +1,9 @@
 import random
 import time
-from Ahc import ComponentModel, Event, EventTypes
+from ahc.Ahc import ComponentModel, Event, EventTypes
 import threading
-from OLSRSimplifiedComponent import OLSRMessageTypes
-
+from ahc.Routing.OLSR.OLSRSimplifiedComponent import OLSRMessageTypes
+# TODO Not a proper implementations
 
 class OLSRControlThread(threading.Thread):
     def __init__(self, event, component):
