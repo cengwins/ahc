@@ -5,7 +5,7 @@ from ahc.Ahc import ComponentModel, Event, GenericMessage, GenericMessageHeader,
 from enum import Enum
 import datetime
 import threading
-from CGSR import RouteRequestPacket, RREPPacket, SourceRouting, HelloMessage, ClusterAdjacencyExtension, CGSREventTypes, \
+from ahc.Routing.CGSR.CGSR import RouteRequestPacket, RREPPacket, SourceRouting, HelloMessage, ClusterAdjacencyExtension, CGSREventTypes, \
     CGSRMessageType
 import random
 

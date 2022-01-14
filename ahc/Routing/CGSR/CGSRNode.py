@@ -1,6 +1,6 @@
 from ahc.Ahc import ComponentModel, Event, GenericMessage, ConnectorTypes, GenericMessageHeader, EventTypes, \
     ComponentRegistry, Lock, Thread, Topology
-from ahc.Routing.CGSR import CGSRRouter
+from ahc.Routing.CGSR.CGSR import CGSRRouter
 from ahc.Routing.CGSR.CGSRControlComponent import CGSRControlComponent
 from ahc.LinkLayers.GenericLinkLayer import LinkLayer
 from ahc.Routing.CGSR.CGSRDataSender import DataSender
