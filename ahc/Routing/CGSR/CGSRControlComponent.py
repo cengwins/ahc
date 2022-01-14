@@ -1,6 +1,6 @@
 import time
 
-from Ahc import ComponentModel, Event, GenericMessage, GenericMessageHeader, EventTypes, ComponentRegistry, Lock, \
+from ahc.Ahc import ComponentModel, Event, GenericMessage, GenericMessageHeader, EventTypes, ComponentRegistry, Lock, \
     Topology
 from enum import Enum
 import datetime

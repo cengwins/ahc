@@ -1,9 +1,9 @@
-from Ahc import ComponentModel, Event, GenericMessage, ConnectorTypes, GenericMessageHeader, EventTypes, \
+from ahc.Ahc import ComponentModel, Event, GenericMessage, ConnectorTypes, GenericMessageHeader, EventTypes, \
     ComponentRegistry, Lock, Thread, Topology
-from CGSR import CGSRRouter
-from CGSRControlComponent import CGSRControlComponent
-from LinkLayers.GenericLinkLayer import LinkLayer
-from CGSRDataSender import DataSender
+from ahc.Routing.CGSR import CGSRRouter
+from ahc.Routing.CGSR.CGSRControlComponent import CGSRControlComponent
+from ahc.LinkLayers.GenericLinkLayer import LinkLayer
+from ahc.Routing.CGSR.CGSRDataSender import DataSender
 
 class CGSRNode(ComponentModel):
     def on_init(self, eventobj: Event):

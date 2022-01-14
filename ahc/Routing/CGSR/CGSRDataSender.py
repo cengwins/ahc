@@ -1,4 +1,4 @@
-from Ahc import ComponentModel, Event, GenericMessage, GenericMessageHeader, EventTypes
+from ahc.Ahc import ComponentModel, Event, GenericMessage, GenericMessageHeader, EventTypes
 
 class DataSender(ComponentModel):
     def __init__(self, componentname, componentid):
