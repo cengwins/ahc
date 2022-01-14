@@ -194,6 +194,7 @@ class ApplicationLayerComponent(ComponentModel):
         else:
 
             if hdr.messagefrom in self.routing_table.keys():
+               route = self.routing_table[hdr.messagefrom]
                if (hdr.feasibledistance < (int(route['feasibledistance']))):
                 #start new rreq with T=1 from this node
                    hdr = ApplicationLayerMessageHeader(ApplicationLayerMessageTypes.RREQ_MESSAGE, self.componentinstancenumber,
