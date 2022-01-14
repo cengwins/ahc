@@ -3,7 +3,7 @@ import sys
 from ahc.Ahc import ComponentModel, EventTypes, ConnectorTypes
 from ahc.Ahc import Event
 
-from Consensus.Raft.states import Follower
+from ahc.Consensus.Raft.states import Follower
 import logging
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 

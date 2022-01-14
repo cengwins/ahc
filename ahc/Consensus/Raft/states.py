@@ -2,7 +2,7 @@ import logging
 import statistics
 import sys
 import threading
-from Consensus.Raft.log import LogManager
+from ahc.Consensus.Raft.log import LogManager
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
