@@ -7,7 +7,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="adhoccomputing",
-    version="0.0.15",
+    version="0.0.16",
     author="Ertan Onur",
     author_email="eronur@metu.edu.tr",
     description="A small example package",
