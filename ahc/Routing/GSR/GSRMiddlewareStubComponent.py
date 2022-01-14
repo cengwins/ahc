@@ -1,6 +1,6 @@
-from Ahc import ComponentModel, Event
-from Constants import GSR_ROUTER_NAME, GSR_COORDINATOR_NAME
-from GSRExperimentDataCollector import GSRExperimentCollector
+from ahc.Ahc import ComponentModel, Event
+from ahc.Routing.GSR.Constants import GSR_ROUTER_NAME, GSR_COORDINATOR_NAME
+from ahc.Routing.GSR.GSRExperimentDataCollector import GSRExperimentCollector
 
 
 class GSRMiddlewareMessageStub(ComponentModel):

@@ -1,4 +1,4 @@
-from Ahc import Lock
+from ahc.Ahc import Lock
 
 
 def singleton(cls):

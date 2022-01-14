@@ -1,7 +1,7 @@
 from timeit import default_timer as timer
 
-from Ahc import ComponentModel, Event, GenericMessage, GenericMessageHeader, EventTypes
-from Routing.GSR.Constants import GSR_APPLICATION_NAME, GSR_COORDINATOR_NAME, ROUTING_COMPLETED_MESSAGE_TYPE, INFO_MESSAGE_TYPE
+from ahc.Ahc import ComponentModel, Event, GenericMessage, GenericMessageHeader, EventTypes
+from ahc.Routing.GSR.Constants import GSR_APPLICATION_NAME, GSR_COORDINATOR_NAME, ROUTING_COMPLETED_MESSAGE_TYPE, INFO_MESSAGE_TYPE
 
 
 class GSRTestingApplicationComponent(ComponentModel):

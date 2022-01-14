@@ -2,8 +2,8 @@ from timeit import default_timer as timer
 import random
 import time
 
-from Ahc import ComponentModel, Event, GenericMessage, GenericMessageHeader, EventTypes, Lock, Thread
-from Routing.GSR.Constants import GSR_APPLICATION_NAME, \
+from ahc.Ahc import ComponentModel, Event, GenericMessage, GenericMessageHeader, EventTypes, Lock, Thread
+from ahc.Routing.GSR.Constants import GSR_APPLICATION_NAME, \
     GSR_COORDINATOR_NAME, \
     ROUTING_COMPLETED_MESSAGE_TYPE, \
     TERMINATE_MESSAGE_TYPE, \
@@ -12,7 +12,7 @@ from Routing.GSR.Constants import GSR_APPLICATION_NAME, \
     TOMBALA_PLAYER_PERIOD_SECS, \
     TOMBALA_MAX_NUMBER, \
     TOMBALA_N_NUMBERS_IN_HAND
-from GSRExperimentDataCollector import GSRExperimentCollector
+from ahc.Routing.GSR.GSRExperimentDataCollector import GSRExperimentCollector
 
 class GSRExperimentApplicationComponent(ComponentModel):
     tombala_message_kind = "TOMBALA"

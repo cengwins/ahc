@@ -1,5 +1,5 @@
-from Ahc import ComponentModel, Event, GenericMessage, GenericMessageHeader, EventTypes
-from Constants import TERMINATE_MESSAGE_TYPE, \
+from ahc.Ahc import ComponentModel, Event, GenericMessage, GenericMessageHeader, EventTypes
+from ahc.Routing.GSR.Constants import TERMINATE_MESSAGE_TYPE, \
     INFO_MESSAGE_TYPE, \
     ROUTING_COMPLETED_MESSAGE_TYPE, \
     GSR_COORDINATOR_NAME, \

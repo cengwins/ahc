@@ -1,10 +1,10 @@
-from Ahc import Topology
-from Channels.Channels import P2PFIFOPerfectChannel
+from ahc.Ahc import Topology
+from ahc.Channels.Channels import P2PFIFOPerfectChannel
 import networkx as nx
-from GSRExperimentNodeComponent import GSRExperimentNode
-from GSRExperimentDataCollector import GSRExperimentCollector
-from Routing.GSR.RoutingGSRComponent import RoutingGSRComponent
-from Constants import N_NODES
+from ahc.Routing.GSR.GSRExperimentNodeComponent import GSRExperimentNode
+from ahc.Routing.GSR.GSRExperimentDataCollector import GSRExperimentCollector
+from ahc.Routing.GSR.RoutingGSRComponent import RoutingGSRComponent
+from ahc.Routing.GSR.Constants import N_NODES
 
 # undirected graph
 def draw_random_graph(n):

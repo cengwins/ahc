@@ -1,8 +1,8 @@
-from Ahc import Topology
-from Channels.Channels import P2PFIFOPerfectChannel
+from ahc.Ahc import Topology
+from ahc.Channels.Channels import P2PFIFOPerfectChannel
 import networkx as nx
-from GSRTestingNodeComponent import GSRTestingNode
-from Routing.GSR.RoutingGSRComponent import RoutingGSRComponent
+from ahc.Routing.GSR.GSRTestingNodeComponent import GSRTestingNode
+from ahc.Routing.GSR.RoutingGSRComponent import RoutingGSRComponent
 
 
 # undirected graph

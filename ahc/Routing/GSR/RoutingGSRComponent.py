@@ -1,4 +1,4 @@
-from Ahc import \
+from ahc.Ahc import \
     ComponentModel, \
     ComponentRegistry, \
     EventTypes, \
@@ -8,9 +8,9 @@ from Ahc import \
     Event, \
     Thread, \
     Topology
-from GSRQueueElement import GSQQueueElement
-from GSRExperimentDataCollector import GSRExperimentCollector
-from Constants import GSR_COORDINATOR_NAME, \
+from ahc.Routing.GSR.GSRQueueElement import GSQQueueElement
+from ahc.Routing.GSR.GSRExperimentDataCollector import GSRExperimentCollector
+from ahc.Routing.GSR.Constants import GSR_COORDINATOR_NAME, \
     GSR_ROUTER_NAME, \
     UPDATE_MESSAGE_TYPE, \
     TERMINATE_ROUTING_MESSAGE_TYPE, \

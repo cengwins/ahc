@@ -1,8 +1,8 @@
-from Ahc import ComponentModel, Event, ConnectorTypes
-from GSRExperimentApplicationComponent import GSRExperimentApplicationComponent
-from Routing.GSR.GSRCoordinatorComponent import GSRCoordinator
-from Routing.GSR.GSRMiddlewareStubComponent import GSRMiddlewareMessageStub
-from Routing.GSR.RoutingGSRComponent import RoutingGSRComponent
+from ahc.Ahc import ComponentModel, Event, ConnectorTypes
+from ahc.Routing.GSR.GSRExperimentApplicationComponent import GSRExperimentApplicationComponent
+from ahc.Routing.GSR.GSRCoordinatorComponent import GSRCoordinator
+from ahc.Routing.GSR.GSRMiddlewareStubComponent import GSRMiddlewareMessageStub
+from ahc.Routing.GSR.RoutingGSRComponent import RoutingGSRComponent
 
 
 # Encapsulator for the Application Node
