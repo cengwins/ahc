@@ -22,12 +22,12 @@ import random
 
 sys.path.insert(0, os.getcwd())
 
-from Ahc import ComponentModel, Event, ConnectorTypes, Topology
-from Ahc import ComponentRegistry
-from Ahc import GenericMessagePayload, GenericMessageHeader, GenericMessage, EventTypes
-from Channels.Channels import P2PFIFOPerfectChannel
-from LinkLayers.GenericLinkLayer import LinkLayer
-from NetworkLayers.AllSeeingEyeNetworkLayer import AllSeingEyeNetworkLayer
+from ahc.Ahc import ComponentModel, Event, ConnectorTypes, Topology
+from ahc.Ahc import ComponentRegistry
+from ahc.Ahc import GenericMessagePayload, GenericMessageHeader, GenericMessage, EventTypes
+from ahc.Channels.Channels import P2PFIFOPerfectChannel
+from ahc.LinkLayers.GenericLinkLayer import LinkLayer
+from ahc.Routing.AllSeeingEyeNetworkLayer import AllSeingEyeNetworkLayer
 
 
 class RoutingAODVComponent(ComponentModel):
@@ -38,5 +38,5 @@ class RoutingAODVComponent(ComponentModel):
         super().on_init(eventobj)
         
     def on_message_from_bottom(self,eventobj: Event):
-        print(f"{self.componentinstancenumber} received {message_destination}")
+        print(f"{self.componentinstancenumber} received")
         

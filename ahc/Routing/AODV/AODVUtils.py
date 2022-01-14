@@ -1,5 +1,5 @@
 from enum import Enum
-from Ahc import GenericMessageHeader
+from ahc.Ahc import GenericMessageHeader
 
 class AODVMessageTypes(Enum):
     RREQ = "RREQ"

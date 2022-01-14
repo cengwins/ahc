@@ -10,14 +10,14 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import threading
 
-from Ahc import ComponentModel, Event, ConnectorTypes, Topology
-from Ahc import ComponentRegistry
-from Ahc import GenericMessagePayload, GenericMessageHeader, GenericMessage, EventTypes
-from Channels.Channels import P2PFIFOPerfectChannel
-from LinkLayers.GenericLinkLayer import LinkLayer
+from ahc.Ahc import ComponentModel, Event, ConnectorTypes, Topology
+from ahc.Ahc import ComponentRegistry
+from ahc.Ahc import GenericMessagePayload, GenericMessageHeader, GenericMessage, EventTypes
+from ahc.Channels.Channels import P2PFIFOPerfectChannel
+from ahc.LinkLayers.GenericLinkLayer import LinkLayer
 #from NetworkLayers.AllSeeingEyeNetworkLayer import AllSeingEyeNetworkLayer
-from Routing.AODV.RoutingExample.AODVNetworkLayerComponent import AODVNetworkLayerComponent
-from Routing.AODV.RoutingExample.AODVUtils import AODVMessageTypes, AODVMessageHeader
+from ahc.Routing.AODV.AODVNetworkLayerComponent import AODVNetworkLayerComponent
+from ahc.Routing.AODV.AODVUtils import AODVMessageTypes, AODVMessageHeader
 
 registry = ComponentRegistry()
 

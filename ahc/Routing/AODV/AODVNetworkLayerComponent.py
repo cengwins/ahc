@@ -1,8 +1,8 @@
 from enum import Enum
 import threading
-from Ahc import ComponentModel, Event, GenericMessageHeader, GenericMessagePayload, GenericMessage, Topology, \
+from ahc.Ahc import ComponentModel, Event, GenericMessageHeader, GenericMessagePayload, GenericMessage, Topology, \
   MessageDestinationIdentifiers, EventTypes
-from Routing.AODV.RoutingExample.AODVUtils import AODVMessageTypes, AODVMessageHeader
+from ahc.Routing.AODV.AODVUtils import AODVMessageTypes, AODVMessageHeader
 import random
 # define your own message types
 class NetworkLayerMessageTypes(Enum):
