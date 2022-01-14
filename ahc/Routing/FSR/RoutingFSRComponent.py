@@ -1,4 +1,6 @@
 # from Ahc import ComponentModel, Event, GenericMessage, GenericMessageHeader, EventTypes, ComponentRegistry, Lock, Thread, Topology
+#TODO: Does not use AHC messaging!
+
 from random import randrange, randint
 import threading, time, queue, math, heapq as hq
 
