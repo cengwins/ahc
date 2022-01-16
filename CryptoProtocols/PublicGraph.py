@@ -27,6 +27,7 @@ class PublicGraph:
                 if (i, j) not in list(public_graph.edges) and random.uniform(0, 1) > 0.5:
                     # add edge if edge is already not added and with probability
                     public_graph.add_edge(i, j, attr=True)
+
         """
         # uncomment to view graph and hamiltonian cycle
         print("Formed Hamiltonian Cycle\n", nx.to_numpy_matrix(hamiltonian_cycle,
@@ -82,8 +83,10 @@ class PublicGraph:
             return PublicGraph.__CYCLE_START_NODE
         return None
 
+    # To use normal implementation make graph_node_size = cycle_node_size
+    # To hide a cycle in a larger graph make graph_node_size >= cycle_node_size
     __GRAPH, __HAMILTONIAN_CYCLE, __CYCLE_START_NODE = __generate_graph_with_hamiltonian_cycle(self=None,
-                                                                                               graph_node_size=20,
+                                                                                               graph_node_size=10,
                                                                                                cycle_node_size=10)
     # This keyword is abstract, it is used to give intuition that prover knows the cycle
     __AUTH_KEYWORD = "BearsBeetsBattleStarGalactica"
