@@ -1,7 +1,9 @@
 import base64
 
-
+import warnings
 from math import e
+import random
+import string
 
 from cryptography.hazmat.primitives import hashes
 from Ahc import *
@@ -45,9 +47,10 @@ from Alice and her public key to verify that she knows her private key.
 
 
 """
+    
 
 
-
+warnings.filterwarnings("ignore")
 
 
 
@@ -57,43 +60,48 @@ class Alice(ComponentModel):
 
 
     def on_init(self, eventobj: Event):
+        print("Alice has been created !!!")
 
         self.private_key = rsa.generate_private_key(public_exponent=65537,
                                                     key_size=2048,
                                                     )
         self.public_key = self.private_key.public_key()
 
+        self.false_private_key = rsa.generate_private_key(public_exponent=65537,
+                                                    key_size=2048,
+                                                    )
+        self.false_public_key = self.false_private_key.public_key()
+
         payload = [self.componentname,"KEY",self.public_key]
 
         # Send public key to channel        
         key_event = Event(self,EventTypes.MFRT,payload)
         self.send_down(key_event)
-        print("Knock! Knock!! Knock!!!\nAlice:Rabbit are you there??")
 
 
 
 
     def on_message_from_bottom(self, eventobj: Event):
 
-        print(f"I am {self.componentname}, eventcontent={eventobj.eventcontent}")
-
         payload_in = eventobj.eventcontent
 
         #Host sent its public key so Alice need to
         #Try to login
         if payload_in[1] == "KEY":
-
-            self.host_public_key = payload_in[1]
+            print("Alice got Host's public-key")
+            self.host_public_key = payload_in[2]
 
             # After getting message from below 
             # Alice needs to sign a message then Host can 
             # try to validate it. 
-            message = b"That's Alice you old rabbit, open the hole!!"
+            # Let's create a random string in 32 character long
+            S = 32  # number of characters in the string.  
+            message = ''.join(random.choices(string.ascii_uppercase + string.digits, k = S))
             
             message_bytes = bytes(message,encoding='utf-8')
 
             ciphertext = self.host_public_key.encrypt(
-                            message,
+                            message_bytes,
                             padding.OAEP(
                                     mgf=padding.MGF1(algorithm=hashes.SHA1()),
                                     algorithm=hashes.SHA1(),
@@ -103,30 +111,27 @@ class Alice(ComponentModel):
 
             ciphertext  = str(base64.b64encode(ciphertext), encoding='utf-8')
 
-            data_to_sign = bytes(message, encoding='utf8') if not isinstance(message,bytes) else message
-
             signer = self.private_key.signer(
                                     padding.PSS(
                                                 mgf=padding.MGF1(hashes.SHA256()),
                                                 salt_length=padding.PSS.MAX_LENGTH
                                             ),hashes.SHA256()
                                     )
-            signer.update(data_to_sign)
-            signature = str(base64.b64encode(signer.finalize()),ecoding='utf8')
+            signer.update(message_bytes)
+            signature = str(base64.b64encode(signer.finalize()),encoding='utf8')
 
             data = (ciphertext,signature)
 
             payload_out = [self.componentname,"LOGIN",data]
             login_event = Event(self,EventTypes.MFRT,payload_out)
             self.send_down(login_event)
-            print("Alice:That's Alice you old rabbit, open the hole")
 
         elif payload_in[1] == "OK":
             #Host has successfully authed Alice
-            print("Alice:Oh finally!!")
+            print("Alice has been authorized")
         elif payload_in[1] == "FAIL":
             #Host denied Alice
-            print("Alice:What?? \nLet me in!!! \nThat's Alice you fool!!!") 
+            print("Alice has been denied") 
 
 class AliceNode(ComponentModel):
 
@@ -160,23 +165,20 @@ class HostNode(ComponentModel):
 
 
 
-
-
-
 class Host(ComponentModel):
 
     def on_init(self,eventobj:Event):
-        print("Host is started !!!")
+        print("Host has been created!!!")
         #Generate public private key pairs
         self.private_key = rsa.generate_private_key(public_exponent=65537,
                                                     key_size=2048,
                                                     )
         self.public_key = self.private_key.public_key()
+        self.alice_public_key = None
 
 
 
     def on_message_from_bottom(self, eventobj: Event):
-        super().on_message_from_bottom(eventobj)
 
         #When message came from bottom need to decide wheter
         #this message is Alice's public-key or login trial
@@ -185,27 +187,22 @@ class Host(ComponentModel):
 
         # Alice sent hers pub-key
         if payload_in[1] == "KEY":
-            print("Rabbit:Who is this???")
             #Save alice's public key
+            print("Host got somebody's public-key")
             self.alice_public_key = payload_in[2]
-
-
             payload_out = [self.componentname,"KEY",self.public_key]
             key_event = Event(self,EventTypes.MFRT,payload_out)
             self.send_down(key_event)
         
         elif payload_in[1] == "LOGIN":
+            print("Somebody tries to login")
             ciphertext = payload_in[2][0]
             signature  = payload_in[2][1]
             ciphertext_decoded = base64.b64decode(ciphertext) 
             #if not isinstance(ciphertext, bytes) else ciphertext
             plain_text = self.private_key.decrypt(ciphertext_decoded,
-                                                    padding.OAEP(
-                                                        mgf=padding.MGF1(algorithm=hashes.SHA1()),
-                                                        algorithm=hashes.SHA1(),
-                                                        label=None
-                                                    )
-                        )
+                         padding.OAEP(padding.MGF1(algorithm=hashes.SHA1()),
+                         hashes.SHA1(), None))
             plain_text = str(plain_text, encoding='utf8')
 
 
