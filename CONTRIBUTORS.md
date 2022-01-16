@@ -11,4 +11,5 @@
 - [Mahmoud Alasmar](https://github.com/e212602)
 - [Yigit Sever](https://github.com/yigitsever)
 - [Ali Atlı](https://github.com/aliatli)
+- [Tarık Keskin](https://github.com/tarikkeskin)
 - [Saidu Sokoto](https://github.com/bibo7086)
