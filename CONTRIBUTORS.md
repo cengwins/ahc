@@ -13,3 +13,4 @@
 - [Ali Atlı](https://github.com/aliatli)
 - [Saidu Sokoto](https://github.com/bibo7086)
 - [Gorkem Meydan](https://github.com/gorkemmeydan)
+- [Deniz Turan Caglarca](https://github.com/GambitMonkey)
