@@ -361,6 +361,27 @@ class Topology:
     nodes = list(self.G.nodes)
     cc = nodetype(nodetype.__name__, id)
     self.nodes[0] = cc
+    
+  def construct_from_graph_key_exchange(self, G: nx.Graph, nodetype1, nodetype2, nodetype3, channeltype, context=None):
+    self.G = G
+    nodes = list(G.nodes)
+    edges = list(G.edges)
+    j = 0
+    for i in nodes:
+      print(i)
+      if(j == 0):
+        cc = nodetype1(nodetype1.__name__, i)
+      elif(j == 1):
+        cc = nodetype2(nodetype2.__name__, i)
+      else:
+        cc = nodetype3(nodetype3.__name__, i)
+      self.nodes[i] = cc
+      j+=1
+    for k in edges:
+      ch = channeltype(channeltype.__name__, str(k[0]) + "-" + str(k[1]))
+      self.channels[k] = ch
+      self.nodes[k[0]].connect_me_to_channel(ConnectorTypes.DOWN, ch)
+      self.nodes[k[1]].connect_me_to_channel(ConnectorTypes.DOWN, ch)
 
   def construct_from_graph(self, G: nx.Graph, nodetype, channeltype, context=None):
     self.G = G
