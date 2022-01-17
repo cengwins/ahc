@@ -18,3 +18,4 @@
 - [Erol Yağız Aydın](https://github.com/ygzaydn)
 - [Gürcan Kavakçı](https://github.com/gurcankavakci)
 - [Yiğitcan Uçan](https://github.com/ucanyiit)
+- [Burak Sezgin](https://github.com/zerohoc)
