@@ -1,9 +1,9 @@
 import os
 import sys
 sys.path.insert(0, os.getcwd())
-from Ahc import ComponentModel, Event, ConnectorTypes, Topology, EventTypes
+from ahc.Ahc import ComponentModel, Event, ConnectorTypes, Topology, EventTypes
 from cryptography.fernet import Fernet
-from Channels import Channel
+from ahc.Channels.Channels import Channel
 import networkx as nx
 from time import sleep
 
