@@ -25,13 +25,13 @@ import matplotlib.pyplot as plt
 from enum import Enum
 import numpy as np
 import networkx as nx
-from Ahc import (ComponentModel, Event, EventTypes, GenericMessage,
+from ahc.Ahc import (ComponentModel, Event, EventTypes, GenericMessage,
                  GenericMessageHeader, GenericMessagePayload, Topology)
 import threading
-from Channels.Channels import P2PFIFOPerfectChannel
-from LinkLayers.GenericLinkLayer import LinkLayer
-from NetworkLayers.AllSeeingEyeNetworkLayer import AllSeingEyeNetworkLayer
-from Ahc import ConnectorTypes
+from ahc.Channels.Channels import P2PFIFOPerfectChannel
+from ahc.LinkLayers.GenericLinkLayer import LinkLayer
+from ahc.Routing.AllSeeingEyeNetworkLayer import AllSeingEyeNetworkLayer
+from ahc.Ahc import ConnectorTypes
 from tabulate import tabulate
 from time import sleep, time
 import copy
