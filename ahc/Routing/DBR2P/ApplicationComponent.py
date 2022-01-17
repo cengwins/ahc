@@ -1,5 +1,5 @@
-from Ahc import ComponentModel, Event, EventTypes, GenericMessage
-from .Messages import *
+from ahc.Ahc import ComponentModel, Event, EventTypes, GenericMessage
+from ahc.Routing.DBR2P.Messages import *
 
 import copy
 

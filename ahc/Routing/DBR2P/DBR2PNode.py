@@ -1,7 +1,7 @@
-from Ahc import ComponentModel, Event, ConnectorTypes, EventTypes, Topology
-from Routing.DBR2P.AlgorithmDBR2PComponent import *
-from Routing.DBR2P.Messages import *
-from Routing.DBR2P.ApplicationComponent import *
+from ahc.Ahc import ComponentModel, Event, ConnectorTypes, EventTypes, Topology
+from ahc.Routing.DBR2P.AlgorithmDBR2PComponent import *
+from ahc.Routing.DBR2P.Messages import *
+from ahc.Routing.DBR2P.ApplicationComponent import *
 
 
 # Encapsulator for the DBR2P Node

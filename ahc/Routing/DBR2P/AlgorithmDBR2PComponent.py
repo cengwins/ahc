@@ -2,8 +2,8 @@ import queue
 import threading
 import time
 
-from Ahc import ComponentModel, Event,  EventTypes, GenericMessage
-from Routing.DBR2P.Messages import DBR2PMessageHeader, DBR2PMessagePayload, DBR2PMesageType
+from ahc.Ahc import ComponentModel, Event,  EventTypes, GenericMessage
+from ahc.Routing.DBR2P.Messages import DBR2PMessageHeader, DBR2PMessagePayload, DBR2PMesageType
 
 TIME_TO_WAIT = 2.0  # This is time out in sec for  SOURCE_NODE_ROUTE_DISCOVERY and DESTINATION_RECEIVE_request
 Tc_TO_WAIT = 2.0  # This is time to wait in sec to get another RD_request from the same source for intermediate_node_receive_RDrequest
