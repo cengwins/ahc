@@ -1,15 +1,15 @@
 from copy import deepcopy
 
-from Routing.DSRAlgorithm.RoutingExample.ApplicationComponent import ApplicationComponent
-from Routing.DSRAlgorithm.RoutingExample.DSRAlgorithmComponent import DSRAlgorithmComponent
-from Routing.DSRAlgorithm.RoutingExample.DSRAlgorithmComponent import MessageTypes
+from ahc.Routing.DSR.ApplicationComponent import ApplicationComponent
+from ahc.Routing.DSR.DSRAlgorithmComponent import DSRAlgorithmComponent
+from ahc.Routing.DSR.DSRAlgorithmComponent import MessageTypes
 
-from Ahc import ComponentModel
-from Ahc import ConnectorTypes
-from Ahc import Event
-from Ahc import EventTypes
-from Ahc import GenericMessage
-from Ahc import GenericMessageHeader
+from ahc.Ahc import ComponentModel
+from ahc.Ahc import ConnectorTypes
+from ahc.Ahc import Event
+from ahc.Ahc import EventTypes
+from ahc.Ahc import GenericMessage
+from ahc.Ahc import GenericMessageHeader
 
 
 class AdhocNodeComponent(ComponentModel):
