@@ -3,12 +3,12 @@ import threading
 import time
 from copy import deepcopy
 
-from Ahc import ComponentModel
-from Ahc import Event
-from Ahc import EventTypes
-from Ahc import GenericMessage
-from Ahc import GenericMessageHeader
-from Ahc import Thread
+from ahc.Ahc import ComponentModel
+from ahc.Ahc import Event
+from ahc.Ahc import EventTypes
+from ahc.Ahc import GenericMessage
+from ahc.Ahc import GenericMessageHeader
+from ahc.Ahc import Thread
 
 
 class MessageTypes(enum.Enum):
