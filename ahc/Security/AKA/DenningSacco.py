@@ -1,8 +1,8 @@
 import math
 import struct
 
-from Ahc import ComponentModel, Topology, Event, ConnectorTypes, EventTypes, ComponentRegistry
-from Channels.Channels import Channel
+from ahc.Ahc import ComponentModel, Topology, Event, ConnectorTypes, EventTypes, ComponentRegistry
+from ahc.Channels.Channels import Channel
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import hashes
@@ -13,7 +13,7 @@ from cryptography.fernet import Fernet
 from threading import Semaphore
 import time
 import networkx as nx
-
+# TODO: keys should be managed better
 alicePrivateKey = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 alicePublicKey = alicePrivateKey.public_key()
 bobPrivateKey = rsa.generate_private_key(public_exponent=65537, key_size=2048)
@@ -308,28 +308,3 @@ class Trent(ComponentModel):
 
         super().__init__(componentname, componentinstancenumber)
 """
-
-def Main():
-    topo: Topology = Topology()
-    topo.nodes['A'] = Alice('Alice', 0)
-    topo.nodes['B'] = Bob('Bob', 1)
-    topo.nodes['T'] = Trent('Trent', 2)
-
-    topo.channels['A-T'] = Channel('A-T', 3)
-    topo.channels['A-B'] = Channel('A-B', 4)
-
-    topo.nodes['T'].connect_me_to_channel(ConnectorTypes.DOWN, topo.channels['A-T'])
-    topo.nodes['A'].connect_me_to_channel(ConnectorTypes.DOWN, topo.channels['A-T'])
-    topo.nodes['A'].connect_me_to_channel(ConnectorTypes.UP, topo.channels['A-B'])
-    topo.nodes['B'].connect_me_to_channel(ConnectorTypes.DOWN, topo.channels['A-B'])
-
-    topo.G = nx.Graph()
-    topo.G.add_nodes_from(['A', 'B', 'T'])
-    topo.G.add_edges_from([('A', 'T'), ('A', 'B')])
-
-    topo.start()
-    while True: pass
-
-
-if __name__ == "__main__":
-    Main()
