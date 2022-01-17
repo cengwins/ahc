@@ -27,7 +27,6 @@ __email__ = "eonur@ceng.metu.edu.tr"
 __license__ = "GPLv3"
 __maintainer__ = "developer"
 __status__ = "Production"
-__version__ = "0.0.1"
 
 import datetime
 import queue

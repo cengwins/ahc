@@ -1,5 +1,6 @@
 from setuptools import setup, find_packages
 
+from ahc.version import __version__
 
 
 with open("README.md", "r", encoding="utf-8") as fh:
@@ -7,7 +8,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="adhoccomputing",
-    version="0.0.19",
+    version=__version__,
     author="Ertan Onur",
     author_email="eronur@metu.edu.tr",
     description="A small example package",
