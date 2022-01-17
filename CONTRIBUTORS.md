@@ -14,8 +14,9 @@
 - [Ali Atlı](https://github.com/aliatli)
 - [Saidu Sokoto](https://github.com/bibo7086)
 - [Gorkem Meydan](https://github.com/gorkemmeydan)
+- [Deniz Turan Caglarca](https://github.com/GambitMonkey)
 - [Gökçe Kankaya](https://github.com/gke96)
 - [Erol Yağız Aydın](https://github.com/ygzaydn)
 - [Gürcan Kavakçı](https://github.com/gurcankavakci)
 - [Yiğitcan Uçan](https://github.com/ucanyiit)
-- [Burak Sezgin](https://github.com/zerohoc)
+
