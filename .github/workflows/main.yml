@@ -1,5 +1,7 @@
 name: Build and Publish Python adhoccomputing package to PyPI and TestPyPI
-on: push
+on:
+  release:
+    types: [published]
 
 jobs:
   build-n-publish:
