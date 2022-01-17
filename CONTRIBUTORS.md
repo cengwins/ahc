@@ -13,6 +13,8 @@
 - [Enes Altuntaş](https://github.com/Notelied)
 - [Ali Atlı](https://github.com/aliatli)
 - [Saidu Sokoto](https://github.com/bibo7086)
+- [Gorkem Meydan](https://github.com/gorkemmeydan)
+- [Gökçe Kankaya](https://github.com/gke96)
 - [Erol Yağız Aydın](https://github.com/ygzaydn)
 - [Gürcan Kavakçı](https://github.com/gurcankavakci)
 - [Yiğitcan Uçan](https://github.com/ucanyiit)
