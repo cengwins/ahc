@@ -1,7 +1,7 @@
 from enum import Enum
 from tabulate import tabulate
 
-from Ahc import ComponentModel, Event, EventTypes, GenericMessageHeader, GenericMessage, MessageDestinationIdentifiers
+from ahc.Ahc import ComponentModel, Event, EventTypes, GenericMessageHeader, GenericMessage, MessageDestinationIdentifiers
 from threading import Timer
 
 class DsdvTimer():
