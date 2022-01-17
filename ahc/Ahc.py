@@ -27,15 +27,18 @@ __email__ = "eonur@ceng.metu.edu.tr"
 __license__ = "GPLv3"
 __maintainer__ = "developer"
 __status__ = "Production"
-__version__ = "0.0.1"
 
 import datetime
 import queue
 from enum import Enum
 from threading import Thread, Lock
-from random import sample
+from random import sample, random, sample
+import itertools
+from matplotlib.pyplot import flag
 import networkx as nx
 import itertools
+import threading
+import time
 # TIMING ASSUMPTIONS
 # TODO: Event handling time, message sending time, assumptions about clock (drift, skew, ...)
 # TODO: 1. Asynch,  2. Synch 3. Partial-synch 4. Timed asynch
@@ -260,6 +263,24 @@ class ComponentModel:
       self.connectors = ConnectorList()
       self.connectors[name] = component
 
+  def remove_connection_to_component_from_me(self, name, component):
+    try:
+      self.connectors[name].remove(component)
+    except AttributeError:
+      pass
+
+  def remove_connection_to_channel_from_me(self, name, channel):
+    try:
+      self.connectors[name].remove(channel)
+    except AttributeError:
+      pass
+    connectornameforchannel = self.componentname + str(self.componentinstancenumber)
+    channel.remove_connection_to_component_from_me(connectornameforchannel, self)
+    self.on_break_connection_to_channel(name, channel)
+
+  def on_break_connection_to_channel(self, name, channel):
+    print(f"Connection broken to channel: {name}:{channel.componentinstancenumber}")
+
   def connect_me_to_channel(self, name, channel):
     try:
       self.connectors[name] = channel
@@ -362,7 +383,8 @@ class Topology:
     cc = nodetype(nodetype.__name__, id)
     self.nodes[0] = cc
 
-  def construct_from_graph(self, G: nx.Graph, nodetype, channeltype, context=None):
+  #def construct_from_graph(self, G: nx.Graph, nodetype, channeltype, context=None):
+  def construct_from_graph(self, G: nx.Graph, nodetype, channeltype, context=None, dynamic = False, path = "topology.txt"):
     self.G = G
     nodes = list(G.nodes('conf', None))
     edges = list(G.edges)
@@ -377,6 +399,79 @@ class Topology:
       self.channels[k] = ch
       self.nodes[k[0]].connect_me_to_channel(ConnectorTypes.DOWN, ch)
       self.nodes[k[1]].connect_me_to_channel(ConnectorTypes.DOWN, ch)
+    
+    if dynamic:
+      self.file_path = path
+      self._timer_(self.enable_dynamic_topology, nodetype, channeltype)
+
+  def _timer_(self, function, *args):
+    stopped = threading.Event()
+
+    def loop():
+        while not stopped.wait(random() * 10): # the first call is in `interval` secs
+                function(*args)
+
+    threading.Thread(target=loop).start()    
+    return stopped.set
+
+  def enable_dynamic_topology(self,
+      nodetype,
+      channeltype,
+      new_node: float = 0.6, # the probability of creating new node
+      delete_node: float = 0.4, # the probability of deletion of current nodes
+      new_edge: float = 0.45, # the probability of creating new edge
+      delete_edge: float = 0.45, # the probability of deletion new edge 
+      ) -> None:
+
+      flags = {
+        "new_node": random() <= new_node,
+        "delete_node": random() <= delete_node,
+        "new_edge": random() <= new_edge,
+        "delete_edge": random() <= delete_edge
+      }
+
+      if flags["new_node"]:
+        u = max(self.nodes) + 1
+        v = sample(sorted(self.nodes), 1)[0]
+        self.G.add_node(u)
+        self.G.add_edge(u, v)
+        cc = nodetype(nodetype.__name__, u, u)
+        self.nodes[u] = cc
+
+        ch = channeltype(channeltype.__name__, str(u) + "-" + str(v))
+        self.channels[(u,v)] = ch
+        self.nodes[u].connect_me_to_channel(ConnectorTypes.DOWN, ch)
+        self.nodes[v].connect_me_to_channel(ConnectorTypes.DOWN, ch)
+
+      # if flags["delete_node"]:
+      #   self.G.remove_node(sample(self.nodes, 1)[0])
+
+      if flags["new_edge"]:
+        all_possible_edges = list(itertools.combinations(self.nodes.keys(), 2))
+        for i in self.channels.keys():
+          all_possible_edges.remove((min(i),max(i)))
+        u, v = sample(all_possible_edges, 1)[0]
+
+        self.G.add_edge(u, v)
+        ch = channeltype(channeltype.__name__, str(u) + "-" + str(v))
+        self.channels[(u,v)] = ch
+        self.nodes[u].connect_me_to_channel(ConnectorTypes.DOWN, ch)
+        self.nodes[v].connect_me_to_channel(ConnectorTypes.DOWN, ch)
+
+      if flags["delete_edge"]:
+         u, v = sample(self.channels.keys(), 1)[0]
+         node_u = self.nodes[u]
+         node_v = self.nodes[v]
+         self.G.remove_edge(u, v)
+         ch = self.channels[(u,v)]
+         node_u.remove_connection_to_channel_from_me(ConnectorTypes.DOWN, ch)
+         node_v.remove_connection_to_channel_from_me(ConnectorTypes.DOWN, ch)
+
+      with open(self.file_path, "a") as f:
+        f.write(str(time.time_ns() / 1000) + '\n')
+        f.write(str(self.G.nodes) + '\n')
+        f.write(str(self.G.edges) + '\n')
+        f.write('\n')
 
 # TODO: construct_from_graph_peterson and construct_from_graph_bakery will be removed... Does not follow the AHC style..
   def construct_from_graph_peterson(self, G: nx.Graph, nodetype, channeltype):
@@ -501,6 +596,7 @@ class Topology:
   def plot(self):
     # self.lock.acquire()
     # nx.draw(self.G, self.nodepos, node_color=self.nodecolors, with_labels=True, font_weight='bold')
+    nx.draw(self.G, self.nodepos, node_color=self.nodecolors, with_labels=True, font_weight='bold')
     # plt.draw()
     print(self.nodecolors)
     # self.lock.release()
