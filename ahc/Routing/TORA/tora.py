@@ -3,7 +3,7 @@ from enum import Enum
 from threading import Lock
 from typing import Dict, List, Tuple
 
-from Ahc import (
+from ahc.Ahc import (
     ComponentModel,
     ConnectorTypes,
     Event,
@@ -13,8 +13,8 @@ from Ahc import (
     GenericMessagePayload,
     Topology,
 )
-from LinkLayers.GenericLinkLayer import LinkLayer
-from NetworkLayers.AllSeeingEyeNetworkLayer import AllSeingEyeNetworkLayer
+from ahc.LinkLayers.GenericLinkLayer import LinkLayer
+from ahc.Routing.AllSeeingEyeNetworkLayer import AllSeingEyeNetworkLayer
 
 INITIAL_TIME = 20000000000
 benchmark_time_lock: Lock = Lock()
