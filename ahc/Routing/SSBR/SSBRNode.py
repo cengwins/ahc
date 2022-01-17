@@ -1,9 +1,9 @@
-from Ahc import ComponentModel, Event, ConnectorTypes, EventTypes, Topology
-from Routing.SSBR.ApplicationAndNetworkComponent import ApplicationAndNetwork
-from Routing.SSBR.FPComponent import FP
-from Routing.SSBR.NetworkInterfaceComponent import NetworkInterface
-from Routing.SSBR.DRPComponent import DRP
-from Routing.SSBR.HelperFunctions import messageParser, sendMessageToOtherNode
+from ahc.Ahc import ComponentModel, Event, ConnectorTypes, EventTypes, Topology
+from ahc.Routing.SSBR.ApplicationAndNetworkComponent import ApplicationAndNetwork
+from ahc.Routing.SSBR.FPComponent import FP
+from ahc.Routing.SSBR.NetworkInterfaceComponent import NetworkInterface
+from ahc.Routing.SSBR.DRPComponent import DRP
+from ahc.Routing.SSBR.HelperFunctions import messageParser, sendMessageToOtherNode
 
 # Encapsulator for the SSBR Node
 class SSBRNode(ComponentModel):

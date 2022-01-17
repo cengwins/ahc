@@ -1,5 +1,5 @@
-from Routing.SSBR.HelperFunctions import SSBRRouteSearchMessage, SSBRUnicastMessage, messageParser
-from Ahc import ComponentModel, Event, EventTypes
+from ahc.Routing.SSBR.HelperFunctions import SSBRRouteSearchMessage, SSBRUnicastMessage, messageParser
+from ahc.Ahc import ComponentModel, Event, EventTypes
 
 class ApplicationAndNetwork(ComponentModel):
     def __init__(self, componentname, componentid):

@@ -1,5 +1,5 @@
-from Routing.SSBR.HelperFunctions import messageParser, SSBRRouteSearchMessage, SSBRUnicastMessageFPParser, SSBRUnicastMessage
-from Ahc import ComponentModel, Event, EventTypes, ComponentRegistry
+from ahc.Routing.SSBR.HelperFunctions import messageParser, SSBRRouteSearchMessage, SSBRUnicastMessageFPParser, SSBRUnicastMessage
+from ahc.Ahc import ComponentModel, Event, EventTypes, ComponentRegistry
 
 class FP(ComponentModel):
     def __init__(self, componentname, componentid):

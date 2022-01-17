@@ -6,6 +6,7 @@ from ahc.Ahc import GenericMessage
 from ahc.Ahc import GenericMessageHeader
 
 
+
 class ApplicationComponent(ComponentModel):
     def __init__(self, component_name, component_id):
         super(ApplicationComponent, self).__init__(component_name, component_id)

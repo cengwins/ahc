@@ -8,12 +8,12 @@ import time as t
 
 sys.path.insert(0, os.getcwd())
 
-from Ahc import ComponentRegistry, Topology
-from Channels.Channels import  P2PFIFOPerfectChannel
+from ahc.Ahc import ComponentRegistry, Topology
+from ahc.Channels.Channels import  P2PFIFOPerfectChannel
 import networkx as nx
 import matplotlib.pyplot as plt
-from Routing.SSBR.SSBRNode import SSBRNode
-from Routing.SSBR.HelperFunctions import buildRoutingTable, findStrongConnectedLinksForSingleNode, printSSTInfo, constructStrongRoute, resetRoutingState, benchmarkTest
+from ahc.Routing.SSBR.SSBRNode import SSBRNode
+from ahc.Routing.SSBR.HelperFunctions import buildRoutingTable, findStrongConnectedLinksForSingleNode, printSSTInfo, constructStrongRoute, resetRoutingState, benchmarkTest
 
 NODE_COUNT = input("Enter # of nodes: ")
 NODE_COUNT = int(NODE_COUNT)

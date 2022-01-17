@@ -1,5 +1,5 @@
-from Routing.SSBR.HelperFunctions import messageParser
-from Ahc import ComponentModel, Event, GenericMessage, GenericMessageHeader, EventTypes
+from ahc.Routing.SSBR.HelperFunctions import messageParser
+from ahc.Ahc import ComponentModel, Event, GenericMessage, GenericMessageHeader, EventTypes
 
 class NetworkInterface(ComponentModel):
     def __init__(self, componentname, componentid):

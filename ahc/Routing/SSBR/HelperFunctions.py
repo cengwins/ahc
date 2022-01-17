@@ -1,5 +1,5 @@
 import networkx as nx
-from Ahc import GenericMessage, GenericMessageHeader, ComponentRegistry, Topology
+from ahc.Ahc import GenericMessage, GenericMessageHeader, ComponentRegistry, Topology
 
 def messageParser(self, eventobj, destination = ""):
     messageTo = eventobj.eventcontent.header.messageto

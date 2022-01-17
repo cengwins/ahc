@@ -1,6 +1,7 @@
-from Routing.SSBR.HelperFunctions import messageParser
-from Ahc import ComponentModel, Event, EventTypes, ComponentRegistry
-from Routing.SSBR.HelperFunctions import SSBRRouteReplyMessage, SSBRRouteCompletedMessage
+from ahc.Routing.SSBR.HelperFunctions import messageParser
+from ahc.Ahc import ComponentModel, Event, EventTypes, ComponentRegistry
+from ahc.Routing.SSBR.HelperFunctions import SSBRRouteReplyMessage, SSBRRouteCompletedMessage
+
 class DRP(ComponentModel):
     def __init__(self, componentname, componentid):
         super(DRP, self).__init__(componentname, componentid)
