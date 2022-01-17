@@ -1,8 +1,8 @@
 import time
 from enum import Enum
-from Ahc import ComponentModel, Event, ConnectorTypes, Topology
-from Ahc import ComponentRegistry
-from Ahc import GenericMessagePayload, GenericMessageHeader, GenericMessage, EventTypes
+from ahc.Ahc import ComponentModel, Event, ConnectorTypes, Topology
+from ahc.Ahc import ComponentRegistry
+from ahc.Ahc import GenericMessagePayload, GenericMessageHeader, GenericMessage, EventTypes
 
 registry = ComponentRegistry()
 topo = Topology()
