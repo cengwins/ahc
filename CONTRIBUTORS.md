@@ -14,4 +14,5 @@
 - [Saidu Sokoto](https://github.com/bibo7086)
 - [Gürcan Kavakçı](https://github.com/gurcankavakci)
 - [Yiğitcan Uçan](https://github.com/ucanyiit)
+- [Burak Sezgin](https://github.com/zerohoc)
 
