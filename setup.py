@@ -1,14 +1,12 @@
 from setuptools import setup, find_packages
 
-from ahc.ahcversion import __version__
-
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
     name="adhoccomputing",
-    version=__version__,
+    version=1.2.0,
     author="Ertan Onur",
     author_email="eronur@metu.edu.tr",
     description="A small example package",
