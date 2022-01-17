@@ -1,8 +1,8 @@
 from numpy import inner
-from Ahc import ComponentModel, Event, GenericMessage, GenericMessageHeader, GenericMessagePayload, EventTypes, ComponentRegistry, Lock, Thread, Topology, ConnectorTypes, MessageDestinationIdentifiers
-from Broadcasting.Broadcasting import ControlledFlooding, BroadcastingEventTypes, BroadcastingMessageHeader, BroadcastingMessageTypes
-from Channels.Channels import P2PFIFOFairLossChannel, P2PFIFOPerfectChannel, Channel
-from LinkLayers.GenericLinkLayer import LinkLayer
+from ahc.Ahc import ComponentModel, Event, GenericMessage, GenericMessageHeader, GenericMessagePayload, EventTypes, ComponentRegistry, Lock, Thread, Topology, ConnectorTypes, MessageDestinationIdentifiers
+from ahc.Broadcasting.Broadcasting import ControlledFlooding, BroadcastingEventTypes, BroadcastingMessageHeader, BroadcastingMessageTypes
+from ahc.Channels.Channels import P2PFIFOFairLossChannel, P2PFIFOPerfectChannel, Channel
+from ahc.LinkLayers.GenericLinkLayer import LinkLayer
 
 from enum import Enum
 
