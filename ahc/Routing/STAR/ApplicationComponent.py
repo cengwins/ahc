@@ -1,9 +1,9 @@
 import logging
 import threading
 
-from Ahc import *
-from Routing.SourceTreeAdaptiveRouting.STARNodeComponent import STARMessageTypes
-from Routing.SourceTreeAdaptiveRouting.helper import MessageGenerator, STARTestBenchConfig
+from ahc.Ahc import *
+from ahc.Routing.STAR.STARNodeComponent import STARMessageTypes
+from ahc.Routing.STAR.helper import MessageGenerator, STARTestBenchConfig
 
 logger = logging.getLogger(__name__)
 

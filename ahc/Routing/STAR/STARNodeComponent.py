@@ -6,9 +6,9 @@ from copy import deepcopy
 from networkx import Graph
 from typing import Dict, List, Any, Tuple
 
-from Ahc import *
-from Routing.SourceTreeAdaptiveRouting.MinHeap import MinHeap, MinHeapNode
-from Routing.SourceTreeAdaptiveRouting.helper import STARStats, STARStatEvent
+from ahc.Ahc import *
+from ahc.Routing.STAR.MinHeap import MinHeap, MinHeapNode
+from ahc.Routing.STAR.helper import STARStats, STARStatEvent
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s [%(levelname)s] - %(message)s')
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
