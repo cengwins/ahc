@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-from ahc.version import __version__
+from version import __version__
 
 
 with open("README.md", "r", encoding="utf-8") as fh:

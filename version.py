@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python
 __author__ = "One solo developer"
 __authors__ = ["Ertan Onur", "Berke Tezergil", "etc"]
 __contact__ = "eonur@ceng.metu.edu.tr"
