@@ -1,3 +1,5 @@
+# Contributors
+
 - [Berker Acır](https://github.com/berkeracir)
 - [Osman Ufuk Yağmur](https://github.com/VengerA)
 - [Berke Tezergil](https://github.com/btezergil)
@@ -10,4 +12,4 @@
 - [Yigit Sever](https://github.com/yigitsever)
 - [Ali Atlı](https://github.com/aliatli)
 - [Saidu Sokoto](https://github.com/bibo7086)
-- [Yasar Budulgan](https://github.com/yasarb)
+- [Yiğitcan Uçan](https://github.com/ucanyiit)
