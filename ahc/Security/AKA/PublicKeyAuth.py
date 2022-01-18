@@ -6,7 +6,7 @@ import random
 import string
 
 from cryptography.hazmat.primitives import hashes
-from Ahc import *
+from ahc.Ahc import *
 from cryptography.hazmat.primitives.asymmetric import rsa,padding
 from cryptography.exceptions import InvalidSignature  
 
