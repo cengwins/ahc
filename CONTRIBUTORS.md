@@ -21,6 +21,7 @@
 - [Özlem Tonkal](https://github.com/ozlemton)
 - [Tarık Keskin](https://github.com/tarikkeskin)
 - [Saidu Sokoto](https://github.com/bibo7086)
+- [Barış Can](https://github.com/barisc22)
 - [Ahmet Emre Kılıç](https://github.com/moh1c)
 - [Doruk Gerçel](https://github.com/DorukGercel)
 - [Eyup Ensar Coban](https://github.com/ensarcoban)
