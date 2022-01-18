@@ -1,4 +1,4 @@
-from Ahc import ComponentModel, Event, ConnectorTypes, EventTypes, Topology
+from ahc.Ahc import ComponentModel, Event, ConnectorTypes, EventTypes, Topology
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
@@ -7,7 +7,7 @@ from cryptography.fernet import Fernet
 import time
 import sys
 import os
-from Channels.Channels import Channel
+from ahc.Channels.Channels import Channel
 
 import json
 
