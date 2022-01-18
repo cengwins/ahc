@@ -10,6 +10,7 @@
 - [İbrahim Koç]
 - [Togay Can Akyavaş](https://github.com/tcakyavas)
 - [Ege Uçak](https://github.com/egeucak)
+- [Eren Demircan](https://github.com/erndmrcn)
 - [Mahmoud Alasmar](https://github.com/e212602)
 - [Yigit Sever](https://github.com/yigitsever)
 - [Enes Altuntaş](https://github.com/Notelied)
