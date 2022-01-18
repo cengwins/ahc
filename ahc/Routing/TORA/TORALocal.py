@@ -10,13 +10,13 @@ import datetime
 from time import sleep
 
 
-from Ahc import ComponentModel, Event, ConnectorTypes, Topology, EventTypes
-from Ahc import ComponentRegistry
-from Broadcasting.Broadcasting import ControlledFlooding
-from Channels.Channels import P2PFIFOFairLossChannel
-from LinkLayers.GenericLinkLayer import LinkLayer
-from NetworkLayers import AllSeeingEyeNetworkLayer
-from Ahc import ComponentModel
+from ahc.Ahc import ComponentModel, Event, ConnectorTypes, Topology, EventTypes
+from ahc.Ahc import ComponentRegistry
+from ahc.Broadcasting.Broadcasting import ControlledFlooding
+from ahc.Channels.Channels import P2PFIFOFairLossChannel
+from ahc.LinkLayers.GenericLinkLayer import LinkLayer
+from ahc.Routing import AllSeeingEyeNetworkLayer
+from ahc.Ahc import ComponentModel
 '''
 Creating nodes -> demand driven
 Maintaining routes -> link reversal algorithm
