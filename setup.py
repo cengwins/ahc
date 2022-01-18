@@ -9,7 +9,7 @@ setup(
     version='1.2.1',
     author="Ertan Onur",
     author_email="eronur@metu.edu.tr",
-    description="A small example package",
+    description="Ad Hoc Computing Library",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/cengwins/ahc",
