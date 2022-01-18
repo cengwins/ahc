@@ -26,6 +26,7 @@
 - [Eyup Ensar Coban](https://github.com/ensarcoban)
 - [Ahmet Emre Akpınar](https://github.com/emrekpnr)
 - [Gorkem Meydan](https://github.com/gorkemmeydan)
+- [Celil Yigit](https://github.com/Frostbite99)
 - [Umut Özdoğan](https://github.com/umutozd)
 - [Deniz Turan Caglarca](https://github.com/GambitMonkey)
 - [Gökçe Kankaya](https://github.com/gke96)
