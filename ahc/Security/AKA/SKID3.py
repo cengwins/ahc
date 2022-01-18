@@ -24,8 +24,8 @@ from enum import Enum
 from sys import byteorder
 from random import randint
 
-from Ahc import ComponentModel, Event, EventTypes
-from MAC.RipeMAC import RipeMacEventTypes
+from ahc.Ahc import ComponentModel, Event, EventTypes
+from ahc.MAC.RipeMAC import RipeMacEventTypes
 
 
 class SKID3EventTypes(Enum):

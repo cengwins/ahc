@@ -3,9 +3,9 @@ import queue
 
 from enum import Enum
 from sys import byteorder
-from Ahc import Event, EventTypes, ComponentModel
+from ahc.Ahc import Event, EventTypes, ComponentModel
 from Crypto.Cipher import DES
-from MAC.GenericMAC import GenericMac, GenericMacEventTypes
+from ahc.MAC.GenericMAC import GenericMac, GenericMacEventTypes
 
 class RipeMacEventTypes(Enum):
     HANDLE_MAC_FRAME = "HandleMacFrame"
