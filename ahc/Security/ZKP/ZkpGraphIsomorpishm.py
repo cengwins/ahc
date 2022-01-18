@@ -8,11 +8,11 @@ import networkx as nx
 
 sys.path.insert(0,os.getcwd())
 
-from Ahc import ComponentModel, Event, ConnectorTypes, Topology, EventTypes, ComponentRegistry
-from Ahc import GenericMessageHeader, GenericMessagePayload, GenericMessage
-from Channels.Channels import P2PFIFOPerfectChannel
-from LinkLayers.GenericLinkLayer import LinkLayer
-from NetworkLayers.AllSeeingEyeNetworkLayer import AllSeingEyeNetworkLayer
+from ahc.Ahc import ComponentModel, Event, ConnectorTypes, Topology, EventTypes, ComponentRegistry
+from ahc.Ahc import GenericMessageHeader, GenericMessagePayload, GenericMessage
+from ahc.Channels.Channels import P2PFIFOPerfectChannel
+from ahc.LinkLayers.GenericLinkLayer import LinkLayer
+from ahc.Routing.AllSeeingEyeNetworkLayer import AllSeingEyeNetworkLayer
 
 registry = ComponentRegistry()
 
@@ -242,14 +242,3 @@ class NodeVictor(ComponentModel):
 
         self.linklayer.connect_me_to_component(ConnectorTypes.DOWN, self)
         self.connect_me_to_component(ConnectorTypes.UP, self.linklayer)
-
-def main():
-
-    topo = Topology()
-    topo.construct_sender_receiver(NodePeggy, NodeVictor, P2PFIFOPerfectChannel)
-    topo.start()
-
-    while True: pass
-
-if __name__ == "__main__":
-  main()
