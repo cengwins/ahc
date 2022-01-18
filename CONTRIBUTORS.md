@@ -8,6 +8,7 @@
 - [Ilyas Eren Yilmaz](https://github.com/ilyaserenyilmaz)
 - [Yasemin Hale Karakaş](https://github.com/YaseminKarakas)
 - [İbrahim Koç]
+- [Togay Can Akyavaş](https://github.com/tcakyavas)
 - [Ege Uçak](https://github.com/egeucak)
 - [Mahmoud Alasmar](https://github.com/e212602)
 - [Yigit Sever](https://github.com/yigitsever)
