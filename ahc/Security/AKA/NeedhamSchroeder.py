@@ -1,14 +1,14 @@
 import os
 import sys
 sys.path.insert(0, os.getcwd())
-from Ahc import ComponentModel, Event, ConnectorTypes, Topology, EventTypes
-from Ahc import ComponentRegistry
+from ahc.Ahc import ComponentModel, Event, ConnectorTypes, Topology, EventTypes
+from ahc.Ahc import ComponentRegistry
 from cryptography.fernet import Fernet
 import json
 from enum import Enum
 from datetime import date, datetime
 import time
-from Channels.Channels import Channel
+from ahc.Channels.Channels import Channel
 import networkx as nx
 import matplotlib.pyplot as plt
 
