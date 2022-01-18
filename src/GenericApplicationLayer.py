@@ -1,6 +1,8 @@
 from generics import *
 from topology import ComponentModel
 from definitions import *
+import random
+import time 
 
 # define your own message types
 class ApplicationLayerMessageTypes(Enum):
