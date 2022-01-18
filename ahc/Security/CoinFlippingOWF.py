@@ -1,5 +1,5 @@
-from Ahc import *
-from Channels.Channels import Channel
+from ahc.Ahc import *
+from ahc.Channels.Channels import Channel
 import networkx
 import random
 import hashlib
