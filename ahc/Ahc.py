@@ -596,7 +596,7 @@ class Topology:
   def plot(self):
     # self.lock.acquire()
     # nx.draw(self.G, self.nodepos, node_color=self.nodecolors, with_labels=True, font_weight='bold')
-    nx.draw(self.G, self.nodepos, node_color=self.nodecolors, with_labels=True, font_weight='bold')
+    # nx.draw(self.G, self.nodepos, node_color=self.nodecolors, with_labels=True, font_weight='bold')
     # plt.draw()
     print(self.nodecolors)
     # self.lock.release()

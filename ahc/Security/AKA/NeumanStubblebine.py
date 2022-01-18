@@ -1,5 +1,5 @@
-from Ahc import ComponentModel, ComponentRegistry, ConnectorTypes,Event, EventTypes, Topology
-from Channels.Channels import Channel
+from ahc.Ahc import ComponentModel, ComponentRegistry, ConnectorTypes,Event, EventTypes, Topology
+from ahc.Channels.Channels import Channel
 from cryptography.fernet import Fernet
 import networkx
 import os
