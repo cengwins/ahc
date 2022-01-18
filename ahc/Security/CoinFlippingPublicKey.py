@@ -1,4 +1,4 @@
-from Ahc import *
+from ahc.Ahc import *
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
@@ -6,9 +6,10 @@ import secrets
 import string
 import random
 from time import sleep
-from Channels.Channels import Channel
+from ahc.Channels.Channels import Channel
 from enum import Enum
 from cryptography.hazmat.primitives import serialization
+# Hakan Kanbur
 
 alicePrivateKey = rsa.generate_private_key(
     public_exponent=65537,
