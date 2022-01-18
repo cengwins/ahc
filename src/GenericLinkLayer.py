@@ -1,12 +1,13 @@
 from enum import Enum
 from generics import *
+from src.GenericModel import GenericModel
 from topology import ComponentModel
 from definitions import *
 
 class LinkLayerMessageTypes(Enum):
   LINKMSG = "LINKMSG"
 
-class LinkLayer(ComponentModel):
+class LinkLayer(GenericModel):
 
   def on_message_from_top(self, eventobj: Event):
     abovehdr = eventobj.eventcontent.header
