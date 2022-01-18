@@ -9,6 +9,7 @@
 - [Ilyas Eren Yilmaz](https://github.com/ilyaserenyilmaz)
 - [Yasemin Hale Karakaş](https://github.com/YaseminKarakas)
 - [İbrahim Koç]
+- [Ahmet Kürşad Şaşmaz](https://github.com/ahmetksasmaz)
 - [Togay Can Akyavaş](https://github.com/tcakyavas)
 - [Ege Uçak](https://github.com/egeucak)
 - [Helin Kayabas](https://github.com/helinkayabas)
