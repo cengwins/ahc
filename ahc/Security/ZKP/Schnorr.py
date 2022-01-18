@@ -1,7 +1,7 @@
-from Ahc import ComponentModel, Event, ConnectorTypes, Topology, EventTypes
-from Ahc import ComponentRegistry
-from Ahc import GenericMessagePayload, GenericMessageHeader, GenericMessage, EventTypes
-from Channels.Channels import Channel
+from ahc.Ahc import ComponentModel, Event, ConnectorTypes, Topology, EventTypes
+from ahc.Ahc import ComponentRegistry
+from ahc.Ahc import GenericMessagePayload, GenericMessageHeader, GenericMessage, EventTypes
+from ahc.Channels.Channels import Channel
 from enum import IntEnum
 from random import randint
 from Crypto.PublicKey import DSA
