@@ -25,7 +25,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import padding as spadding
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from Ahc import ComponentModel, Event, EventTypes, ConnectorList, ConnectorTypes, ComponentRegistry
+from ahc.Ahc import ComponentModel, Event, EventTypes, ConnectorList, ConnectorTypes, ComponentRegistry
 
 
 class Client(ComponentModel):
