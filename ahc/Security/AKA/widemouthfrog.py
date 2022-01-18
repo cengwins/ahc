@@ -3,8 +3,8 @@ import sys
 
 sys.path.insert(0, os.getcwd())
 
-from Ahc import ComponentModel, Event, ConnectorTypes, Topology, EventTypes
-from Ahc import ComponentRegistry
+from ahc.Ahc import ComponentModel, Event, ConnectorTypes, Topology, EventTypes
+from ahc.Ahc import ComponentRegistry
 from cryptography.fernet import Fernet
 import json
 import time
