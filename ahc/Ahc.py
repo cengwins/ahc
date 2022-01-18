@@ -189,7 +189,7 @@ class ComponentRegistry:
     for itemkey in self.components:
       cmp = self.components[itemkey]
       cmp.inputqueue.put_nowait(Event(self, EventTypes.INIT, None))
-      print("Initializing, ", cmp.componentname, ":", cmp.componentinstancenumber)
+      #print("Initializing, ", cmp.componentname, ":", cmp.componentinstancenumber)
 
   def print_components(self):
     for itemkey in self.components:
@@ -234,14 +234,19 @@ class ComponentModel:
   def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1):
     self.context = context
     self.configurationparameters = configurationparameters
-    self.eventhandlers = {EventTypes.INIT: self.on_init, EventTypes.MFRB: self.on_message_from_bottom,
-                          EventTypes.MFRT: self.on_message_from_top, EventTypes.MFRP: self.on_message_from_peer}
+    self.eventhandlers = {
+                          EventTypes.INIT: self.on_init, 
+                          EventTypes.MFRB: self.on_message_from_bottom,
+                          EventTypes.MFRT: self.on_message_from_top, 
+                          EventTypes.MFRP: self.on_message_from_peer
+                        }
     # Add default handlers to all instantiated components.
     # If a component overwrites the __init__ method it has to call the super().__init__ method
     self.inputqueue = queue.Queue()
     self.componentname = componentname
     self.componentinstancenumber = componentinstancenumber
     self.num_worker_threads = num_worker_threads
+    
     try:
       if self.connectors:
         pass
@@ -292,7 +297,8 @@ class ComponentModel:
     self.on_connected_to_channel(name, channel)
 
   def on_connected_to_channel(self, name, channel):
-    print(f"Connected to channel: {name}:{channel.componentinstancenumber}")
+    pass
+    #print(f"Connected to channel: {name}:{channel.componentinstancenumber}")
 
   def on_pre_event(self, event):
     pass
@@ -506,6 +512,26 @@ class Topology:
     for i in nodes:
       cc = nodetype(nodetype.__name__, i, i)
       self.nodes[i] = cc
+    for k in edges:
+      ch = channeltype(channeltype.__name__, str(k[0]) + "-" + str(k[1]))
+      self.channels[k] = ch
+      self.nodes[k[0]].connect_me_to_channel(ConnectorTypes.DOWN, ch)
+      self.nodes[k[1]].connect_me_to_channel(ConnectorTypes.DOWN, ch)
+
+  def construct_from_graph_key_exchange(self, G: nx.Graph, nodetype1, nodetype2, nodetype3, channeltype, context=None):
+    self.G = G
+    nodes = list(G.nodes)
+    edges = list(G.edges)
+    j = 0
+    for i in nodes:
+      if(j == 0):
+        cc = nodetype1(nodetype1.__name__, i)
+      if(j == 1):
+        cc = nodetype2(nodetype2.__name__, i)
+      else:
+        cc = nodetype3(nodetype3.__name__, i)
+      self.nodes[i] = cc
+      j+=1
     for k in edges:
       ch = channeltype(channeltype.__name__, str(k[0]) + "-" + str(k[1]))
       self.channels[k] = ch
