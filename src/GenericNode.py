@@ -5,7 +5,6 @@ from helpers import *
 from generics import *
 from definitions import *
 
-import GenericModel
 import GenericLinkLayer
 import GenericApplicationLayer
 import GenericNetworkLayer
@@ -29,6 +28,6 @@ class AdHocNode:
     self.linklayer.connect_me_to_component(ConnectorTypes.UP, self.netlayer)
     self.linklayer.connect_me_to_component(ConnectorTypes.DOWN, self)
 
-  def initiate_topo(self, graph: nx.Graph, calculate_from_graph=False): 
-    return
-    
+  def get_neighbours(self, graph: nx.Graph, calculate_from_graph=False):
+      pass
+  

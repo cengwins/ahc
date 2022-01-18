@@ -3,16 +3,10 @@ from generics import *
 from topology import ComponentModel
 from definitions import *
 
-# from Ahc import ComponentModel, MessageDestinationIdentifiers, Event, GenericMessageHeader, GenericMessagePayload, \
-#   GenericMessage, EventType
-# define your own message types
 class LinkLayerMessageTypes(Enum):
   LINKMSG = "LINKMSG"
 
 class LinkLayer(ComponentModel):
-  def on_init(self, eventobj: Event):
-    # print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
-    pass
 
   def on_message_from_top(self, eventobj: Event):
     abovehdr = eventobj.eventcontent.header
