@@ -17,6 +17,7 @@
 - [Yigit Sever](https://github.com/yigitsever)
 - [Enes Altuntaş](https://github.com/Notelied)
 - [Ali Atlı](https://github.com/aliatli)
+- [Tarık Keskin](https://github.com/tarikkeskin)
 - [Saidu Sokoto](https://github.com/bibo7086)
 - [Doruk Gerçel](https://github.com/DorukGercel)
 - [Eyup Ensar Coban](https://github.com/ensarcoban)
