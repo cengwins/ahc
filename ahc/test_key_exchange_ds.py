@@ -1,6 +1,6 @@
 from ahc.Ahc import Topology
 from Channels.Channels import P2PFIFOPerfectChannel
-from key_exchange_digital_signature import *
+from ahc.Security.AKA.key_exchange_digital_signature import *
 import networkx as nx
 
 
