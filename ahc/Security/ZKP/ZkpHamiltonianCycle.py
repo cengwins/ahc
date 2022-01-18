@@ -5,16 +5,16 @@ import random
 import struct
 import json
 import networkx as nx
-from CryptoProtocols.PublicGraph import PublicGraph, PublicGraphHelper, FakeGraphHelper
+from ahc.Security.ZKP.PublicGraph import PublicGraph, PublicGraphHelper, FakeGraphHelper
 from enum import Enum
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes, CipherContext
 from Crypto.Random import get_random_bytes
-from Ahc import \
+from ahc.Ahc import \
     ComponentModel, Event, ConnectorTypes, ComponentRegistry, GenericMessagePayload, GenericMessageHeader, \
     GenericMessage, EventTypes
-from LinkLayers.GenericLinkLayer import LinkLayer
-from NetworkLayers.AllSeeingEyeNetworkLayer import AllSeingEyeNetworkLayer
+from ahc.LinkLayers.GenericLinkLayer import LinkLayer
+from ahc.Routing.AllSeeingEyeNetworkLayer import AllSeingEyeNetworkLayer
 
 sys.path.insert(0, os.getcwd())
 registry = ComponentRegistry()
