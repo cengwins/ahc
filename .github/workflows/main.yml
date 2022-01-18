@@ -1,5 +1,7 @@
 name: Build and Publish Python adhoccomputing package to PyPI and TestPyPI
-on: push
+on:
+  release:
+    types: [published]
 
 jobs:
   build-n-publish:
@@ -25,6 +27,7 @@ jobs:
         --wheel
         --outdir dist/
     - name: Publish distribution 📦 to PyPI
+      if: startsWith(github.ref, 'refs/tags')
       uses: pypa/gh-action-pypi-publish@master
       with:
         verbose: true
