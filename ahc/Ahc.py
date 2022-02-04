@@ -628,6 +628,9 @@ class Topology:
   # Returns the list of neighbors of a node
   def get_neighbors(self, nodeId):
     return sorted([neighbor for neighbor in self.G.neighbors(nodeId)])
+  
+  def get_node(self, instancenumber):
+    return self.nodes[instancenumber]
 
   def get_predecessors(self, nodeId):
     return sorted([neighbor for neighbor in self.G.predecessors(nodeId)])
