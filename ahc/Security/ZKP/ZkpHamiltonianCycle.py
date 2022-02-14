@@ -3,6 +3,7 @@ import os
 import sys
 import random
 import struct
+import time
 import json
 import networkx as nx
 from ahc.Security.ZKP.PublicGraph import PublicGraph, PublicGraphHelper, FakeGraphHelper
@@ -52,10 +53,16 @@ class ApplicationLayerMessagePayload(GenericMessagePayload):
     pass
 
 
+timestamp = 0
+
+
 class BaseZkpAppLayerComponent(ComponentModel):
     def on_init(self, eventobj: Event):
         if self.componentinstancenumber == 0:
             print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
+            # init timer
+            global timestamp
+            timestamp = time.time()
             self.send_self(Event(self, "commit", None))
         else:
             pass
@@ -202,6 +209,9 @@ class ProverApplicationLayerComponent(BaseZkpAppLayerComponent):
                                                    default_backend()).encryptor())
 
     def print_end_result(self, message_type: ApplicationLayerMessageTypes):
+        # stop timer and print elapsed time
+        global timestamp
+        print(f"Elapsed time:", time.time() - timestamp, " seconds")
         if message_type == ApplicationLayerMessageTypes.ACCEPT:
             if self.type == ProverType.HONEST:
                 print(f"ACCEPTED -> TRUE ACCEPT")

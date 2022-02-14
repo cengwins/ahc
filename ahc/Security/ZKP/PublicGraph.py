@@ -86,8 +86,8 @@ class PublicGraph:
     # To use normal implementation make graph_node_size = cycle_node_size
     # To hide a cycle in a larger graph make graph_node_size >= cycle_node_size
     __GRAPH, __HAMILTONIAN_CYCLE, __CYCLE_START_NODE = __generate_graph_with_hamiltonian_cycle(self=None,
-                                                                                               graph_node_size=10,
-                                                                                               cycle_node_size=10)
+                                                                                               graph_node_size=18,
+                                                                                               cycle_node_size=18)
     # This keyword is abstract, it is used to give intuition that prover knows the cycle
     __AUTH_KEYWORD = "BearsBeetsBattleStarGalactica"
 
