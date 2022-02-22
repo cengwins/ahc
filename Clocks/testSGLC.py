@@ -97,7 +97,7 @@ def main():
   maxEvent = int(maxEvent)
 
   for node in topo.nodes: 
-    topo.nodes[node].middleware.setMaxEvents(10)
+    topo.nodes[node].middleware.setMaxEvents(maxEvent)
 
   topo.start()
   time.sleep(30)

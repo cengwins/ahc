@@ -2,10 +2,8 @@ import math
 import operator
 import networkx as nx
 import matplotlib.pyplot as plt
-from scipy.misc import * 
 import threading
 import numpy as np
-
 
 mutex1 = threading.Lock()
 mutex2 = threading.Lock()
