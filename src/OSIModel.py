@@ -4,9 +4,9 @@ from generics import *
 from helpers import *
 from src.topology import ComponentModel
 from topology import ComponentModel
-from Layers.NetworkLayers.AllSeeingEyeNetworkLayer import *
-from Layers.LinkLayers.GenericLinkLayer import *
-from Layers.ApplicationLayers.GenericApplication import *
+from GenericApplicationLayer import *
+from GenericLinkLayer import *
+from GenericNetworkLayer import *
 class LayerTypes(Enum):
   NET = "network"
   LINK = "link"
@@ -14,16 +14,6 @@ class LayerTypes(Enum):
   APP = "app"
   PHY = "physical"
 
-class LayerOrder:
-  order = [
-    LayerTypes.APP,
-    LayerTypes.TRANS,
-    LayerTypes.NET,
-    LayerTypes.LINK
-  ]
-
-  def custom_layerization(self, order): 
-    self.order = order
 
 class AdHocNode(ComponentModel):
 
@@ -60,7 +50,9 @@ class AdHocNode(ComponentModel):
     self.connect_me_to_component(ConnectorTypes.UP, self.linklayer)
 
     super().__init__(componentname, self.componentinstancenumber)
-
-
-    def connect_layers(self, layer, last):
-      pass
+  
+  def connect_to_layer(self, down: ComponentModel, up: ComponentModel, newLayer: ComponentModel):
+    newLayer.connect_me_to_component(ConnectorTypes.DOWN, down)
+    newLayer.connect_me_to_component(ConnectorTypes.UP, up)
+    down.connect_me_to_component(ConnectorTypes.UP, newLayer)
+    up.connect_me_to_component(ConnectorTypes.DOWN, newLayer)

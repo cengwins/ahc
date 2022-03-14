@@ -14,9 +14,34 @@ import GenericEvent
 class GenericModel:
 
     connectors: Dict = {}
-  
-    def __init__(self) -> None:
-        pass
+    terminated = False
+
+    def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1):
+        self.context = context
+        self.configurationparameters = configurationparameters
+        self.eventhandlers = {EventTypes.INIT: self.on_init, EventTypes.MFRB: self.on_message_from_bottom,
+                            EventTypes.MFRT: self.on_message_from_top, EventTypes.MFRP: self.on_message_from_peer}
+        # Add default handlers to all instantiated components.
+        # If a component overwrites the __init__ method it has to call the super().__init__ method
+        self.inputqueue = queue.Queue()
+        self.componentname = componentname
+        self.componentinstancenumber = componentinstancenumber
+        self.num_worker_threads = num_worker_threads
+        try:
+            if self.connectors:
+                pass
+        except AttributeError:
+            self.connectors = ConnectorList()
+
+
+        #TODO: Handle This Part 
+        # for i in range(self.num_worker_threads):
+        #     t = Thread(target=self.queue_handler, args=[self.inputqueue])
+        #     t.daemon = True
+        #     t.start()
+
+        # self.registry = ComponentRegistry()
+        # self.registry.add_component(self)
 
 
     def send_down(self, event: Event):
