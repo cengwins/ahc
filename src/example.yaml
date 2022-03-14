@@ -1,0 +1,40 @@
+container_image: python:3.10-alpine
+# container_image: pytorch
+
+# container_image: "."
+
+ahc_version: 2.1
+
+topologies:
+  - name: topology1
+    nodes:
+      - node_1
+      - node_2
+
+    links:
+      - node_1:node_2
+
+topology:
+  nodes:
+    - node_1
+    - node_2
+
+  links:
+    - node_1:node_2
+
+experiment:
+  runs: 2 # sampling run
+
+  runs:
+    - name: run-1
+      topology: topology1
+      sampling_count: 2
+
+    - name: run-2
+      topology: topology2
+      sampling_count: 2
+
+
+persist_files:
+  - "*"
+  - "abc.txt"
