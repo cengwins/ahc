@@ -3,6 +3,8 @@ from generics import *
 from topology import ComponentModel
 from definitions import *
 from topology import Topology
+from GenericModel import *
+
 # define your own message types
 class NetworkLayerMessageTypes(Enum):
   NETMSG = "NETMSG"
@@ -15,7 +17,7 @@ class NetworkLayerMessageHeader(GenericMessageHeader):
 class NetworkLayerMessagePayload(GenericMessagePayload):
   pass
 
-class AllSeingEyeNetworkLayer(ComponentModel):
+class GenericNetworkLayer(GenericModel):
 
   def on_message_from_top(self, eventobj: Event):
     # Encapsulate the SDU in network layer PDU

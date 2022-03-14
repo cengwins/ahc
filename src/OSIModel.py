@@ -15,7 +15,7 @@ class LayerTypes(Enum):
   PHY = "physical"
 
 
-class AdHocNode(ComponentModel):
+class AdHocNode(GenericModel):
 
   def on_init(self, eventobj: Event):
     print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
@@ -26,18 +26,11 @@ class AdHocNode(ComponentModel):
   def on_message_from_bottom(self, eventobj: Event):
     self.send_up(Event(self, EventTypes.MFRB, eventobj.eventcontent))
 
-  def __init__(self, componentname, layerOrder: LayerOrder):
+  def __init__(self, componentname):
 
-    for i in layerOrder.order: 
-      match i: 
-        case LayerTypes.APP:
-          self.appllayer = ApplicationLayerComponent("ApplicationLayer", self.componentinstancenumber)
-        case LayerTypes.TRANS:
-            pass
-        case LayerTypes.NET: 
-          self.netlayer = AllSeingEyeNetworkLayer("NetworkLayer", self.componentinstancenumber)      
-        case LayerTypes.LINK: 
-          self.linklayer = LinkLayer("LinkLayer", self.componentinstancenumber) 
+    self.appllayer = ApplicationLayerComponent("ApplicationLayer", self.componentinstancenumber)
+    self.netlayer = AllSeingEyeNetworkLayer("NetworkLayer", self.componentinstancenumber)      
+    self.linklayer = LinkLayer("LinkLayer", self.componentinstancenumber) 
           
     # self.failuredetect = GenericFailureDetector("FailureDetector", componentid)
 
