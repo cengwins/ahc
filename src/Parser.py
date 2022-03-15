@@ -13,11 +13,15 @@ class ExperimentType:
   name = ""
   topology_name = ""
   sampling_count = 0
+  usrp_included = False
 
-  def __init__(self, name, topology_name, sampling_count):
-      self.name = name
-      self.topology_name = topology_name
-      self.sampling_count = sampling_count
+  def __init__(self, name, topology_name, sampling_count, include_hw):
+    self.name = name
+    self.topology_name = topology_name
+    self.sampling_count = sampling_count
+    self.usrp_included = include_hw
+  
+  
 
 class AhcObject: 
   topologies = []
@@ -34,6 +38,6 @@ class AhcObject:
         self.topologies.append(TopoType(topo.name, topo.nodes, topo.links))
       
       for exp in data.experiment:
-        self.experiments.append(ExperimentType(exp.name, exp.topology, exp.sampling_count))
+        self.experiments.append(ExperimentType(exp.name, exp.topology, exp.sampling_count, exp.include_usrp))
     except AttributeError:
       print('Yaml file contains missing attributes')

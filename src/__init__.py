@@ -15,3 +15,8 @@ from GenericNetworkLayer import *
 from GenericLinkLayer import *
 
 from GenericApplicationLayer import *
+
+from Experiment import Experiment
+
+from OSIModel import AdHocNode
+

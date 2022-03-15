@@ -29,10 +29,12 @@ experiment:
     - name: run-1
       topology: topology1
       sampling_count: 2
+      include_usrp: True
 
     - name: run-2
       topology: topology2
       sampling_count: 2
+      include_usrp: False
 
 
 persist_files:

@@ -8,7 +8,6 @@ from topology import *
 from threading import Thread, Lock
 from random import sample
 from OSIModel import *
-import GenericEvent
 
 
 class GenericModel:
