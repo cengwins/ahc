@@ -4,20 +4,20 @@ from src.GenericModel import GenericModel
 from topology import ComponentModel
 from definitions import *
 
-class LinkLayerMessageTypes(Enum):
-  LINKMSG = "LINKMSG"
+class TransportLayerMessages(Enum):
+  TRANSPORT_MSG = "TRANSPORT_MSG"
 
-class GenericLinkLayer(GenericModel):
+class GenericTransportLayer(GenericModel):
 
   def on_message_from_top(self, eventobj: Event):
     abovehdr = eventobj.eventcontent.header
     if abovehdr.messageto == MessageDestinationIdentifiers.NETWORKLAYERBROADCAST:
-      hdr = GenericMessageHeader(LinkLayerMessageTypes.LINKMSG, self.componentinstancenumber,
+      hdr = GenericMessageHeader(TransportLayerMessages.TRANSPORT_MSG, self.componentinstancenumber,
                                    MessageDestinationIdentifiers.LINKLAYERBROADCAST,nexthop=MessageDestinationIdentifiers.LINKLAYERBROADCAST)
     else:
       #if we do not broadcast, use nexthop to determine interfaceid and set hdr.interfaceid
       myinterfaceid = str(self.componentinstancenumber) + "-" + str(abovehdr.nexthop)
-      hdr = GenericMessageHeader(LinkLayerMessageTypes.LINKMSG, self.componentinstancenumber,
+      hdr = GenericMessageHeader(TransportLayerMessages.TRANSPORT_MSG, self.componentinstancenumber,
                                    abovehdr.nexthop, nexthop=abovehdr.nexthop, interfaceid=myinterfaceid)
 
     payload = eventobj.eventcontent

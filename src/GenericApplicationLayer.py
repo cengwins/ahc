@@ -20,7 +20,7 @@ class ApplicationLayerMessagePayload(GenericMessagePayload):
     pass
 
 
-class ApplicationLayerComponent(ComponentModel):
+class GenericApplicationLayer(ComponentModel):
     def on_init(self, eventobj: Event):
         print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
 

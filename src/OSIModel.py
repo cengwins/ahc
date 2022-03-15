@@ -7,6 +7,7 @@ from topology import ComponentModel
 from GenericApplicationLayer import *
 from GenericLinkLayer import *
 from GenericNetworkLayer import *
+from GenericTransportLayer import *
 class LayerTypes(Enum):
   NET = "network"
   LINK = "link"
@@ -28,18 +29,24 @@ class AdHocNode(GenericModel):
 
   def __init__(self, componentname):
 
-    self.appllayer = ApplicationLayerComponent("ApplicationLayer", self.componentinstancenumber)
-    self.netlayer = AllSeingEyeNetworkLayer("NetworkLayer", self.componentinstancenumber)      
-    self.linklayer = LinkLayer("LinkLayer", self.componentinstancenumber) 
+    self.appllayer = GenericApplicationLayer("ApplicationLayer", self.componentinstancenumber)
+    self.netlayer = GenericNetworkLayer("NetworkLayer", self.componentinstancenumber)      
+    self.linklayer = GenericLinkLayer("LinkLayer", self.componentinstancenumber) 
+    self.transportlayer = GenericTransportLayer("TransportLayer", self.componentinstancenumber) 
           
     # self.failuredetect = GenericFailureDetector("FailureDetector", componentid)
 
     # CONNECTIONS AMONG SUBCOMPONENTS
-    self.appllayer.connect_me_to_component(ConnectorTypes.DOWN, self.netlayer)
+    self.appllayer.connect_me_to_component(ConnectorTypes.DOWN, self.transportlayer)
+    self.transportlayer.connect_me_to_component(ConnectorTypes.DOWN, self.netlayer)
     self.netlayer.connect_me_to_component(ConnectorTypes.DOWN, self.linklayer)
-    self.linklayer.connect_me_to_component(ConnectorTypes.UP, self.netlayer)
-
     self.linklayer.connect_me_to_component(ConnectorTypes.DOWN, self)
+
+
+
+    self.linklayer.connect_me_to_component(ConnectorTypes.UP, self.netlayer)
+    self.netlayer.connect_me_to_component(ConnectorTypes.UP, self.transportlayer)
+    self.transportlayer.connect_me_to_component(ConnectorTypes.UP, self.appllayer)
     self.connect_me_to_component(ConnectorTypes.UP, self.linklayer)
 
     super().__init__(componentname, self.componentinstancenumber)
