@@ -1,5 +1,5 @@
 from generics import *
-from topology import ComponentModel
+from GenericModel import GenericModel
 from definitions import *
 import random
 import time 
@@ -20,7 +20,7 @@ class ApplicationLayerMessagePayload(GenericMessagePayload):
     pass
 
 
-class GenericApplicationLayer(ComponentModel):
+class GenericApplicationLayer(GenericModel):
     def on_init(self, eventobj: Event):
         print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
 

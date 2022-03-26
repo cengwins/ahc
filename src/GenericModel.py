@@ -6,14 +6,18 @@ from generics import *
 from definitions import *
 from topology import *
 from threading import Thread, Lock
+from timeit import default_timer as timer
 from random import sample
-from OSIModel import *
+
 
 
 class GenericModel:
 
     connectors: Dict = {}
     terminated = False
+
+    componentinstancenumber = 0
+    componentname = ''
 
     def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1):
         self.context = context
@@ -42,6 +46,7 @@ class GenericModel:
         # self.registry = ComponentRegistry()
         # self.registry.add_component(self)
 
+   
 
     def send_down(self, event: Event):
         try:
@@ -79,3 +84,41 @@ class GenericModel:
 
     def on_message_from_peer(self, eventobj: Event):
         print(f"{EventTypes.MFRP}  {self.componentname}.{self.componentinstancenumber}")
+
+    def on_init(self, eventobj: Event):
+        if self.componentinstancenumber == 0:
+            message_header = GenericMessageHeader("INITIATE  -> ", +str(self.componentname),
+                                                  "Component-" + str(self.componentinstancenumber))
+            message = GenericMessage(message_header, "")
+            kickstarter = Event(self, EventTypes.MFRT, message)
+            self.send_down(kickstarter)
+            print(f"{self.componentname} - {self.componentinstancenumber} sends an INITIATE to Coordinator")
+            self.start_time = timer()
+
+    def queue_handler(self, myqueue):
+        while not self.terminated:
+            workitem = myqueue.get()
+            if workitem.event in self.eventhandlers:
+                self.on_pre_event(workitem)
+                self.eventhandlers[workitem.event](eventobj=workitem)  # call the handler
+            else:
+                print(f"Event Handler: {workitem.event} is not implemented")
+            myqueue.task_done()
+
+    def connect_me_to_channel(self, name, channel):
+        print(f"{self.componentname + str(self.componentinstancenumber)} ===== {self.componentinstancenumber} ======")
+        
+        try:
+            self.connectors[name] = channel
+        except AttributeError:
+            self.connectors = ConnectorList()
+            self.connectors[name] = channel
+        connectornameforchannel = self.componentname + str(self.componentinstancenumber)
+        
+        channel.connect_me_to_component(connectornameforchannel, self)
+        self.on_connected_to_channel(name, channel)
+
+    def on_connected_to_channel(self, name, channel):
+        print(f"Connected to channel: {name}:{channel.componentinstancenumber}")
+
+

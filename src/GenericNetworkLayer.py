@@ -1,6 +1,5 @@
 from enum import Enum
 from generics import *
-from topology import ComponentModel
 from definitions import *
 from topology import Topology
 from GenericModel import *

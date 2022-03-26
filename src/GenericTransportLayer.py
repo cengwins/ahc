@@ -1,7 +1,6 @@
 from enum import Enum
 from generics import *
-from src.GenericModel import GenericModel
-from topology import ComponentModel
+from GenericModel import GenericModel
 from definitions import *
 
 class TransportLayerMessages(Enum):
