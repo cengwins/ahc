@@ -1,13 +1,10 @@
-from helpers import auto_str
 import datetime
 
-@auto_str
 class GenericMessagePayload:
 
   def __init__(self, messagepayload):
     self.messagepayload = messagepayload
 
-@auto_str
 class GenericMessage:
 
   def __init__(self, header, payload):
@@ -15,7 +12,6 @@ class GenericMessage:
     self.payload = payload
     self.uniqueid = str(header.messagefrom) + "-" + str(header.sequencenumber)
 
-@auto_str
 class GenericMessageHeader:
 
   def __init__(self, messagetype, messagefrom, messageto, nexthop=float('inf'), interfaceid=float('inf'), sequencenumber=-1):
@@ -26,8 +22,6 @@ class GenericMessageHeader:
     self.interfaceid = interfaceid
     self.sequencenumber = sequencenumber
 
-
-@auto_str
 class Event:
   curr_event_id = 0
 

@@ -1,7 +1,6 @@
 # from Channels import P2PFIFOPerfectChannel
 from definitions import *
 from generics import *
-from helpers import *
 from GenericModel import *
 from GenericApplicationLayer import *
 from GenericLinkLayer import *
@@ -22,7 +21,6 @@ class AHCChannelError(Exception):
 class Channel(GenericModel):
 
   def on_init(self, eventobj: Event):
-
     pass
 
   # Overwrite onSendToChannel if you want to do something in the first pipeline stage
@@ -67,18 +65,21 @@ class Channel(GenericModel):
     self.eventhandlers[ChannelEventTypes.INCH] = self.on_process_in_channel
     self.eventhandlers[ChannelEventTypes.DLVR] = self.on_deliver_to_component
 
-    for i in range(self.num_worker_threads):
-      # note that the input queue is handled by the super class...
-      t = Thread(target=self.queue_handler, args=[self.channelqueue])
-      t1 = Thread(target=self.queue_handler, args=[self.outputqueue])
-      t.daemon = True
-      t1.daemon = True
-      t.start()
-      t1.start()
+    # for i in range(self.num_worker_threads):
+    #   # note that the input queue is handled by the super class...
+    #   t = Thread(target=self.queue_handler, args=[self.channelqueue])
+    #   t1 = Thread(target=self.queue_handler, args=[self.outputqueue])
+    #   t.daemon = True
+    #   t1.daemon = True
+    #   t.start()
+    #   t1.start()
 
 
 class P2PFIFOPerfectChannel(Channel):
 
+  def __init__(self, componentname, componentinstancenumber):
+      super().__init__(componentname, componentinstancenumber)
+      self.connectors = {}
   # Overwrite onSendToChannel
   # Channels are broadcast, that is why we have to check channel id's using hdr.interfaceid for P2P
   def on_message_from_top(self, eventobj: Event):
@@ -108,16 +109,13 @@ class P2PFIFOPerfectChannel(Channel):
           callee.trigger_event(myevent)
 
   # Overwriting to limit the number of connected components
-  def connect_me_to_component(self, name, component: GenericLinkLayer):
+  def connect_me_to_component(self, name, component):
     try:
       self.connectors[name] = component
-      print(f"Number of nodes connected: {len(self.ports)}")
       if len(self.connectors) > 2:
-        print("zaa")
-        print(self.connectors)
         raise AHCChannelError("More than two nodes cannot connect to a P2PFIFOChannel")
     except AttributeError:
-      self.connectors = ConnectorList()
+      # self.connectors = ConnectorList()
       self.connectors[name] = component
     # except AHCChannelError as e:
     #    print( f"{e}" )
@@ -165,6 +163,19 @@ class AdHocNode(GenericModel):
     down.connect_me_to_component(ConnectorTypes.UP, newLayer)
     up.connect_me_to_component(ConnectorTypes.DOWN, newLayer)
 
+  def connect_me_to_channel(self, name, channel: Channel):
+    print(f"{self.componentname + str(self.componentinstancenumber)} ===== {self.componentinstancenumber} ======")
+      
+    try:
+        self.connectors[name] = channel
+    except AttributeError:
+        # self.connectors = ConnectorList()
+        self.connectors[name] = channel
+    connectornameforchannel = self.componentname + str(self.componentinstancenumber)
+      
+    channel.connect_me_to_component(connectornameforchannel, self)
+    self.on_connected_to_channel(channel.componentname, channel)
+
 
 def main():
     # G = nx.Graph()
@@ -172,7 +183,7 @@ def main():
     # G.add_edges_from([(1, 2)])
     # nx.draw(G, with_labels=True, font_weight='bold')
     # plt.draw()
-    G = nx.random_geometric_graph(19, 0.3)
+    G = nx.random_geometric_graph(19, 0.5)
     nx.draw(G, with_labels=True, font_weight='bold')
     plt.draw()
 

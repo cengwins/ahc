@@ -1,9 +1,9 @@
 import queue
 from typing import ClassVar, Generic
-from helpers import *
+
 from generics import *
 from definitions import *
-from topology import *
+from Topology import *
 from threading import Thread, Lock
 from random import sample
 from OSIModel import *

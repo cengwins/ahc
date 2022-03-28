@@ -1,4 +1,4 @@
-from helpers import *
+
 from generics import *
 from definitions import *
 from enum import Enum
@@ -117,7 +117,7 @@ class Topology:
       cc = nodetype(nodetype.__name__, i)
       self.nodes[i] = cc
     for k in edges:
-      ch = channeltype(channeltype.__name__, str(k[0]) + "-" + str(k[1]))
+      ch = channeltype(channeltype.__name__ + "-" + str(k[0]) + "-" + str(k[1]), str(k[0]) + "-" + str(k[1]))
       self.channels[k] = ch
       self.nodes[k[0]].connect_me_to_channel(ConnectorTypes.DOWN, ch)
       self.nodes[k[1]].connect_me_to_channel(ConnectorTypes.DOWN, ch)

@@ -1,14 +1,12 @@
 import queue
 from typing import Dict
 from typing import ClassVar, Generic
-from helpers import *
 from generics import *
 from definitions import *
-from topology import *
+from Topology import *
 from threading import Thread, Lock
 from timeit import default_timer as timer
 from random import sample
-
 
 
 class GenericModel:
@@ -34,7 +32,8 @@ class GenericModel:
             if self.connectors:
                 pass
         except AttributeError:
-            self.connectors = ConnectorList()
+            self.connectors = {}
+            # self.connectors = ConnectorList()
 
 
         #TODO: Handle This Part 
@@ -73,7 +72,7 @@ class GenericModel:
         try:
             self.connectors[name] = component
         except AttributeError:
-            self.connectors = ConnectorList()
+            # self.connectors = ConnectorList()
             self.connectors[name] = component
     
     def on_message_from_bottom(self, eventobj: Event):
@@ -106,19 +105,15 @@ class GenericModel:
             myqueue.task_done()
 
     def connect_me_to_channel(self, name, channel):
-        print(f"{self.componentname + str(self.componentinstancenumber)} ===== {self.componentinstancenumber} ======")
+        # print(f"{self.componentname + str(self.componentinstancenumber)} ===== {self.componentinstancenumber} ======")
         
         try:
             self.connectors[name] = channel
         except AttributeError:
-            self.connectors = ConnectorList()
+            # self.connectors = ConnectorList()
             self.connectors[name] = channel
-        connectornameforchannel = self.componentname + str(self.componentinstancenumber)
-        
-        channel.connect_me_to_component(connectornameforchannel, self)
-        self.on_connected_to_channel(name, channel)
 
     def on_connected_to_channel(self, name, channel):
-        print(f"Connected to channel: {name}:{channel.componentinstancenumber}")
+        print(f"Connected channel-{name} by component-{self.componentinstancenumber}:{channel.componentinstancenumber}")
 
 

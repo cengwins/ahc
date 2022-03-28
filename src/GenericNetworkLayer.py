@@ -1,7 +1,7 @@
 from enum import Enum
 from generics import *
 from definitions import *
-from topology import Topology
+from Topology import Topology
 from GenericModel import *
 
 # define your own message types
