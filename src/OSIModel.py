@@ -176,13 +176,39 @@ class AdHocNode(GenericModel):
     channel.connect_me_to_component(connectornameforchannel, self)
     self.on_connected_to_channel(channel.componentname, channel)
 
+  def replace_component(self, new:GenericModel, indx, args):
+    match indx:
+      case 0: # Physical Layer
+        self.physicallayer:GenericModel = new(args) 
+        self.physicallayer.connect_me_to_component(ConnectorTypes.UP, self.linklayer)
+        self.linklayer.connect_me_to_component(ConnectorTypes.DOWN, self.physicallayer)
+      case 1: # Link Layer
+        self.linklayer = new(args)
+        self.linklayer.connect_me_to_component(ConnectorTypes.UP, self.netlayer)
+        self.netlayer.connect_me_to_component(ConnectorTypes.DOWN, self.linklayer)
+        if self.physicallayer:
+          self.physicallayer.connect_me_to_component(ConnectorTypes.UP, self.linklayer)
+          self.linklayer.connect_me_to_component(ConnectorTypes.DOWN, self.physicallayer)
+      case 2: # Network Layer
+        self.netlayer = new(args)
+        self.netlayer.connect_me_to_component(ConnectorTypes.UP, self.transportlayer)
+        self.netlayer.connect_me_to_component(ConnectorTypes.DOWN, self.linklayer)
+        self.linklayer.connect_me_to_channel(ConnectorTypes.UP, self.netlayer)
+        self.transportlayer.connect_me_to_component(ConnectorTypes.DOWN, self.netlayer)
+      case 3: # Transport Layer
+        self.transportlayer = new(args)
+        self.transportlayer.connect_me_to_component(ConnectorTypes.UP, self.appllayer)
+        self.transportlayer.connect_me_to_component(ConnectorTypes.DOWN, self.netlayer)
+        self.netlayer.connect_me_to_channel(ConnectorTypes.UP, self.transportlayer)
+        self.appllayer.connect_me_to_component(ConnectorTypes.DOWN, self.transportlayer)
+      case 4: # Application Layer
+        self.appllayer = new(args)
+        self.transportlayer.connect_me_to_channel(ConnectorTypes.UP, self.appllayer)
+        self.appllayer.connect_me_to_component(ConnectorTypes.DOWN, self.transportlayer)
+
 
 def main():
-    # G = nx.Graph()
-    # G.add_nodes_from([1, 2])
-    # G.add_edges_from([(1, 2)])
-    # nx.draw(G, with_labels=True, font_weight='bold')
-    # plt.draw()
+
     G = nx.random_geometric_graph(19, 0.5)
     nx.draw(G, with_labels=True, font_weight='bold')
     plt.draw()

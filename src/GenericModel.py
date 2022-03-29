@@ -1,3 +1,5 @@
+from cgi import print_exception
+from cmath import e
 import queue
 from typing import Dict
 from typing import ClassVar, Generic
@@ -35,7 +37,6 @@ class GenericModel:
             self.connectors = {}
             # self.connectors = ConnectorList()
 
-
         #TODO: Handle This Part 
         # for i in range(self.num_worker_threads):
         #     t = Thread(target=self.queue_handler, args=[self.inputqueue])
@@ -49,10 +50,14 @@ class GenericModel:
 
     def send_down(self, event: Event):
         try:
-            for p in self.connectors[ConnectorTypes.DOWN]:
-                p.trigger_event(event)
-        except:
-            pass
+            self.connectors[ConnectorTypes.DOWN].on_message_from_top(event)
+
+            # for p in self.connectors[ConnectorTypes.DOWN]:
+                # print(p)
+                # p.trigger_event(event)
+        except Exception as e:
+            print_exception(e)
+            
 
     def send_up(self, event: Event):
         try:
@@ -83,6 +88,7 @@ class GenericModel:
 
     def on_message_from_peer(self, eventobj: Event):
         print(f"{EventTypes.MFRP}  {self.componentname}.{self.componentinstancenumber}")
+
 
     def on_init(self, eventobj: Event):
         if self.componentinstancenumber == 0:
@@ -116,4 +122,5 @@ class GenericModel:
     def on_connected_to_channel(self, name, channel):
         print(f"Connected channel-{name} by component-{self.componentinstancenumber}:{channel.componentinstancenumber}")
 
-
+    def initiate_process(self):
+        pass

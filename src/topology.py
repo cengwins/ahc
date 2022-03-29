@@ -9,75 +9,6 @@ import itertools
 import queue
 
 inf = float('inf')
-
-class ConnectorList(dict):
-  def __setitem__(self, key, value):
-    try:
-      self[key]
-    except KeyError:
-      super(ConnectorList, self).__setitem__(key, [])
-    self[key].append(value)
-    
-  class FramerObjects():
-    framerobjects = {}
-    ahcuhdubjects = {}
-    def add_framer(self, id, obj):
-        self.framerobjects[id] = obj
-    
-    def get_framer_by_id(self, id):
-        return self.framerobjects[id]
-
-    def add_ahcuhd(self, id, obj):
-        self.ahcuhdubjects[id] = obj
-    
-    def get_ahcuhd_by_id(self, id):
-        return self.ahcuhdubjects[id]
-
-class ComponentRegistry:
-  components = {}
-
-  def get_component_by_instance(self, instance):
-    list_of_keys = list()
-    list_of_items = self.components.items()
-    for item in list_of_items:
-      if item[1] == instance:
-        list_of_keys.append(item[0])
-    return list_of_keys
-
-  def add_component(self, component):
-    key = component.componentname + str(component.componentinstancenumber)
-    self.components[key] = component
-
-  def get_component_by_key(self, componentname, componentinstancenumber):
-    key = componentname + str(componentinstancenumber)
-    return self.components[key]
-
-  def init(self):
-    for itemkey in self.components:
-      cmp = self.components[itemkey]
-      cmp.inputqueue.put_nowait(Event(self, EventTypes.INIT, None))
-      print("Initializing, ", cmp.componentname, ":", cmp.componentinstancenumber)
-
-  def print_components(self):
-    for itemkey in self.components:
-      cmp = self.components[itemkey]
-      print(f"I am {cmp.componentname}.{cmp.componentinstancenumber}")
-      for i in cmp.connectors:
-        connectedcmp = cmp.connectors[i]
-        for p in connectedcmp:
-          print(f"\t{i} {p.componentname}.{p.componentinstancenumber}")
-
-  def get_non_channel_components(self):
-    res = []
-    for itemkey in self.components:
-      cmp = self.components[itemkey]
-      if cmp.componentname.find("Channel") != -1:
-        continue
-      res.append(cmp)
-    return res
-
-
-
 class Topology:
   nodes = {}
   channels = {}
@@ -153,32 +84,31 @@ class Topology:
   def start(self):
     N = len(self.G.nodes)
     self.compute_forwarding_table()
-    self.nodecolors = ['b'] * N
-    self.lock = Lock()
-    ComponentRegistry().init()
+    # self.nodecolors = ['b'] * N
+    # self.lock = Lock()
 
   def compute_forwarding_table(self):
     # N = len(self.G.nodes)
-    self.ForwardingTable = dict(nx.all_pairs_shortest_path(self.G))
     # print(f"There are {N} nodes")
     # for i in range(N):
-      # for j in range(N):
-        # try:
-          # mypath = path[i][j]
-          # print(f"{i}to{j} path = {path[i][j]} nexthop = {path[i][j][1]}")
-          # self.ForwardingTable[i][j] = path[i][j][1]
+    #   for j in range(N):
+    #     try:
+    #       mypath = path[i][j]
+    #       print(f"{i}to{j} path = {path[i][j]} nexthop = {path[i][j][1]}")
+    #       self.ForwardingTable[i][j] = path[i][j][1]
 
-          # print(f"{i}to{j}path = NONE")
-          # self.ForwardingTable[i][j] = inf  # No paths
-        # except IndexError:
-          # print(f"{i}to{j} nexthop = NONE")
-          # self.ForwardingTable[i][j] = i  # There is a path but length = 1 (self)
+    #       print(f"{i}to{j}path = NONE")
+    #       self.ForwardingTable[i][j] = inf  # No paths
+    #     except IndexError:
+    #       print(f"{i}to{j} nexthop = NONE")
+    #       self.ForwardingTable[i][j] = i  # There is a path but length = 1 (self)
 
-  # all-seeing eye routing table contruction
-  # def print_forwarding_table(self):
-  #   registry.print_components()
-  #   print('\n'.join([''.join(['{:4}'.format(item) for item in row])
-  #                    for row in list(self.ForwardingTable.values())]))
+    # all-seeing eye routing table contruction
+    # def print_forwarding_table(self):
+    #   registry.print_components()
+    #   print('\n'.join([''.join(['{:4}'.format(item) for item in row])
+    #                    for row in list(self.ForwardingTable.values())]))
+    self.ForwardingTable = dict(nx.all_pairs_shortest_path(self.G))
 
   # returns the all-seeing eye routing based next hop id
   def get_next_hop(self, fromId, toId):
@@ -214,3 +144,4 @@ class Topology:
 
   def get_random_node(self):
     return self.nodes[sample(self.G.nodes(), 1)[0]]
+

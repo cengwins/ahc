@@ -21,6 +21,7 @@ class ApplicationLayerMessagePayload(GenericMessagePayload):
 
 
 class GenericApplicationLayer(GenericModel):
+
     def on_init(self, eventobj: Event):
         print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
 

@@ -9,7 +9,6 @@ from random import sample
 from OSIModel import *
 from generics import *
 
-@auto_str
 class GenericEvent:
   curr_event_id = 0
 
