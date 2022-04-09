@@ -9,6 +9,7 @@ class LinkLayerMessageTypes(Enum):
 class GenericLinkLayer(GenericModel):
 
   def on_message_from_top(self, eventobj: Event):
+    print("geldi")
     abovehdr = eventobj.eventcontent.header
     if abovehdr.messageto == MessageDestinationIdentifiers.NETWORKLAYERBROADCAST:
       hdr = GenericMessageHeader(LinkLayerMessageTypes.LINKMSG, self.componentinstancenumber,

@@ -134,35 +134,26 @@ class AdHocNode(GenericModel):
 
   def __init__(self, componentname, componentid):
 
-    self.appllayer = GenericApplicationLayer("ApplicationLayer", self.componentinstancenumber)
-    self.netlayer = GenericNetworkLayer("NetworkLayer", self.componentinstancenumber)      
-    self.linklayer = GenericLinkLayer("LinkLayer", self.componentinstancenumber) 
-    self.transportlayer = GenericTransportLayer("TransportLayer", self.componentinstancenumber) 
+    ap = GenericApplicationLayer("ApplicationLayer", self.componentinstancenumber)
+    net = GenericNetworkLayer("NetworkLayer", self.componentinstancenumber)      
+    link = GenericLinkLayer("LinkLayer", self.componentinstancenumber) 
+    trans = GenericTransportLayer("TransportLayer", self.componentinstancenumber) 
           
     # self.failuredetect = GenericFailureDetector("FailureDetector", componentid)
-
+    # import pdb; pdb.set_trace() 
     # CONNECTIONS AMONG SUBCOMPONENTS
-    self.appllayer.connect_me_to_component(ConnectorTypes.DOWN, self.transportlayer)
-    self.transportlayer.connect_me_to_component(ConnectorTypes.DOWN, self.netlayer)
-    self.netlayer.connect_me_to_component(ConnectorTypes.DOWN, self.linklayer)
-    self.linklayer.connect_me_to_component(ConnectorTypes.DOWN, self)
+    ap.connect_me_to_component(ConnectorTypes.DOWN, trans)
+    trans.connect_me_to_component(ConnectorTypes.DOWN, net)
+    net.connect_me_to_component(ConnectorTypes.DOWN, link)
+    # link.connect_me_to_component(ConnectorTypes.DOWN, self)
 
-
-
-    self.linklayer.connect_me_to_component(ConnectorTypes.UP, self.netlayer)
-    self.netlayer.connect_me_to_component(ConnectorTypes.UP, self.transportlayer)
-    self.transportlayer.connect_me_to_component(ConnectorTypes.UP, self.appllayer)
-    self.linklayer.connect_me_to_component(ConnectorTypes.DOWN, self)
-    self.connect_me_to_component(ConnectorTypes.UP, self.linklayer)
-
+    link.connect_me_to_component(ConnectorTypes.UP, net)
+    net.connect_me_to_component(ConnectorTypes.UP, trans)
+    trans.connect_me_to_component(ConnectorTypes.UP, ap)
+    # self.connect_me_to_component(ConnectorTypes.UP, link)
+    import pdb; pdb.set_trace() 
     super().__init__(componentname, componentid)
   
-  def connect_to_layer(self, down, up, newLayer):
-    newLayer.connect_me_to_component(ConnectorTypes.DOWN, down)
-    newLayer.connect_me_to_component(ConnectorTypes.UP, up)
-    down.connect_me_to_component(ConnectorTypes.UP, newLayer)
-    up.connect_me_to_component(ConnectorTypes.DOWN, newLayer)
-
   def connect_me_to_channel(self, name, channel: Channel):
     print(f"{self.componentname + str(self.componentinstancenumber)} ===== {self.componentinstancenumber} ======")
       
@@ -179,6 +170,7 @@ class AdHocNode(GenericModel):
   def replace_component(self, new:GenericModel, indx, args):
     match indx:
       case 0: # Physical Layer
+        
         self.physicallayer:GenericModel = new(args) 
         self.physicallayer.connect_me_to_component(ConnectorTypes.UP, self.linklayer)
         self.linklayer.connect_me_to_component(ConnectorTypes.DOWN, self.physicallayer)

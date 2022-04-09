@@ -181,8 +181,8 @@ class Grid:
          node_colors = ["mediumslateblue" for i in range(self.node_count_on_edge ** 2)]
 
          if self.ax is not None:
-             nx.draw(self.G, with_labels=True, node_color=node_colors, pos=self.positions, ax=self.ax)
-             nx.draw_networkx_edge_labels(self.G, pos=self.positions, ax = self.ax)
+             nx.draw(self.G, with_labels=True, node_color=node_colors, pos=self.positions)
+             nx.draw_networkx_edge_labels(self.G, pos=self.positions)
          else:
              nx.draw(self.G, self.pos)
              nx.draw_networkx_edge_labels(self.G, self.pos)

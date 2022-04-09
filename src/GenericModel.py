@@ -50,7 +50,7 @@ class GenericModel:
 
     def send_down(self, event: Event):
         try:
-            self.connectors[ConnectorTypes.DOWN].on_message_from_top(event)
+            self.connectors[ConnectorTypes.DOWN].eventhandlers[EventTypes.MFRT](event)
 
             # for p in self.connectors[ConnectorTypes.DOWN]:
                 # print(p)
@@ -61,8 +61,9 @@ class GenericModel:
 
     def send_up(self, event: Event):
         try:
-            for p in self.connectors[ConnectorTypes.UP]:
-                p.trigger_event(event)
+            self.connectors[ConnectorTypes.UP].eventhandlers[EventTypes.MFRB](event)
+            # for p in self.connectors[ConnectorTypes.UP]:
+            #     p.trigger_event(event)
         except:
             pass
 
@@ -74,16 +75,14 @@ class GenericModel:
             pass
 
     def connect_me_to_component(self, name, component):
-        try:
-            self.connectors[name] = component
-        except AttributeError:
-            # self.connectors = ConnectorList()
-            self.connectors[name] = component
+        self.connectors[name] = component
+        print(self.connectors)
     
     def on_message_from_bottom(self, eventobj: Event):
         print(f"{EventTypes.MFRB} {self.componentname}.{self.componentinstancenumber}")
 
     def on_message_from_top(self, eventobj: Event):
+        print(self.connectors)
         print(f"{EventTypes.MFRT}  {self.componentname}.{self.componentinstancenumber}")
 
     def on_message_from_peer(self, eventobj: Event):
@@ -111,7 +110,7 @@ class GenericModel:
             myqueue.task_done()
 
     def connect_me_to_channel(self, name, channel):
-        # print(f"{self.componentname + str(self.componentinstancenumber)} ===== {self.componentinstancenumber} ======")
+        print(f"{self.componentname + str(self.componentinstancenumber)} ===== {self.componentinstancenumber} ======")
         
         try:
             self.connectors[name] = channel
