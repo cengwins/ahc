@@ -230,15 +230,6 @@ def main():
 
   g.plot()
 
-
-  axes[5].plot(np.array([n**2 for n in range(4,9)]), np.array(message_count_arr))  
-  axes[6].plot(np.array([n**2 for n in range(4,9)]), np.array(time_arr))
-  axes[5].set_ylabel('Messeage Count')
-  axes[5].set_xlabel('Node Count')
-  axes[6].set_ylabel('Time Passes in Seconds')
-  axes[6].set_xlabel('Node Count')
-  axes[5].set_title("Message Count by Node Count")
-  axes[5].set_title("Time")
   plt.show()
   # plt.show()  # while (True): pass
 

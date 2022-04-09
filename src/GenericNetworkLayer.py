@@ -20,7 +20,6 @@ class GenericNetworkLayer(GenericModel):
 
   def on_message_from_top(self, eventobj: Event):
     # Encapsulate the SDU in network layer PDU
-    print("zaa")
     applmsg = eventobj.eventcontent
     destination = applmsg.header.messageto
     nexthop = Topology().get_next_hop(self.componentinstancenumber, destination)

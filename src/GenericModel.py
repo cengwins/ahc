@@ -13,12 +13,6 @@ from random import sample
 
 class GenericModel:
 
-    connectors: Dict = {}
-    terminated = False
-
-    componentinstancenumber = 0
-    componentname = ''
-
     def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1):
         self.context = context
         self.configurationparameters = configurationparameters
@@ -30,6 +24,9 @@ class GenericModel:
         self.componentname = componentname
         self.componentinstancenumber = componentinstancenumber
         self.num_worker_threads = num_worker_threads
+        self.connectors = {}
+        self.terminated = False
+
         try:
             if self.connectors:
                 pass
