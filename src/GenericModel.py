@@ -117,14 +117,8 @@ class GenericModel:
     def on_connected_to_channel(self, name, channel):
         print(f"Connected channel-{name} by component-{self.componentinstancenumber}:{channel.componentinstancenumber}")
 
-    def queue_handler(self, myqueue):
-        while not self.terminated:
-            workitem = self.inputqueue.get()
-            if workitem.event in self.eventhandlers:
-                self.eventhandlers[workitem.event](eventobj=workitem)  # call the handler
-            else:
-                print(f"Event Handler: {workitem.event} is not implemented")
-            myqueue.task_done()
-
     def trigger_event(self, eventobj: Event):
         self.inputqueue.put_nowait(eventobj)
+
+    def on_pre_event(self, event):
+        pass

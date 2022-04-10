@@ -49,6 +49,7 @@ class GenericApplicationLayer(GenericModel):
                 print(
                     f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
         except AttributeError:
+            print("buradan geldi")
             print("Attribute Error")
 
 

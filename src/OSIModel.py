@@ -6,113 +6,10 @@ from GenericApplicationLayer import *
 from GenericLinkLayer import *
 from GenericNetworkLayer import *
 from GenericTransportLayer import *
-
-# Testing
-import networkx as nx
-import matplotlib.pyplot as plt
-
-class ChannelEventTypes(Enum):
-  INCH = "processinchannel"
-  DLVR = "delivertocomponent"
-
+from GenericChannel import P2PFIFOPerfectChannel, GenericChannel
 
 class AHCChannelError(Exception):
   pass
-class Channel(GenericModel):
-
-  def on_init(self, eventobj: Event):
-    pass
-
-  # Overwrite onSendToChannel if you want to do something in the first pipeline stage
-  def on_message_from_top(self, eventobj: Event):
-    # channel receives the input message and will process the message by the process event in the next pipeline stage
-    # Preserve the event id through the pipeline
-    myevent = Event(eventobj.eventsource, ChannelEventTypes.INCH,
-                    eventobj.eventcontent, eventid=eventobj.eventid)
-    self.channelqueue.put_nowait(myevent)
-
-  # Overwrite onProcessInChannel if you want to do something in interim pipeline stage
-  def on_process_in_channel(self, eventobj: Event):
-    # Add delay, drop, change order whatever....
-    # Finally put the message in outputqueue with event deliver
-    # Preserve the event id through the pipeline
-    print("saa")
-    myevent = Event(eventobj.eventsource, ChannelEventTypes.DLVR,
-                    eventobj.eventcontent, eventid=eventobj.eventid)
-    self.outputqueue.put_nowait(myevent)
-
-  # Overwrite onDeliverToComponent if you want to do something in the last pipeline stage
-  # onDeliver will deliver the message from the channel to the receiver component using messagefromchannel event
-  def on_deliver_to_component(self, eventobj: Event):
-    print("zaa")
-    callername = eventobj.eventsource.componentinstancenumber
-    for item in self.connectors:
-      callees = self.connectors[item]
-      for callee in callees:
-        calleename = callee.componentinstancenumber
-        # print(f"I am connected to {calleename}. Will check if I have to distribute it to {item}")
-        if calleename == callername:
-          pass
-        else:
-          # Preserve the event id through the pipeline
-          myevent = Event(eventobj.eventsource, EventTypes.MFRB,
-                          eventobj.eventcontent, self.componentinstancenumber,
-                          eventid=eventobj.eventid)
-          callee.trigger_event(myevent)
-
-  def __init__(self, componentname, componentinstancenumber):
-    super().__init__(componentname, componentinstancenumber)
-    self.outputqueue = queue.Queue()
-    self.channelqueue = queue.Queue()
-    self.eventhandlers[ChannelEventTypes.INCH] = self.on_process_in_channel
-    self.eventhandlers[ChannelEventTypes.DLVR] = self.on_deliver_to_component
-
-
-class P2PFIFOPerfectChannel(Channel):
-
-  def __init__(self, componentname, componentinstancenumber):
-      super().__init__(componentname, componentinstancenumber)
-      self.connectors = {}
-  # Overwrite onSendToChannel
-  # Channels are broadcast, that is why we have to check channel id's using hdr.interfaceid for P2P
-  def on_message_from_top(self, eventobj: Event):
-    # if channelid != hdr.interfaceif then drop (should not be on this channel)
-    hdr = eventobj.eventcontent.header
-    if hdr.nexthop != MessageDestinationIdentifiers.LINKLAYERBROADCAST:
-      if set(hdr.interfaceid.split("-")) == set(self.componentinstancenumber.split("-")):
-        print(f"Will forward message since {hdr.interfaceid} and {self.componentinstancenumber}")
-        myevent = Event(eventobj.eventsource, ChannelEventTypes.INCH, eventobj.eventcontent)
-        self.channelqueue.put_nowait(myevent)
-      else:
-        #print(f"Will drop message since {hdr.interfaceid} and {self.componentinstancenumber}")
-        pass
-
-  def on_deliver_to_component(self, eventobj: Event):
-    msg = eventobj.eventcontent
-    callername = eventobj.eventsource.componentinstancenumber
-    for item in self.connectors:
-      callees = self.connectors[item]
-      for callee in callees:
-        calleename = callee.componentinstancenumber
-        # print(f"I am connected to {calleename}. Will check if I have to distribute it to {item}")
-        if calleename == callername:
-          pass
-        else:
-          myevent = Event(eventobj.eventsource, EventTypes.MFRB, eventobj.eventcontent, self.componentinstancenumber)
-          callee.trigger_event(myevent)
-
-  # Overwriting to limit the number of connected components
-  def connect_me_to_component(self, name, component):
-    try:
-      self.connectors[name] = component
-      if len(self.connectors) > 2:
-        raise AHCChannelError("More than two nodes cannot connect to a P2PFIFOChannel")
-    except AttributeError:
-      # self.connectors = ConnectorList()
-      self.connectors[name] = component
-    # except AHCChannelError as e:
-    #    print( f"{e}" )
-
 
 class AdHocNode(GenericModel):
 
@@ -124,7 +21,6 @@ class AdHocNode(GenericModel):
 
   def on_message_from_bottom(self, eventobj: Event):
     self.send_up(Event(self, EventTypes.MFRB, eventobj.eventcontent))
-
 
   def __init__(self, componentname, componentid, fw_table):
     super().__init__(componentname, componentid)
@@ -151,7 +47,7 @@ class AdHocNode(GenericModel):
     down.connect_me_to_component(ConnectorTypes.UP, newLayer)
     up.connect_me_to_component(ConnectorTypes.DOWN, newLayer)
 
-  def connect_me_to_channel(self, name, channel: Channel):
+  def connect_me_to_channel(self, name, channel: GenericChannel):
     try:
         self.connectors[name] = channel
     except AttributeError:
