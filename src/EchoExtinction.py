@@ -1,3 +1,4 @@
+from curses import newwin
 from enum import Enum
 from GenericModel import GenericModel
 from GenericEvent import GenericEvent
@@ -39,18 +40,7 @@ class WaveMessagePayload:
   def __init__(self, tag):
     self.tag = tag
 
-topo = Topology()
-
 class XD(GenericApplicationLayer):
-
-  def __init__(self, args):
-      super().__init__(args.componentname, args.componentinstancenumber)
-
-  def on_init(self, eventobj: Event):
-    # print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
-    self.neighbors = topo.G.neighbors(self.componentinstancenumber)
-
-
   def on_message_from_bottom(self, eventobj: Event):
     try:
       applmessage = eventobj.eventcontent
@@ -88,8 +78,7 @@ class XD(GenericApplicationLayer):
 
 #TODO: If you call this before all on_inits, then things will go wrong...
   def initiate_process(self):
-    self.neighbors = topo.G.neighbors(self.componentinstancenumber)
-    print(f"Process initiated {self.componentinstancenumber}")
+    self.neighbors = self.get_neighbors()
     self.initiated = True
     for i in self.neighbors:
       destination = i
@@ -148,7 +137,9 @@ class XD(GenericApplicationLayer):
         hdr1 = ApplicationLayerMessageHeader(ApplicationLayerMessageTypes.ACCEPT_WAVE, self.componentinstancenumber, destination)
         wave_msg = GenericMessage(hdr1, payload)
         self.send_down(Event(self, EventTypes.MFRT, wave_msg))
-          
+
+  def get_neighbors(self):
+    return sorted([neighbor for neighbor in self.topo.neighbors(self.componentinstancenumber)])
 
   def __init__(self, args):
     super().__init__(args['componentname'], args['componentinstancenumber'])
@@ -161,6 +152,7 @@ class XD(GenericApplicationLayer):
     self.isWaiting = False 
 
     self.waitingAccepts = []
+    self.topo:nx.Graph = args["topo"]
 
 class Grid:
      def __init__(self, node_count_on_edge: int, ax = None) -> None:
@@ -200,6 +192,7 @@ def main():
   fig.tight_layout()
   time_arr = []
   message_count_arr = []
+  topo = Topology()
 
   
 
@@ -218,7 +211,10 @@ def main():
   for i in nodex:
     args['componentinstancenumber'] = topo.nodes[i].componentinstancenumber
     args['componentname'] =  topo.nodes[i].componentname
+    args['topo'] = g.G
     topo.nodes[i].replace_component(XD, 4, args)
+
+
   for i in range(0,10):
     topo.nodes[i].appllayer.initiate_process()
 
@@ -230,7 +226,7 @@ def main():
 
   g.plot()
 
-  plt.show()
+  # plt.show()
   # plt.show()  # while (True): pass
 
 if __name__ == "__main__":

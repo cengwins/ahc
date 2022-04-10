@@ -18,15 +18,19 @@ class NetworkLayerMessagePayload(GenericMessagePayload):
 
 class GenericNetworkLayer(GenericModel):
 
+  def __init__(self, componentname, componentinstancenumber, fw_table = {}, context=None, configurationparameters=None, num_worker_threads=1):
+    self.fw_table = fw_table
+    super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads)
+
   def on_message_from_top(self, eventobj: Event):
     # Encapsulate the SDU in network layer PDU
     applmsg = eventobj.eventcontent
     destination = applmsg.header.messageto
-    nexthop = Topology().get_next_hop(self.componentinstancenumber, destination)
+    nexthop = self.get_next_hop(self.componentinstancenumber, destination)
+    # print(self.fw_table)
     if nexthop != float('inf'):
       # print(f"{self.componentinstancenumber} will SEND a message to {destination} over {nexthop}")
-      hdr = NetworkLayerMessageHeader(NetworkLayerMessageTypes.NETMSG, self.componentinstancenumber, destination,
-                                      nexthop)
+      hdr = NetworkLayerMessageHeader(NetworkLayerMessageTypes.NETMSG, self.componentinstancenumber, destination, nexthop)
       payload = eventobj.eventcontent
       msg = GenericMessage(hdr, payload)
       self.send_down(Event(self, EventTypes.MFRT, msg))
@@ -44,7 +48,7 @@ class GenericNetworkLayer(GenericModel):
       # print(f"I received a message to {hdr.messageto} and I am {self.componentinstancenumber}")
     else:
       destination = hdr.messageto
-      nexthop = Topology().get_next_hop(self.componentinstancenumber, destination)
+      nexthop = self.get_next_hop(self.componentinstancenumber, destination)
       if nexthop != float('inf'):
         newhdr = NetworkLayerMessageHeader(NetworkLayerMessageTypes.NETMSG, self.componentinstancenumber, destination,
                                            nexthop)
@@ -56,5 +60,12 @@ class GenericNetworkLayer(GenericModel):
         pass
         # print(f"NO PATH {self.componentinstancenumber} will NOT FORWARD a message to {destination} over {nexthop}")
 
-  def __init__(self, componentname, componentinstancenumber):
-    super().__init__(componentname, componentinstancenumber)
+  def get_next_hop(self, fromId, toId):
+    try:
+      retval = self.fw_table[fromId][toId]
+      return retval[1]
+    except KeyError:
+      return inf
+    except IndexError:
+      return fromId
+

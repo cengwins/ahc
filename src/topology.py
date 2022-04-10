@@ -44,8 +44,9 @@ class Topology:
     self.G = G
     nodes = list(G.nodes)
     edges = list(G.edges)
+    self.compute_forwarding_table()
     for i in nodes:
-      cc = nodetype(nodetype.__name__, i)
+      cc = nodetype(nodetype.__name__, i, self.ForwardingTable)
       self.nodes[i] = cc
     for k in edges:
       ch = channeltype(channeltype.__name__ + "-" + str(k[0]) + "-" + str(k[1]), str(k[0]) + "-" + str(k[1]))
@@ -121,8 +122,7 @@ class Topology:
       return fromId
 
   # Returns the list of neighbors of a node
-  def get_neighbors(self, nodeId):
-    return sorted([neighbor for neighbor in self.G.neighbors(nodeId)])
+  
 
   def get_predecessors(self, nodeId):
     return sorted([neighbor for neighbor in self.G.predecessors(nodeId)])

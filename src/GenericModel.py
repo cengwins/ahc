@@ -27,6 +27,11 @@ class GenericModel:
         self.connectors = {}
         self.terminated = False
 
+        for i in range(self.num_worker_threads):
+            t = Thread(target=self.queue_handler, args=[self.inputqueue])
+            t.daemon = True
+            t.start()
+
         try:
             if self.connectors:
                 pass
@@ -47,13 +52,10 @@ class GenericModel:
 
     def send_down(self, event: Event):
         try:
-            self.connectors[ConnectorTypes.DOWN].eventhandlers[EventTypes.MFRT](event)
-
-            # for p in self.connectors[ConnectorTypes.DOWN]:
-                # print(p)
-                # p.trigger_event(event)
+            self.connectors[ConnectorTypes.DOWN].on_message_from_top(event)
+            
         except Exception as e:
-            print_exception(e)
+            raise(f"Cannot send message to Down Connector {self.componentname } -- {self.componentinstancenumber}")
             
 
     def send_up(self, event: Event):
@@ -73,13 +75,11 @@ class GenericModel:
 
     def connect_me_to_component(self, name, component):
         self.connectors[name] = component
-        print(self.connectors)
     
     def on_message_from_bottom(self, eventobj: Event):
         print(f"{EventTypes.MFRB} {self.componentname}.{self.componentinstancenumber}")
 
     def on_message_from_top(self, eventobj: Event):
-        print(self.connectors)
         print(f"{EventTypes.MFRT}  {self.componentname}.{self.componentinstancenumber}")
 
     def on_message_from_peer(self, eventobj: Event):
@@ -107,7 +107,6 @@ class GenericModel:
             myqueue.task_done()
 
     def connect_me_to_channel(self, name, channel):
-        print(f"{self.componentname + str(self.componentinstancenumber)} ===== {self.componentinstancenumber} ======")
         
         try:
             self.connectors[name] = channel
@@ -118,5 +117,14 @@ class GenericModel:
     def on_connected_to_channel(self, name, channel):
         print(f"Connected channel-{name} by component-{self.componentinstancenumber}:{channel.componentinstancenumber}")
 
-    def initiate_process(self):
-        pass
+    def queue_handler(self, myqueue):
+        while not self.terminated:
+            workitem = self.inputqueue.get()
+            if workitem.event in self.eventhandlers:
+                self.eventhandlers[workitem.event](eventobj=workitem)  # call the handler
+            else:
+                print(f"Event Handler: {workitem.event} is not implemented")
+            myqueue.task_done()
+
+    def trigger_event(self, eventobj: Event):
+        self.inputqueue.put_nowait(eventobj)

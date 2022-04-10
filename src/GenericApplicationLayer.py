@@ -51,30 +51,5 @@ class GenericApplicationLayer(GenericModel):
         except AttributeError:
             print("Attribute Error")
 
-    # print(f"{self.componentname}.{self.componentinstancenumber}: Gotton message {eventobj.content} ")
-    # value = eventobj.content.value
-    # value += 1
-    # newmsg = MessageContent( value )
-    # myevent = Event( self, "agree", newmsg )
-    # self.trigger_event(myevent)
 
-    def on_propose(self, eventobj: Event):
-        destination = 1
-        hdr = ApplicationLayerMessageHeader(ApplicationLayerMessageTypes.ACCEPT, self.componentinstancenumber,
-                                            destination)
-        payload = ApplicationLayerMessagePayload("23")
-        proposalmessage = GenericMessage(hdr, payload)
-        self.send_down(Event(self, EventTypes.MFRT, proposalmessage))
-
-    def on_agree(self, eventobj: Event):
-        print(f"Agreed on {eventobj.eventcontent}")
-
-    def on_timer_expired(self, eventobj: Event):
-        pass
-
-    def __init__(self, componentname, componentinstancenumber):
-        super().__init__(componentname, componentinstancenumber)
-        self.eventhandlers["propose"] = self.on_propose
-        self.eventhandlers["agree"] = self.on_agree
-        self.eventhandlers["timerexpired"] = self.on_timer_expired
 

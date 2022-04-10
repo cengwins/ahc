@@ -10,6 +10,7 @@ class GenericTransportLayer(GenericModel):
 
   def on_message_from_top(self, eventobj: Event):
     abovehdr = eventobj.eventcontent.header
+    hdr = None
     if abovehdr.messageto == MessageDestinationIdentifiers.NETWORKLAYERBROADCAST:
       hdr = GenericMessageHeader(TransportLayerMessages.TRANSPORT_MSG, self.componentinstancenumber,
                                    MessageDestinationIdentifiers.LINKLAYERBROADCAST,nexthop=MessageDestinationIdentifiers.LINKLAYERBROADCAST)
@@ -17,11 +18,11 @@ class GenericTransportLayer(GenericModel):
       #if we do not broadcast, use nexthop to determine interfaceid and set hdr.interfaceid
       myinterfaceid = str(self.componentinstancenumber) + "-" + str(abovehdr.nexthop)
       hdr = GenericMessageHeader(TransportLayerMessages.TRANSPORT_MSG, self.componentinstancenumber,
-                                   abovehdr.nexthop, nexthop=abovehdr.nexthop, interfaceid=myinterfaceid)
+                                   abovehdr.messageto, nexthop=abovehdr.nexthop, interfaceid=myinterfaceid)
+
 
     payload = eventobj.eventcontent
     msg = GenericMessage(hdr, payload)
-    # print(self.connectors)
     self.send_down(Event(self, EventTypes.MFRT, msg))
 
   def on_message_from_bottom(self, eventobj: Event):

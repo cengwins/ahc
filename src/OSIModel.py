@@ -36,6 +36,7 @@ class Channel(GenericModel):
     # Add delay, drop, change order whatever....
     # Finally put the message in outputqueue with event deliver
     # Preserve the event id through the pipeline
+    print("saa")
     myevent = Event(eventobj.eventsource, ChannelEventTypes.DLVR,
                     eventobj.eventcontent, eventid=eventobj.eventid)
     self.outputqueue.put_nowait(myevent)
@@ -43,6 +44,7 @@ class Channel(GenericModel):
   # Overwrite onDeliverToComponent if you want to do something in the last pipeline stage
   # onDeliver will deliver the message from the channel to the receiver component using messagefromchannel event
   def on_deliver_to_component(self, eventobj: Event):
+    print("zaa")
     callername = eventobj.eventsource.componentinstancenumber
     for item in self.connectors:
       callees = self.connectors[item]
@@ -65,15 +67,6 @@ class Channel(GenericModel):
     self.eventhandlers[ChannelEventTypes.INCH] = self.on_process_in_channel
     self.eventhandlers[ChannelEventTypes.DLVR] = self.on_deliver_to_component
 
-    # for i in range(self.num_worker_threads):
-    #   # note that the input queue is handled by the super class...
-    #   t = Thread(target=self.queue_handler, args=[self.channelqueue])
-    #   t1 = Thread(target=self.queue_handler, args=[self.outputqueue])
-    #   t.daemon = True
-    #   t1.daemon = True
-    #   t.start()
-    #   t1.start()
-
 
 class P2PFIFOPerfectChannel(Channel):
 
@@ -87,7 +80,7 @@ class P2PFIFOPerfectChannel(Channel):
     hdr = eventobj.eventcontent.header
     if hdr.nexthop != MessageDestinationIdentifiers.LINKLAYERBROADCAST:
       if set(hdr.interfaceid.split("-")) == set(self.componentinstancenumber.split("-")):
-        #print(f"Will forward message since {hdr.interfaceid} and {self.componentinstancenumber}")
+        print(f"Will forward message since {hdr.interfaceid} and {self.componentinstancenumber}")
         myevent = Event(eventobj.eventsource, ChannelEventTypes.INCH, eventobj.eventcontent)
         self.channelqueue.put_nowait(myevent)
       else:
@@ -132,11 +125,12 @@ class AdHocNode(GenericModel):
   def on_message_from_bottom(self, eventobj: Event):
     self.send_up(Event(self, EventTypes.MFRB, eventobj.eventcontent))
 
-  def __init__(self, componentname, componentid):
+
+  def __init__(self, componentname, componentid, fw_table):
     super().__init__(componentname, componentid)
 
     self.appllayer = GenericApplicationLayer("ApplicationLayer", self.componentinstancenumber)
-    self.netlayer = GenericNetworkLayer("NetworkLayer", self.componentinstancenumber)      
+    self.netlayer = GenericNetworkLayer("NetworkLayer", self.componentinstancenumber, fw_table)      
     self.linklayer = GenericLinkLayer("LinkLayer", self.componentinstancenumber) 
     self.transportlayer = GenericTransportLayer("TransportLayer", self.componentinstancenumber) 
 
@@ -166,7 +160,6 @@ class AdHocNode(GenericModel):
     connectornameforchannel = self.componentname + str(self.componentinstancenumber)
       
     channel.connect_me_to_component(connectornameforchannel, self)
-    self.on_connected_to_channel(channel.componentname, channel)
 
   def replace_component(self, new:GenericModel, indx, args):
     match indx:
@@ -200,18 +193,3 @@ class AdHocNode(GenericModel):
         self.appllayer.connect_me_to_component(ConnectorTypes.DOWN, self.transportlayer)
 
 
-def main():
-
-    G = nx.random_geometric_graph(19, 0.5)
-    nx.draw(G, with_labels=True, font_weight='bold')
-    plt.draw()
-
-    topo = Topology()
-    topo.construct_from_graph(G, AdHocNode, P2PFIFOPerfectChannel)
-    topo.start()
-
-    plt.show()  # while (True): pass
-
-
-if __name__ == "__main__":
-    main()
