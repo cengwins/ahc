@@ -189,5 +189,5 @@ class P2PFIFOPerfectChannel(GenericChannel):
 #     else:
 #       self.duplicationprobability = 0
 
-# class FIFOBroadcastPerfectChannel(Channel):
-#   pass
+class FIFOBroadcastPerfectChannel(GenericChannel):
+  pass
