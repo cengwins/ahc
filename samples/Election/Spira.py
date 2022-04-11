@@ -2,6 +2,9 @@ import os
 import sys
 import time
 from enum import Enum
+import matplotlib.pyplot as plt
+import numpy as np
+import networkx as nx
 sys.path.insert(0, os.getcwd())
 
 from Ahc import ComponentModel, Event, Topology
@@ -274,3 +277,115 @@ class ElectionSpiraComponent(ComponentModel):
     self.fn = 0 
     self.parent = componentinstancenumber
     self.reported_val = 1000
+
+class ERG:
+     def __init__(self, node_count: int, connectivity: float, ax = None) -> None:
+         self.ax = ax
+         self.node_count = node_count
+         self.root = random.choice(list(range(self.node_count)))
+         self.G = nx.nx.erdos_renyi_graph(self.node_count, connectivity, seed=random.randint(100, 10000), directed=False)
+
+     def plot(self):
+         node_colors = ["red" if i == self.root else "mediumslateblue" for i in range(self.node_count)]
+
+         if self.ax is not None:
+             nx.draw(self.G, with_labels=True, node_color=node_colors, ax=self.ax)
+         else:
+             nx.draw(self.G, with_labels=True, node_color=node_colors)
+
+class Grid:
+     def __init__(self, node_count_on_edge: int, ax = None) -> None:
+         self.ax = ax
+         self.node_count_on_edge = node_count_on_edge
+         self.root = random.choice(list(range(self.node_count_on_edge ** 2)))
+         self.G = nx.grid_2d_graph(self.node_count_on_edge, self.node_count_on_edge)
+         self.positions = {self.node_count_on_edge * x[0] + x[1]: x for x in self.G.nodes()}
+
+         self.G = nx.relabel_nodes(self.G, lambda x: self.node_count_on_edge * x[0] + x[1])
+
+         for u,v in list (self.G.edges):
+             self.G[u][v]['weight'] = int(random.random() * 10)
+
+         self.pos = nx.spring_layout(self.G)
+
+     def plot(self):
+         node_colors = ["mediumslateblue" for i in range(self.node_count_on_edge ** 2)]
+
+         if self.ax is not None:
+             nx.draw(self.G, with_labels=True, node_color=node_colors, pos=self.positions, ax=self.ax)
+             nx.draw_networkx_edge_labels(self.G, pos=self.positions, ax = self.ax)
+         else:
+             nx.draw(self.G, self.pos)
+             nx.draw_networkx_edge_labels(self.G, self.pos)
+
+class Star:
+     def __init__(self, slave_count: int, master_is_root: bool = True, ax = None) -> None:
+         self.ax = ax
+         self.slave_count = slave_count
+         self.root = 0 if master_is_root else random.choice(list(range(1, slave_count + 1)))
+
+         self.G = nx.Graph()
+
+         self.G.add_node(0)
+
+         for i in range(1, self.slave_count + 1):
+             self.G.add_node(i)
+             self.G.add_edge(0, i)
+
+     def plot(self):
+         node_colors = ["red" if i == self.root else "mediumslateblue" for i in range(self.slave_count + 1)]
+
+         if self.ax is not None:
+             nx.draw(self.G, with_labels=True, node_color=node_colors, ax=self.ax)
+         else:
+             nx.draw(self.G, with_labels=True, node_color=node_colors)
+
+
+def main():
+   # G = nx.Graph()
+   # G.add_nodes_from([1, 2])
+   # G.add_edges_from([(1, 2)])
+   # nx.draw(G, with_labels=True, font_weight='bold')
+   # plt.draw()
+   global message_count
+   fig, axes = plt.subplots(1, 7)
+   fig.set_figheight(5)
+   fig.set_figwidth(10)
+   fig.tight_layout()
+   time_arr = []
+   message_count_arr = []
+
+   for i in range(4, 9):
+
+     start_time = time.time()
+
+     g = Grid(i, ax= axes[i-4])
+     topo.construct_from_graph(g.G, AdHocNode, P2PFIFOPerfectChannel)
+     topo.start()
+     for i in range(0,10):
+       topo.nodes[i].initiate_process()
+
+     end_time = time.time()
+     time_arr.append(end_time-start_time)
+
+     message_count_arr.append(message_count)
+     message_count = 0 
+
+     g.plot()
+
+
+   axes[5].plot(np.array([n**2 for n in range(4,9)]), np.array(message_count_arr))  
+   axes[6].plot(np.array([n**2 for n in range(4,9)]), np.array(time_arr))
+   axes[5].set_ylabel('Messeage Count')
+   axes[5].set_xlabel('Node Count')
+   axes[6].set_ylabel('Time Passes in Seconds')
+   axes[6].set_xlabel('Node Count')
+   axes[5].set_title("Message Count by Node Count")
+   axes[5].set_title("Time")
+   plt.show()
+   # plt.show()  # while (True): pass
+
+if __name__ == "__main__":
+   main()
+
+
