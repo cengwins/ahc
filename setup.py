@@ -4,22 +4,39 @@ from setuptools import setup, find_packages
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
+
 setup(
-    name="adhoccomputing",
-    version='1.2.1',
-    author="Ertan Onur",
-    author_email="eronur@metu.edu.tr",
-    description="Ad Hoc Computing Library",
-    long_description=long_description,
-    long_description_content_type="text/markdown",
-    url="https://github.com/cengwins/ahc",
-    project_urls={
+  # TODO: Fix the configs in this part
+  name='ahc',
+  version='0.1.0',    
+  description="Ad Hoc Computing Library",
+  long_description=long_description,
+  long_description_content_type="text/markdown",
+  url='https://gitlab.ceng.metu.edu.tr/group-17/ahc-library',
+  author='CengWins',
+  author_email='eronur@metu.edu.tr',
+  license='BSD 2-clause',
+  packages=['ahc'],
+  install_requires=[
+    'matplotlib',
+    'mnist',
+    'networkx',
+    'numpy',
+    'pandas',
+    'Pillow',
+    'pygraphviz',
+    'scikit_learn',
+    'seaborn',
+    'setuptools',
+    'torch',
+    'yaml'
+  ],
+  project_urls={
         "Bug Tracker": "https://github.com/cengwins/ahc/issues",
-    },
-    classifiers=[
+  },
+  classifiers=[
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
-    packages=find_packages(),
-    python_requires=">=3.8",
+  python_requires=">=3.10",
 )

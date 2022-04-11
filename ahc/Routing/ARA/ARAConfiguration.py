@@ -1,4 +1,0 @@
-class ARAConfiguration:
-  PHEROMONE_DELTA = 0.1 
-  EVAPORATION_FACTOR = 0.005
-  RAND_MAX = 10000
