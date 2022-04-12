@@ -19,16 +19,8 @@ setup(
   packages=['adhoccomputing'],
   install_requires=[
     'matplotlib',
-    'mnist',
     'networkx',
-    'numpy',
-    'pandas',
-    'Pillow',
-    'pygraphviz',
-    'scikit_learn',
-    'seaborn',
     'setuptools',
-    'torch'
   ],
   project_urls={
         "Bug Tracker": "https://github.com/cengwins/ahc/issues",
