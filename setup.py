@@ -28,8 +28,7 @@ setup(
     'scikit_learn',
     'seaborn',
     'setuptools',
-    'torch',
-    'pyyaml'
+    'torch'
   ],
   project_urls={
         "Bug Tracker": "https://github.com/cengwins/ahc/issues",
