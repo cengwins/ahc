@@ -29,7 +29,7 @@ setup(
     'seaborn',
     'setuptools',
     'torch',
-    'yaml'
+    'pyyaml'
   ],
   project_urls={
         "Bug Tracker": "https://github.com/cengwins/ahc/issues",
