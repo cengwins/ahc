@@ -18,15 +18,15 @@ from .Experiment import *
 
 from .OSIModel import *
 
-from .Protocols.MAC.CSMA import *
+from .CSMA import *
 
-from .Protocols.MAC.GenericMAC import *
+from .GenericMAC import *
 
-from .EttusUsrp.FrameHandlerBase import *
+from .FrameHandlerBase import *
 
-from .EttusUsrp.LiquidDspUtils import *
+from .LiquidDspUtils import *
 
-from .EttusUsrp.UhdUtils import *
+from .UhdUtils import *
 
-from .EttusUsrp.UsrpB210OfdmFlexFramePhy import *
+from .UsrpB210OfdmFlexFramePhy import *
 

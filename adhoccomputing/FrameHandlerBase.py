@@ -1,8 +1,9 @@
-from ..GenericModel import GenericModel
+from .GenericModel import GenericModel
 from .UhdUtils import AhcUhdUtils
 from .LiquidDspUtils import *
 from enum import Enum
-from ahc.Ahc import Event, EventTypes, GenericMessage, GenericMessageHeader, GenericMessagePayload,MessageDestinationIdentifiers
+from .Generics import *
+from Definitions import *
 from ctypes import *
 import pickle
 
