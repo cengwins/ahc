@@ -38,4 +38,8 @@ class GenericMac(GenericModel):
         # print(f"I am {self.componentname}, eventcontent={eventobj.eventcontent}\n")
         # put message in queue and try accessing the channel
         self.framequeue.put_nowait(eventobj)
+        self.handle_frame()
         #print("Mac put the frame in queueu", eventobj.eventcontent.payload)
+
+    def handle_frame(self):
+        pass
