@@ -1,13 +1,10 @@
-from ahc.Ahc import ComponentModel, FramerObjects
-from ahc.EttusUsrp.UhdUtils import AhcUhdUtils
-from ahc.EttusUsrp.LiquidDspUtils import *
+from ..GenericModel import GenericModel
+from .UhdUtils import AhcUhdUtils
+from .LiquidDspUtils import *
 from enum import Enum
 from ahc.Ahc import Event, EventTypes, GenericMessage, GenericMessageHeader, GenericMessagePayload,MessageDestinationIdentifiers
 from ctypes import *
 import pickle
-
-framers = FramerObjects()
-
 
 # define your own message types
 class UsrpB210PhyMessageTypes(Enum):
@@ -31,9 +28,9 @@ class UsrpB210PhyMessagePayload(GenericMessagePayload):
     self.phypayload = payload
 
 
-class FrameHandlerBase(ComponentModel):
+class FrameHandlerBase(GenericModel):
 
-    def __init__(self,componentname, componentinstancenumber):
+    def __init__(self,componentname, componentinstancenumber, framers):
         super().__init__(componentname, componentinstancenumber)
 
         self.chan = 0
@@ -47,7 +44,6 @@ class FrameHandlerBase(ComponentModel):
         self.duration = 1
         self.ahcuhd = AhcUhdUtils(self.componentinstancenumber)
         framers.add_framer(id(self), self)
-        framers.add_ahcuhd(componentinstancenumber, self.ahcuhd )
         self.ahcuhd.configureUsrp("winslab_b210_" + str(self.componentinstancenumber))
         print("Configuring", "winslab_b210_" + str(self.componentinstancenumber))
         self.configure()

@@ -1,4 +1,6 @@
-from ahc.Ahc import ComponentModel, Event, framers, EventTypes
+from ...GenericModel import GenericModel 
+from ...Generics import Event
+from ...Definitions import EventTypes
 from enum import Enum
 import queue
 
@@ -7,14 +9,15 @@ class GenericMacEventTypes(Enum):
     HANDLEMACFRAME = "handlemacframe"
 
 
-class GenericMac(ComponentModel):
+class GenericMac(GenericModel):
 
-    def __init__(self, componentname, componentinstancenumber):
+    def __init__(self, componentname, componentinstancenumber, uhd):
         super().__init__(componentname, componentinstancenumber)
         self.framequeue = queue.Queue()
-        self.ahcuhd = framers.get_ahcuhd_by_id(self.componentinstancenumber)
+        self.ahcuhd = uhd
         print("I am Generic MAC my uhd instance id is ", self.ahcuhd.componentinstancenumber)
         self.eventhandlers[GenericMacEventTypes.HANDLEMACFRAME] = self.on_handlemacframe
+
     
     def on_init(self, eventobj: Event):
         self.send_self(Event(self, GenericMacEventTypes.HANDLEMACFRAME, None))  # Continuously trigger handle_frame

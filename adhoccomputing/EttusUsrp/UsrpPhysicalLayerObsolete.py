@@ -4,7 +4,6 @@ from Ahc import Event, EventTypes,GenericMessage, GenericMessageHeader,Component
 from enum import Enum
 import liquid_usrp_pybind11_wrapper as wrapper
 
-
 class PhyUsrpB210OFDMPhysicalLayerEventTypes(Enum):
   RECV = "recv"
 

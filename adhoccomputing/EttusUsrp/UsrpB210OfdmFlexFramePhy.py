@@ -1,17 +1,19 @@
 import sys
-from ahc.Ahc import Event, EventTypes, GenericMessage, GenericMessageHeader, GenericMessagePayload,MessageDestinationIdentifiers, FramerObjects
-from ahc.EttusUsrp.LiquidDspUtils import *
-from ahc.EttusUsrp.FrameHandlerBase import FrameHandlerBase, framers, UsrpB210PhyEventTypes
 from ctypes import *
-import numpy as np
-sys.path.append('/usr/local/lib')
 import pickle
 from threading import Lock
-# framesync_callback = ctypes.CFUNCTYPE(ctypes.c_int32, ctypes.POINTER(ctypes.c_ubyte), ctypes.c_int32, ctypes.POINTER(ctypes.c_ubyte), ctypes.c_uint32, ctypes.c_int32, struct_c__SA_framesyncstats_s, ctypes.POINTER(None))
 
-framers = FramerObjects()
+from adhoccomputing.Definitions import FramerObjects
+# framesync_callback = ctypes.CFUNCTYPE(ctypes.c_int32, ctypes.POINTER(ctypes.c_ubyte), ctypes.c_int32, ctypes.POINTER(ctypes.c_ubyte), ctypes.c_uint32, ctypes.c_int32, struct_c__SA_framesyncstats_s, ctypes.POINTER(None))
+from .FrameHandlerBase import *
+from ..Generics import *
+from .LiquidDspUtils import *
+import numpy as np
 
 mutex = Lock()
+
+framers: FramerObjects = FramerObjects()
+
 def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_uint32, payload:POINTER(c_ubyte), payload_len:c_uint32, payload_valid:c_int32, stats:struct_c__SA_framesyncstats_s, userdata:POINTER(None)):
     mutex.acquire(1)
     try:
@@ -38,6 +40,7 @@ def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_uint32, payload:POINTE
         print("INVALID Type Node", framer.componentinstancenumber, "Payload Valid:[", payload_valid, "]Length=", payload_len, "payload=", bytes(payload))
     mutex.release()
     return 0
+
 
   
 class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
@@ -76,6 +79,7 @@ class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
         self.ahcuhd.finalize_transmit_samples()
         #ofdmflexframesync_print(self.fs) 
             
+   
         
     def configure(self):
         self.fgprops = ofdmflexframegenprops_s(LIQUID_CRC_32, LIQUID_FEC_NONE, LIQUID_FEC_HAMMING74, LIQUID_MODEM_QPSK)
@@ -106,10 +110,9 @@ class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
         ofdmflexframegen_reset(self.fg)
         ofdmflexframesync_reset(self.fs)
         
-
-# Callbacks have to be outside since the c library does not like "self"
-# Because of this reason will use userdata to get access back to the framer object 
+    # Callbacks have to be outside since the c library does not like "self"
+    # Because of this reason will use userdata to get access back to the framer object 
 
     def __init__(self, componentname, componentinstancenumber):
-        super().__init__(componentname, componentinstancenumber)
+        super().__init__(componentname, componentinstancenumber, framers)
         

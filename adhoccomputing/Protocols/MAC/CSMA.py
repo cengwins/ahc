@@ -1,6 +1,11 @@
-from ahc.Ahc import Event, EventTypes, ComponentConfigurationParameters
-from ahc.MAC.GenericMAC import GenericMac, GenericMacEventTypes
+from ...Generics import Event
+from ...Definitions import EventTypes, ComponentConfigurationParameters
+from .GenericMAC import GenericMac, GenericMacEventTypes
 import time, random, math
+
+
+class ComponentConfigurationParameters():
+    pass
 
 class MacCsmaPPersistentConfigurationParameters (ComponentConfigurationParameters):
     def __init__(self, p):
@@ -9,8 +14,8 @@ class MacCsmaPPersistentConfigurationParameters (ComponentConfigurationParameter
 class MacCsmaPPersistent(GenericMac):
     
     #Constructor
-    def __init__(self, componentname, componentinstancenumber, configurationparameters:MacCsmaPPersistentConfigurationParameters):
-        super().__init__(componentname, componentinstancenumber)
+    def __init__(self, componentname, componentinstancenumber, configurationparameters:MacCsmaPPersistentConfigurationParameters, uhd):
+        super().__init__(componentname, componentinstancenumber, uhd)
         self.p = configurationparameters.p
     
     #on_init will be called from topo.start to initialize components

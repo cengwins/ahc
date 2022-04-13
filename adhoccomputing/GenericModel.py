@@ -117,3 +117,6 @@ class GenericModel:
 
     def on_pre_event(self, event):
         pass
+        
+    def send_self(self, event: Event):
+        self.trigger_event(event)
