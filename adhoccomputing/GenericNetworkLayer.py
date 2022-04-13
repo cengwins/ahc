@@ -1,6 +1,6 @@
 from enum import Enum
-from generics import *
-from definitions import *
+from Generics import *
+from Definitions import *
 from Topology import Topology
 from GenericModel import *
 

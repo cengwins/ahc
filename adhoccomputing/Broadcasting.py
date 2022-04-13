@@ -2,8 +2,8 @@ import random
 import time
 from enum import Enum
 
-from definitions import MessageDestinationIdentifiers
-from generics import *
+from Definitions import MessageDestinationIdentifiers
+from Generics import *
 from GenericEvent import *
 from GenericModel import GenericModel
 

@@ -1,8 +1,8 @@
 from .Topology import *
 
-from .generics import *
+from .Generics import *
 
-from .definitions import *
+from .Definitions import *
 
 from .GenericModel import * 
 

@@ -1,6 +1,6 @@
 # from Channels import P2PFIFOPerfectChannel
-from definitions import *
-from generics import *
+from Definitions import *
+from Generics import *
 from GenericModel import *
 from GenericApplicationLayer import *
 from GenericLinkLayer import *

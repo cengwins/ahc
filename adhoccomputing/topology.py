@@ -1,6 +1,6 @@
 
-from generics import *
-from definitions import *
+from Generics import *
+from Definitions import *
 from enum import Enum
 from threading import Thread, Lock
 from random import sample

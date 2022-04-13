@@ -1,7 +1,7 @@
 from enum import Enum
-from generics import *
+from Generics import *
 from GenericModel import GenericModel
-from definitions import *
+from Definitions import *
 
 class LinkLayerMessageTypes(Enum):
   LINKMSG = "LINKMSG"

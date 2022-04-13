@@ -1,6 +1,6 @@
-from generics import *
+from Generics import *
 from GenericModel import GenericModel
-from definitions import *
+from Definitions import *
 import random
 import time 
 
