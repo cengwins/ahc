@@ -1,13 +1,8 @@
-import queue
-from typing import ClassVar, Generic
-
-from Generics import *
-from Definitions import *
-from Topology import *
-from threading import Thread, Lock
-from random import sample
-from OSIModel import *
-from Generics import *
+from .Generics import *
+from .Definitions import *
+from .Topology import *
+from .OSIModel import *
+from .Generics import *
 
 class GenericEvent:
   curr_event_id = 0

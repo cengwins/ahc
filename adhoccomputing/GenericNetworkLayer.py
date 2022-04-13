@@ -1,8 +1,8 @@
 from enum import Enum
-from Generics import *
-from Definitions import *
-from Topology import Topology
-from GenericModel import *
+
+from .Generics import *
+from .Definitions import *
+from .GenericModel import *
 
 # define your own message types
 class NetworkLayerMessageTypes(Enum):

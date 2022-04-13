@@ -2,10 +2,10 @@ import random
 import time
 from enum import Enum
 
-from Definitions import MessageDestinationIdentifiers
-from Generics import *
-from GenericEvent import *
-from GenericModel import GenericModel
+from .Definitions import MessageDestinationIdentifiers
+from .Generics import *
+from .GenericEvent import *
+from .GenericModel import GenericModel
 
 class BroadcastingEventTypes(Enum):
   BROADCAST = "broadcast"
@@ -49,7 +49,7 @@ class ControlledFlooding(GenericModel):
     self.update_topology()
     self.uniquebroadcastidentifier = self.uniquebroadcastidentifier + 1
     self.senddownbroadcast(eventobj, self.componentinstancenumber, self.uniquebroadcastidentifier)
-        
+
   def on_message_from_top(self, eventobj: Event):
     self.update_topology()
     evt = Event(self, BroadcastingEventTypes.BROADCAST, eventobj.eventcontent)

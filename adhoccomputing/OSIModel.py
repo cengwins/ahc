@@ -1,12 +1,12 @@
 # from Channels import P2PFIFOPerfectChannel
-from Definitions import *
-from Generics import *
-from GenericModel import *
-from GenericApplicationLayer import *
-from GenericLinkLayer import *
-from GenericNetworkLayer import *
-from GenericTransportLayer import *
-from GenericChannel import P2PFIFOPerfectChannel, GenericChannel
+from .Definitions import *
+from .Generics import *
+from .GenericModel import *
+from .GenericApplicationLayer import *
+from .GenericLinkLayer import *
+from .GenericNetworkLayer import *
+from .GenericTransportLayer import *
+from .GenericChannel import GenericChannel
 
 class AHCChannelError(Exception):
   pass
@@ -26,9 +26,9 @@ class AdHocNode(GenericModel):
     super().__init__(componentname, componentid)
 
     self.appllayer = GenericApplicationLayer("ApplicationLayer", self.componentinstancenumber)
-    self.netlayer = GenericNetworkLayer("NetworkLayer", self.componentinstancenumber, fw_table)      
-    self.linklayer = GenericLinkLayer("LinkLayer", self.componentinstancenumber) 
-    self.transportlayer = GenericTransportLayer("TransportLayer", self.componentinstancenumber) 
+    self.netlayer = GenericNetworkLayer("NetworkLayer", self.componentinstancenumber, fw_table)
+    self.linklayer = GenericLinkLayer("LinkLayer", self.componentinstancenumber)
+    self.transportlayer = GenericTransportLayer("TransportLayer", self.componentinstancenumber)
 
     self.appllayer.connect_me_to_component(ConnectorTypes.DOWN, self.transportlayer)
     self.transportlayer.connect_me_to_component(ConnectorTypes.DOWN, self.netlayer)
@@ -39,8 +39,8 @@ class AdHocNode(GenericModel):
     self.netlayer.connect_me_to_component(ConnectorTypes.UP, self.transportlayer)
     self.transportlayer.connect_me_to_component(ConnectorTypes.UP, self.appllayer)
     self.connect_me_to_component(ConnectorTypes.UP, self.linklayer)
-    
-  
+
+
   def connect_to_layer(self, down, up, newLayer):
     newLayer.connect_me_to_component(ConnectorTypes.DOWN, down)
     newLayer.connect_me_to_component(ConnectorTypes.UP, up)
@@ -54,12 +54,12 @@ class AdHocNode(GenericModel):
         # self.connectors = ConnectorList()
         self.connectors[name] = channel
     connectornameforchannel = self.componentname + str(self.componentinstancenumber)
-      
+
     channel.connect_me_to_component(connectornameforchannel, self)
 
   def replace_component(self, new:GenericModel, indx, args):
-    if(indx == 0) :        
-      self.physicallayer:GenericModel = new(args) 
+    if(indx == 0) :
+      self.physicallayer:GenericModel = new(args)
       self.physicallayer.connect_me_to_component(ConnectorTypes.UP, self.linklayer)
       self.linklayer.connect_me_to_component(ConnectorTypes.DOWN, self.physicallayer)
     elif(indx ==1) :
@@ -86,7 +86,7 @@ class AdHocNode(GenericModel):
         self.transportlayer.connect_me_to_channel(ConnectorTypes.UP, self.appllayer)
         self.appllayer.connect_me_to_component(ConnectorTypes.DOWN, self.transportlayer)
 
-    else: 
+    else:
       raise("Index number should be between [0,4]")
 
 

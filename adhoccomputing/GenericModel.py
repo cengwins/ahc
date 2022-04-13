@@ -1,15 +1,10 @@
-from cgi import print_exception
-from cmath import e
 import queue
-from typing import Dict
-from typing import ClassVar, Generic
-from generics import *
-from definitions import *
-from Topology import *
-from threading import Thread, Lock
+from threading import Thread
 from timeit import default_timer as timer
-from random import sample
 
+from .Topology import *
+from .Definitions import *
+from .Generics import *
 
 class GenericModel:
 
@@ -39,7 +34,7 @@ class GenericModel:
             self.connectors = {}
             # self.connectors = ConnectorList()
 
-        #TODO: Handle This Part 
+        #TODO: Handle This Part
         # for i in range(self.num_worker_threads):
         #     t = Thread(target=self.queue_handler, args=[self.inputqueue])
         #     t.daemon = True
@@ -48,15 +43,15 @@ class GenericModel:
         # self.registry = ComponentRegistry()
         # self.registry.add_component(self)
 
-   
+
 
     def send_down(self, event: Event):
         try:
             self.connectors[ConnectorTypes.DOWN].on_message_from_top(event)
-            
+
         except Exception as e:
             raise(f"Cannot send message to Down Connector {self.componentname } -- {self.componentinstancenumber}")
-            
+
 
     def send_up(self, event: Event):
         try:
@@ -75,7 +70,7 @@ class GenericModel:
 
     def connect_me_to_component(self, name, component):
         self.connectors[name] = component
-    
+
     def on_message_from_bottom(self, eventobj: Event):
         print(f"{EventTypes.MFRB} {self.componentname}.{self.componentinstancenumber}")
 
@@ -107,7 +102,7 @@ class GenericModel:
             myqueue.task_done()
 
     def connect_me_to_channel(self, name, channel):
-        
+
         try:
             self.connectors[name] = channel
         except AttributeError:

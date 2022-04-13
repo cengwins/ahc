@@ -1,9 +1,10 @@
 import queue
-import random
 from enum import Enum
 from threading import Thread
-from GenericEvent import *
-from GenericModel import *
+
+from .GenericEvent import *
+from .GenericModel import *
+
 # TODO: Channel failure models: lossy-link, fair-loss, stubborn links, perfect links (WHAT ELSE?), FIFO perfect
 # TODO: Logged perfect links (tolerance to crashes), authenticated perfect links
 # TODO: Broadcast channels? and their failure models? Collisions?
@@ -42,8 +43,8 @@ class GenericChannel(GenericModel):
     # Finally put the message in outputqueue with event deliver
     # Preserve the event id through the pipeline
     myevent = Event(eventobj.eventsource, ChannelEventTypes.DLVR, eventobj.eventcontent, eventid=eventobj.eventid)
-    # print(myevent.eventsource) 
-     
+    # print(myevent.eventsource)
+
     self.outputqueue.put_nowait(myevent)
 
   # Overwrite onDeliverToComponent if you want to do something in the last pipeline stage

@@ -1,12 +1,10 @@
-
-from Generics import *
-from Definitions import *
-from enum import Enum
-from threading import Thread, Lock
 from random import sample
-import networkx as nx
 import itertools
-import queue
+import networkx as nx
+
+from .Generics import *
+from .Definitions import *
+
 
 inf = float('inf')
 class Topology:
@@ -15,9 +13,9 @@ class Topology:
 
 
   def construct_winslab_topology_with_channels(self, nodecount, nodetype, channeltype, context=None):
-    
+
     self.construct_winslab_topology_without_channels(nodecount, nodetype, context)
-    
+
     pairs = list(itertools.permutations(range(nodecount), 2))
     print("Pairs", pairs)
     self.G.add_edges_from(pairs)
@@ -30,9 +28,9 @@ class Topology:
 
 
   def construct_winslab_topology_without_channels(self, nodecount, nodetype, context=None):
-    
+
     self.G = nx.Graph()
-    self.G.add_nodes_from(range(nodecount))  # TODO : Change depending on the 
+    self.G.add_nodes_from(range(nodecount))  # TODO : Change depending on the
 
     nodes = list(self.G.nodes)
     for i in nodes:
@@ -122,7 +120,7 @@ class Topology:
       return fromId
 
   # Returns the list of neighbors of a node
-  
+
 
   def get_predecessors(self, nodeId):
     return sorted([neighbor for neighbor in self.G.predecessors(nodeId)])

@@ -4,7 +4,7 @@ from .Generics import *
 
 from .Definitions import *
 
-from .GenericModel import * 
+from .GenericModel import *
 
 from .GenericEvent import *
 
@@ -14,7 +14,7 @@ from .GenericLinkLayer import *
 
 from .GenericApplicationLayer import *
 
-from .Experiment import Experiment
+from .Experiment import *
 
-from .OSIModel import AdHocNode
+from .OSIModel import *
 
