@@ -22,9 +22,9 @@ from .CSMA import *
 
 from .GenericMAC import *
 
-from .FrameHandlerBase import *
-
 from .LiquidDspUtils import *
+
+from .FrameHandlerBase import *
 
 from .UhdUtils import *
 

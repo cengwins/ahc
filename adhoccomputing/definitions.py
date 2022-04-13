@@ -16,16 +16,16 @@ class MessageDestinationIdentifiers(Enum):
   NETWORKLAYERBROADCAST = -2  # For flooding over multiple-hops means all connected nodes to me over one or more links
 
 class FramerObjects():
-    framerobjects = {}
-    ahcuhdubjects = {}
-    def add_framer(self, id, obj):
-        self.framerobjects[id] = obj
+  framerobjects = {}
+  ahcuhdubjects = {}
+  def add_framer(self, id, obj):
+    self.framerobjects[id] = obj
 
-    def get_framer_by_id(self, id):
-        return self.framerobjects[id]
+  def get_framer_by_id(self, id):
+    return self.framerobjects[id]
 
-    def add_ahcuhd(self, id, obj):
-        self.ahcuhdubjects[id] = obj
+  def add_ahcuhd(self, id, obj):
+    self.ahcuhdubjects[id] = obj
 
-    def get_ahcuhd_by_id(self, id):
-        return self.ahcuhdubjects[id]
+  def get_ahcuhd_by_id(self, id):
+    return self.ahcuhdubjects[id]
