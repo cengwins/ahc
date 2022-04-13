@@ -58,34 +58,35 @@ class AdHocNode(GenericModel):
     channel.connect_me_to_component(connectornameforchannel, self)
 
   def replace_component(self, new:GenericModel, indx, args):
-    match indx:
-      case 0: # Physical Layer
-        
-        self.physicallayer:GenericModel = new(args) 
-        self.physicallayer.connect_me_to_component(ConnectorTypes.UP, self.linklayer)
-        self.linklayer.connect_me_to_component(ConnectorTypes.DOWN, self.physicallayer)
-      case 1: # Link Layer
+    if(indx == 0) :        
+      self.physicallayer:GenericModel = new(args) 
+      self.physicallayer.connect_me_to_component(ConnectorTypes.UP, self.linklayer)
+      self.linklayer.connect_me_to_component(ConnectorTypes.DOWN, self.physicallayer)
+    elif(indx ==1) :
         self.linklayer = new(args)
         self.linklayer.connect_me_to_component(ConnectorTypes.UP, self.netlayer)
         self.netlayer.connect_me_to_component(ConnectorTypes.DOWN, self.linklayer)
         if self.physicallayer:
           self.physicallayer.connect_me_to_component(ConnectorTypes.UP, self.linklayer)
           self.linklayer.connect_me_to_component(ConnectorTypes.DOWN, self.physicallayer)
-      case 2: # Network Layer
+    elif(indx == 2): # Network Layer
         self.netlayer = new(args)
         self.netlayer.connect_me_to_component(ConnectorTypes.UP, self.transportlayer)
         self.netlayer.connect_me_to_component(ConnectorTypes.DOWN, self.linklayer)
         self.linklayer.connect_me_to_channel(ConnectorTypes.UP, self.netlayer)
         self.transportlayer.connect_me_to_component(ConnectorTypes.DOWN, self.netlayer)
-      case 3: # Transport Layer
+    elif(indx == 3): # Transport Layer
         self.transportlayer = new(args)
         self.transportlayer.connect_me_to_component(ConnectorTypes.UP, self.appllayer)
         self.transportlayer.connect_me_to_component(ConnectorTypes.DOWN, self.netlayer)
         self.netlayer.connect_me_to_channel(ConnectorTypes.UP, self.transportlayer)
         self.appllayer.connect_me_to_component(ConnectorTypes.DOWN, self.transportlayer)
-      case 4: # Application Layer
+    elif(indx == 4): # Application Layer
         self.appllayer = new(args)
         self.transportlayer.connect_me_to_channel(ConnectorTypes.UP, self.appllayer)
         self.appllayer.connect_me_to_component(ConnectorTypes.DOWN, self.transportlayer)
+
+    else: 
+      raise("Index number should be between [0,4]")
 
 
