@@ -1,18 +1,20 @@
-from generics import *
+from .Topology import *
 
-from definitions import *
+from .generics import *
 
-from GenericModel import * 
+from .definitions import *
 
-from GenericEvent import *
+from .GenericModel import * 
 
-from GenericNetworkLayer import *
+from .GenericEvent import *
 
-from GenericLinkLayer import *
+from .GenericNetworkLayer import *
 
-from GenericApplicationLayer import *
+from .GenericLinkLayer import *
 
-from Experiment import Experiment
+from .GenericApplicationLayer import *
 
-from OSIModel import AdHocNode
+from .Experiment import Experiment
+
+from .OSIModel import AdHocNode
 
