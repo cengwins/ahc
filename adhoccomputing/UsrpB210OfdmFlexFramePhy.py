@@ -3,7 +3,7 @@ from ctypes import *
 import pickle
 from threading import Lock
 
-from adhoccomputing.Definitions import FramerObjects
+from .Definitions import FramerObjects
 # framesync_callback = ctypes.CFUNCTYPE(ctypes.c_int32, ctypes.POINTER(ctypes.c_ubyte), ctypes.c_int32, ctypes.POINTER(ctypes.c_ubyte), ctypes.c_uint32, ctypes.c_int32, struct_c__SA_framesyncstats_s, ctypes.POINTER(None))
 from .FrameHandlerBase import *
 from .Generics import *
