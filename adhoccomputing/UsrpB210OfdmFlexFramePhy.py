@@ -114,5 +114,6 @@ class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
     # Because of this reason will use userdata to get access back to the framer object 
 
     def __init__(self, componentname, componentinstancenumber):
-        super().__init__(componentname, componentinstancenumber)
+        self.framers = framers
+        super().__init__(componentname, componentinstancenumber, framers)
         

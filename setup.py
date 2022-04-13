@@ -8,7 +8,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 setup(
   # TODO: Fix the configs in this part
   name='adhoccomputing',
-  version='2.0.11',
+  version='2.0.12',
   description="Ad Hoc Computing Library",
   long_description=long_description,
   long_description_content_type="text/markdown",

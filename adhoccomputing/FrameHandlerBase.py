@@ -31,7 +31,7 @@ class UsrpB210PhyMessagePayload(GenericMessagePayload):
 
 class FrameHandlerBase(GenericModel):
 
-    def __init__(self,componentname, componentinstancenumber):
+    def __init__(self,componentname, componentinstancenumber, framers):
         super().__init__(componentname, componentinstancenumber)
 
         self.chan = 0
