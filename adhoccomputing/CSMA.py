@@ -1,5 +1,5 @@
-from ...Generics import Event
-from ...Definitions import EventTypes, ComponentConfigurationParameters
+from .Generics import Event
+from .Definitions import EventTypes, ComponentConfigurationParameters
 from .GenericMAC import GenericMac, GenericMacEventTypes
 import time, random, math
 
