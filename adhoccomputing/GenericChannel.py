@@ -86,7 +86,7 @@ class P2PFIFOPerfectChannel(GenericChannel):
 
   def __init__(self, componentname, componentinstancenumber):
       super().__init__(componentname, componentinstancenumber)
-      self.connectors = {}
+      #self.connectors = {}
   # Overwrite onSendToChannel
   # Channels are broadcast, that is why we have to check channel id's using hdr.interfaceid for P2P
   def on_message_from_top(self, eventobj: Event):

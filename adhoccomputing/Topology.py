@@ -44,7 +44,7 @@ class Topology:
     edges = list(G.edges)
     self.compute_forwarding_table()
     for i in nodes:
-      cc = nodetype(nodetype.__name__, i, self.ForwardingTable)
+      cc = nodetype(nodetype.__name__, i)#, self.ForwardingTable)
       self.nodes[i] = cc
     for k in edges:
       ch = channeltype(channeltype.__name__ + "-" + str(k[0]) + "-" + str(k[1]), str(k[0]) + "-" + str(k[1]))

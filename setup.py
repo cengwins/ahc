@@ -16,7 +16,7 @@ setup(
   author='CengWins',
   author_email='ahc@ceng.metu.edu.tr',
   license='BSD 2-clause',
-  packages=['adhoccomputing'],
+  packages=find_packages(),
   install_requires=[
     'matplotlib',
     'networkx',
