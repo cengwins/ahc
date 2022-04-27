@@ -1,9 +1,7 @@
 from random import sample
 import itertools
 import networkx as nx
-
 from ..Generics import *
-from .Definitions import *
 
 
 inf = float('inf')

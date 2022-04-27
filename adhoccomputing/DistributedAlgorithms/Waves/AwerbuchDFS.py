@@ -12,12 +12,15 @@ __version__ = "0.0.1"
 
 import random
 from enum import Enum
-from adhoccomputing.Experimentation.Topology import Topology
-from adhoccomputing.GenericModel import GenericModel, GenericMessageHeader, GenericMessagePayload, GenericMessage
-from adhoccomputing.GenericEvent import Event
-from adhoccomputing.Generics import EventTypes
+from ...Experimentation.Topology import Topology
+from ...GenericModel import GenericModel, GenericMessageHeader, GenericMessagePayload, GenericMessage
+from ...Generics import *
 
-topo = Topology()
+topo = Topology() 
+# hocam artik boyle cagirinca topology yi yeni bir class olusuyor ondan dolayi bu tur cagirmalari 
+# mainde yaparsaniz daha iyi olabilir kod anlasilabilirligi acisindan 
+# topology bilgisini kendi kurdugunuz AdHocNode classina mesela atabilirsiniz topology classini extend ederek vs. 
+# Benzer bir neighbor listesini bulmayi GenericNetworkLayer classinda implement ettim oradan bakabilirsiniz 
 
 class ApplicationLayerMessageTypes(Enum):
   DISCOVER = "DISCOVER"

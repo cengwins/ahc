@@ -2,7 +2,7 @@ import queue
 from enum import Enum
 from threading import Thread
 
-from ...GenericEvent import *
+from ...Generics import *
 from ...GenericModel import *
 
 # TODO: Channel failure models: lossy-link, fair-loss, stubborn links, perfect links (WHAT ELSE?), FIFO perfect
