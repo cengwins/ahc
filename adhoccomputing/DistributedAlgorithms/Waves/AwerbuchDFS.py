@@ -12,10 +12,10 @@ __version__ = "0.0.1"
 
 import random
 from enum import Enum
-from adhoccomputing.Topology import Topology
+from adhoccomputing.Experimentation.Topology import Topology
 from adhoccomputing.GenericModel import GenericModel, GenericMessageHeader, GenericMessagePayload, GenericMessage
 from adhoccomputing.GenericEvent import Event
-from adhoccomputing.Definitions import EventTypes
+from adhoccomputing.Generics import EventTypes
 
 topo = Topology()
 

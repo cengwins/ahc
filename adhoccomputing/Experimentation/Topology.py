@@ -2,7 +2,7 @@ from random import sample
 import itertools
 import networkx as nx
 
-from .Generics import *
+from ..Generics import *
 from .Definitions import *
 
 

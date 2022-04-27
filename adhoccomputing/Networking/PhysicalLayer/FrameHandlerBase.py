@@ -1,9 +1,8 @@
-from .GenericModel import GenericModel
+from ...GenericModel import GenericModel
 from .UhdUtils import AhcUhdUtils
 from .LiquidDspUtils import *
 from enum import Enum
-from .Generics import *
-from .Definitions import *
+from ...Generics import *
 from ctypes import *
 import pickle
 

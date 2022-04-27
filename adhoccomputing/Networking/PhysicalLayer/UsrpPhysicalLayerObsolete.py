@@ -1,13 +1,15 @@
 import sys
-sys.path.append('/usr/local/lib')
-from Ahc import Event, EventTypes,GenericMessage, GenericMessageHeader,ComponentModel
+from ...Generics import Event, EventTypes,GenericMessage, GenericMessageHeader
+from ...GenericModel import GenericModel
 from enum import Enum
 import liquid_usrp_pybind11_wrapper as wrapper
+
+sys.path.append('/usr/local/lib')
 
 class PhyUsrpB210OFDMPhysicalLayerEventTypes(Enum):
   RECV = "recv"
 
-class PhyUsrpB210OFDMPhysicalLayer(ComponentModel):
+class PhyUsrpB210OFDMPhysicalLayer(GenericModel):
   device1 = "winslab_b210_"
   txcvr = None
   ms = wrapper.LIQUID_MODEM_QPSK

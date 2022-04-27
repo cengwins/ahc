@@ -1,12 +1,10 @@
-# from Channels import P2PFIFOPerfectChannel
-from .Definitions import *
-from .Generics import *
-from .GenericModel import *
-from .GenericApplicationLayer import *
-from .GenericLinkLayer import *
-from .GenericNetworkLayer import *
-from .GenericTransportLayer import *
-from .GenericChannel import GenericChannel
+from ..Generics import *
+from ..GenericModel import *
+from .ApplicationLayer.GenericApplicationLayer import *
+from .LinkLayer.GenericLinkLayer import *
+from .NetworkLayer.GenericNetworkLayer import *
+from .TransportLayer.GenericTransportLayer import *
+from .LogicalChannels.GenericChannel import GenericChannel
 
 class AHCChannelError(Exception):
   pass

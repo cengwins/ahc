@@ -1,9 +1,8 @@
 import random
 import time
 
-from .Generics import *
-from .GenericModel import GenericModel
-from .Definitions import *
+from ...Generics import *
+from ...GenericModel import GenericModel
 
 # define your own message types
 class ApplicationLayerMessageTypes(Enum):

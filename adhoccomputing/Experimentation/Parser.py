@@ -1,4 +1,4 @@
-import yaml as y
+# import yaml as y
 
 class TopoType:
   name = ""
@@ -30,14 +30,14 @@ class AhcObject:
   def __init__(self) -> None:
       pass
 
-  def parse_data(self, inp): 
-    data = y.load(inp)
+  # def parse_data(self, inp): 
+  #   data = y.load(inp)
 
-    try:
-      for topo in data.topologies:
-        self.topologies.append(TopoType(topo.name, topo.nodes, topo.links))
+    # try:
+    #   for topo in data.topologies:
+    #     self.topologies.append(TopoType(topo.name, topo.nodes, topo.links))
       
-      for exp in data.experiment:
-        self.experiments.append(ExperimentType(exp.name, exp.topology, exp.sampling_count, exp.include_usrp))
-    except AttributeError:
-      print('Yaml file contains missing attributes')
+    #   for exp in data.experiment:
+    #     self.experiments.append(ExperimentType(exp.name, exp.topology, exp.sampling_count, exp.include_usrp))
+    # except AttributeError:
+    #   print('Yaml file contains missing attributes')

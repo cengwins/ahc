@@ -2,8 +2,7 @@ import queue
 from threading import Thread
 from timeit import default_timer as timer
 
-from .Topology import *
-from .Definitions import *
+from .Experimentation.Topology import *
 from .Generics import *
 
 class GenericModel:

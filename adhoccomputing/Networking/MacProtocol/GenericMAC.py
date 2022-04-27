@@ -1,6 +1,5 @@
-from .GenericModel import GenericModel 
-from .Generics import Event
-from .Definitions import EventTypes
+from ...GenericModel import GenericModel 
+from ...Generics import Event, EventTypes
 from enum import Enum
 import queue
 

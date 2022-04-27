@@ -1,5 +1,4 @@
-from .Generics import Event
-from .Definitions import EventTypes
+from ...Generics import Event, EventTypes
 from .GenericMAC import GenericMac, GenericMacEventTypes
 import time, random, math
 

@@ -3,9 +3,9 @@ import time
 from enum import Enum
 
 from adhoccomputing.Definitions import MessageDestinationIdentifiers
-from .Generics import *
-from .GenericEvent import *
-from .GenericModel import GenericModel
+from ...Generics import *
+from ...GenericEvent import *
+from ...GenericModel import GenericModel
 
 class BroadcastingEventTypes(Enum):
   BROADCAST = "broadcast"
