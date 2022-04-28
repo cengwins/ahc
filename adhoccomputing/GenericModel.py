@@ -49,7 +49,7 @@ class GenericModel:
     def initiate_process(self):
         for c in self.components:
             c.inputqueue.put_nowait(Event(self, EventTypes.INIT, None))
-
+        self.inputqueue.put_nowait(Event(self, EventTypes.INIT, None))
 
     def send_down(self, event: Event):
         try:
@@ -88,14 +88,15 @@ class GenericModel:
 
 
     def on_init(self, eventobj: Event):
-        if self.componentinstancenumber == 0:
-            message_header = GenericMessageHeader("INITIATE  -> ", +str(self.componentname),
-                                                  "Component-" + str(self.componentinstancenumber))
-            message = GenericMessage(message_header, "")
-            kickstarter = Event(self, EventTypes.MFRT, message)
-            self.send_down(kickstarter)
-            print(f"{self.componentname} - {self.componentinstancenumber} sends an INITIATE to Coordinator")
-            self.start_time = timer()
+#        if self.componentinstancenumber == 0:
+#            message_header = GenericMessageHeader("INITIATE  -> ", +str(self.componentname),
+#                                                  "Component-" + str(self.componentinstancenumber))
+#            message = GenericMessage(message_header, "")
+#            kickstarter = Event(self, EventTypes.MFRT, message)
+#            self.send_down(kickstarter)
+#            print(f"{self.componentname} - {self.componentinstancenumber} sends an INITIATE to Coordinator")
+#            self.start_time = timer()
+        pass
 
     def queue_handler(self, myqueue):
         while not self.terminated:

@@ -88,6 +88,7 @@ class DfsTraverse(GenericModel):
   def start_traverse(self):
     token = self.create_token()
     self.send_self(Event(self, EventTypes.MFRB, self.prepare_message(DfsMessageTypes.START, self.componentinstancenumber, token, [])))
+    print("start_traverse")
 
   def create_token(self):
     return str(uuid.uuid4())
