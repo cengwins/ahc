@@ -9,6 +9,9 @@ class Topology:
   nodes = {}
   channels = {}
 
+  def __init__(self, name=None) -> None:
+#      print("Constructing topology", name)
+    pass
 
   def construct_winslab_topology_with_channels(self, nodecount, nodetype, channeltype, context=None):
 
@@ -32,7 +35,7 @@ class Topology:
 
     nodes = list(self.G.nodes)
     for i in nodes:
-      cc = nodetype(nodetype.__name__, i)
+      cc = nodetype(nodetype.__name__, i,topology=self)
       self.nodes[i] = cc
 
 
@@ -42,7 +45,8 @@ class Topology:
     edges = list(G.edges)
     self.compute_forwarding_table()
     for i in nodes:
-      cc = nodetype(nodetype.__name__, i)#, self.ForwardingTable)
+      cc = nodetype(nodetype.__name__, i,topology=self)#, self.ForwardingTable)
+      #print("I am topology:", self)
       self.nodes[i] = cc
     for k in edges:
       ch = channeltype(channeltype.__name__ + "-" + str(k[0]) + "-" + str(k[1]), str(k[0]) + "-" + str(k[1]))
@@ -51,14 +55,14 @@ class Topology:
       self.nodes[k[1]].connect_me_to_channel(ConnectorTypes.DOWN, ch)
 
   def construct_single_node(self, nodetype, instancenumber):
-    self.singlenode = nodetype(nodetype.__name__, instancenumber)
+    self.singlenode = nodetype(nodetype.__name__, instancenumber,topology=self)
     self.G = nx.Graph()
     self.G.add_nodes_from([0])
     self.nodes[0] = self.singlenode
 
   def construct_sender_receiver(self, sendertype, receivertype, channeltype):
-    self.sender = sendertype(sendertype.__name__, 0)
-    self.receiver = receivertype(receivertype.__name__, 1)
+    self.sender = sendertype(sendertype.__name__, 0,topology=self)
+    self.receiver = receivertype(receivertype.__name__, 1,topology=self)
     ch = channeltype(channeltype.__name__, "0-1")
     self.G = nx.Graph()
     self.G.add_nodes_from([0, 1])
@@ -118,6 +122,11 @@ class Topology:
       return fromId
 
   # Returns the list of neighbors of a node
+
+
+  # Returns the list of neighbors of a node
+  def get_neighbors(self, nodeId):
+    return sorted([neighbor for neighbor in self.G.neighbors(nodeId)])
 
 
   def get_predecessors(self, nodeId):

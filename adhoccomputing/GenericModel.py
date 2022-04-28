@@ -7,7 +7,9 @@ from .Generics import *
 
 class GenericModel:
 
-    def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1):
+    def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None):
+        self.topology = topology
+        #print("Topology", topology)
         self.context = context
         self.configurationparameters = configurationparameters
         self.eventhandlers = {EventTypes.INIT: self.on_init, EventTypes.MFRB: self.on_message_from_bottom,

@@ -10,8 +10,10 @@ class GenericMacEventTypes(Enum):
 
 class GenericMac(GenericModel):
 
-    def __init__(self, componentname, componentinstancenumber, uhd):
-        super().__init__(componentname, componentinstancenumber)
+    def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None, uhd=None):
+        super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology)
+#    def __init__(self, componentname, componentinstancenumber, uhd=uhd):
+#        super().__init__(componentname, componentinstancenumber)
         self.framequeue = queue.Queue()
         self.ahcuhd = uhd
         print("I am Generic MAC my uhd instance id is ", self.ahcuhd.componentinstancenumber)

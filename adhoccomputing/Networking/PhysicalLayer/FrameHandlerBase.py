@@ -30,8 +30,11 @@ class UsrpB210PhyMessagePayload(GenericMessagePayload):
 
 class FrameHandlerBase(GenericModel):
 
-    def __init__(self,componentname, componentinstancenumber, framers):
-        super().__init__(componentname, componentinstancenumber)
+    def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None, framers=None):
+        super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology)
+
+#    def __init__(self,componentname, componentinstancenumber, framers):
+#        super().__init__(componentname, componentinstancenumber)
 
         self.chan = 0
         self.bandwidth = 250000

@@ -17,9 +17,9 @@ class NetworkLayerMessagePayload(GenericMessagePayload):
 
 class GenericNetworkLayer(GenericModel):
 
-  def __init__(self, componentname, componentinstancenumber, fw_table = {}, context=None, configurationparameters=None, num_worker_threads=1):
-    self.fw_table = fw_table
-    super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads)
+  def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None):
+    super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology)
+    self.fw_table = dict(nx.all_pairs_shortest_path(topology.G))
 
   def on_message_from_top(self, eventobj: Event):
     # Encapsulate the SDU in network layer PDU

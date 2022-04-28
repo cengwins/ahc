@@ -65,8 +65,8 @@ class GenericChannel(GenericModel):
                           eventid=eventobj.eventid)
           callee.trigger_event(myevent)
 
-  def __init__(self, componentname, componentinstancenumber):
-    super().__init__(componentname, componentinstancenumber)
+  def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None):
+    super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology)
     self.outputqueue = queue.Queue()
     self.channelqueue = queue.Queue()
     self.eventhandlers[ChannelEventTypes.INCH] = self.on_process_in_channel
