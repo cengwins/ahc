@@ -6,6 +6,7 @@ from .Experimentation.Topology import *
 from .Generics import *
 
 class GenericModel:
+    components  = []
 
     def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None):
         self.topology = topology
@@ -44,6 +45,10 @@ class GenericModel:
         # self.registry = ComponentRegistry()
         # self.registry.add_component(self)
 
+
+    def initiate_process(self):
+        for c in self.components:
+            c.inputqueue.put_nowait(Event(self, EventTypes.INIT, None))
 
 
     def send_down(self, event: Event):

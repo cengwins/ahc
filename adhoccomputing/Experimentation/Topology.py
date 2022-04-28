@@ -2,7 +2,7 @@ from random import sample
 import itertools
 import networkx as nx
 from ..Generics import *
-
+from ..GenericModel import GenericModel
 
 inf = float('inf')
 class Topology:
@@ -121,8 +121,10 @@ class Topology:
     except IndexError:
       return fromId
 
-  # Returns the list of neighbors of a node
-
+  def initiate_process(self):
+    for i in self.G.nodes:
+      node = self.nodes[i]
+      node.initiate_process()
 
   # Returns the list of neighbors of a node
   def get_neighbors(self, nodeId):

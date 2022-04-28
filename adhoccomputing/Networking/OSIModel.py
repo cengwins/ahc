@@ -20,11 +20,11 @@ class AdHocNode(GenericModel):
   def on_message_from_bottom(self, eventobj: Event):
     self.send_up(Event(self, EventTypes.MFRB, eventobj.eventcontent))
 
-  def __init__(self, componentname, componentid, fw_table):
-    super().__init__(componentname, componentid)
+  def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None):
+    super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology)
 
     self.appllayer = GenericApplicationLayer("ApplicationLayer", self.componentinstancenumber)
-    self.netlayer = GenericNetworkLayer("NetworkLayer", self.componentinstancenumber, fw_table)
+    self.netlayer = GenericNetworkLayer("NetworkLayer", self.componentinstancenumber)
     self.linklayer = GenericLinkLayer("LinkLayer", self.componentinstancenumber)
     self.transportlayer = GenericTransportLayer("TransportLayer", self.componentinstancenumber)
 
@@ -36,6 +36,10 @@ class AdHocNode(GenericModel):
     self.linklayer.connect_me_to_component(ConnectorTypes.UP, self.netlayer)
     self.netlayer.connect_me_to_component(ConnectorTypes.UP, self.transportlayer)
     self.transportlayer.connect_me_to_component(ConnectorTypes.UP, self.appllayer)
+    self.components.append(self.appllayer)
+    self.components.append(self.netlayer)
+    self.components.append(self.linklayer)
+    self.components.append(self.transportlayer)
     self.connect_me_to_component(ConnectorTypes.UP, self.linklayer)
 
 
