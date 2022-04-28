@@ -53,6 +53,7 @@ class Topology:
       self.channels[k] = ch
       self.nodes[k[0]].connect_me_to_channel(ConnectorTypes.DOWN, ch)
       self.nodes[k[1]].connect_me_to_channel(ConnectorTypes.DOWN, ch)
+      #print("Channel", ch.componentname)
 
   def construct_single_node(self, nodetype, instancenumber):
     self.singlenode = nodetype(nodetype.__name__, instancenumber,topology=self)
@@ -88,6 +89,9 @@ class Topology:
     for i in self.G.nodes:
       node = self.nodes[i]
       node.initiate_process()
+    for i in self.channels:
+      ch = self.channels[i]
+      ch.initiate_process()
 
     # self.nodecolors = ['b'] * N
     # self.lock = Lock()

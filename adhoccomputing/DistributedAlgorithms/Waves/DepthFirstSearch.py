@@ -38,7 +38,7 @@ class DfsTraverse(GenericModel):
     msg = eventobj.eventcontent
     hdr = msg.header
     message_source = hdr.messagefrom
-
+    #print("OnMessageFromBottom", hdr)
     payload:List[Any] = msg.payload.messagepayload
 
     if hdr.messagetype == DfsMessageTypes.FORWARD or hdr.messagetype == DfsMessageTypes.START:

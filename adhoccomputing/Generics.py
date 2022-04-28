@@ -78,3 +78,15 @@ class FramerObjects():
 
   def get_ahcuhd_by_id(self, id):
     return self.ahcuhdubjects[id]
+
+
+
+# A Dictionary that holds a list for the same key
+class ConnectorList(dict):
+
+  def __setitem__(self, key, value):
+    try:
+      self[key]
+    except KeyError:
+      super(ConnectorList, self).__setitem__(key, [])
+    self[key].append(value)

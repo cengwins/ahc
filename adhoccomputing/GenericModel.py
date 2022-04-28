@@ -21,7 +21,7 @@ class GenericModel:
         self.componentname = componentname
         self.componentinstancenumber = componentinstancenumber
         self.num_worker_threads = num_worker_threads
-        self.connectors = {}
+        #self.connectors = {}
         self.terminated = False
 
         for i in range(self.num_worker_threads):
@@ -33,7 +33,7 @@ class GenericModel:
             if self.connectors:
                 pass
         except AttributeError:
-            self.connectors = {}
+            self.connectors = ConnectorList()
             # self.connectors = ConnectorList()
 
         #TODO: Handle This Part
@@ -51,31 +51,38 @@ class GenericModel:
             c.inputqueue.put_nowait(Event(self, EventTypes.INIT, None))
         self.inputqueue.put_nowait(Event(self, EventTypes.INIT, None))
 
+
     def send_down(self, event: Event):
         try:
-            self.connectors[ConnectorTypes.DOWN].on_message_from_top(event)
-
+            for p in self.connectors[ConnectorTypes.DOWN]:
+                p.trigger_event(event)
+                #self.connectors[ConnectorTypes.DOWN].on_message_from_top(event)
         except Exception as e:
             raise(f"Cannot send message to Down Connector {self.componentname } -- {self.componentinstancenumber}")
 
 
     def send_up(self, event: Event):
         try:
-            self.connectors[ConnectorTypes.UP].eventhandlers[EventTypes.MFRB](event)
-            # for p in self.connectors[ConnectorTypes.UP]:
-            #     p.trigger_event(event)
-        except:
-            pass
+            #self.connectors[ConnectorTypes.UP].eventhandlers[EventTypes.MFRB](event)
+            for p in self.connectors[ConnectorTypes.UP]:
+                p.trigger_event(event)
+        except Exception as e:
+            raise(f"Cannot send message to UP Connector {self.componentname } -- {self.componentinstancenumber}")
 
     def send_peer(self, event: Event):
         try:
             for p in self.connectors[ConnectorTypes.PEER]:
                 p.trigger_event(event)
-        except:
-            pass
+        except Exception as e:
+            raise(f"Cannot send message to UP Connector {self.componentname } -- {self.componentinstancenumber}")
 
     def connect_me_to_component(self, name, component):
-        self.connectors[name] = component
+        #self.connectors[name] = component
+        try:
+            self.connectors[name] = component
+        except AttributeError:
+            self.connectors = ConnectorList()
+            self.connectors[name] = component
 
     def on_message_from_bottom(self, eventobj: Event):
         print(f"{EventTypes.MFRB} {self.componentname}.{self.componentinstancenumber}")
@@ -96,11 +103,13 @@ class GenericModel:
 #            self.send_down(kickstarter)
 #            print(f"{self.componentname} - {self.componentinstancenumber} sends an INITIATE to Coordinator")
 #            self.start_time = timer()
+        #print("ONINIT:", self.componentname)
         pass
 
     def queue_handler(self, myqueue):
         while not self.terminated:
             workitem = myqueue.get()
+            #print(self.componentname, self.componentinstancenumber, ": will process", workitem.event)
             if workitem.event in self.eventhandlers:
                 self.on_pre_event(workitem)
                 self.eventhandlers[workitem.event](eventobj=workitem)  # call the handler
@@ -109,15 +118,18 @@ class GenericModel:
             myqueue.task_done()
 
     def connect_me_to_channel(self, name, channel):
-
         try:
             self.connectors[name] = channel
         except AttributeError:
-            # self.connectors = ConnectorList()
+            self.connectors = ConnectorList()
             self.connectors[name] = channel
+        connectornameforchannel = self.componentname + str(self.componentinstancenumber)
+        channel.connect_me_to_component(connectornameforchannel, self)
+        self.on_connected_to_channel(name, channel)
 
     def on_connected_to_channel(self, name, channel):
-        print(f"Connected channel-{name} by component-{self.componentinstancenumber}:{channel.componentinstancenumber}")
+        #print(f"Connected channel-{name} by component-{self.componentinstancenumber}:{channel.componentinstancenumber}")
+        pass
 
     def trigger_event(self, eventobj: Event):
         self.inputqueue.put_nowait(eventobj)
