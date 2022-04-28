@@ -85,6 +85,10 @@ class Topology:
   def start(self):
     N = len(self.G.nodes)
     self.compute_forwarding_table()
+    for i in self.G.nodes:
+      node = self.nodes[i]
+      node.initiate_process()
+
     # self.nodecolors = ['b'] * N
     # self.lock = Lock()
 
@@ -120,12 +124,7 @@ class Topology:
       return inf
     except IndexError:
       return fromId
-
-  def initiate_process(self):
-    for i in self.G.nodes:
-      node = self.nodes[i]
-      node.initiate_process()
-
+  
   # Returns the list of neighbors of a node
   def get_neighbors(self, nodeId):
     return sorted([neighbor for neighbor in self.G.neighbors(nodeId)])
