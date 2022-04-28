@@ -2,6 +2,7 @@
 import time
 
 
+from ...Experimentation.Topology import Topology
 from ...GenericModel import GenericModel, GenericMessageHeader, GenericMessagePayload, GenericMessage
 from ...Generics import *
 

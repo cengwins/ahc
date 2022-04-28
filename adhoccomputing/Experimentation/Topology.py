@@ -69,7 +69,7 @@ class Topology:
     self.G.add_nodes_from([0, 1])
     self.G.add_edges_from([(0, 1)])
     self.nodes[self.sender.componentinstancenumber] = self.sender
-    self.nodes[self.sender.componentinstancenumber] = self.receiver
+    self.nodes[self.receiver.componentinstancenumber] = self.receiver
     self.channels[ch.componentinstancenumber] = ch
     self.sender.connect_me_to_channel(ConnectorTypes.DOWN, ch)
     self.receiver.connect_me_to_channel(ConnectorTypes.DOWN, ch)
