@@ -94,9 +94,7 @@ class P2PFIFOPerfectChannel(GenericChannel):
 
   def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None):
     super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology)
-  #def __init__(self, componentname, componentinstancenumber):
-  #    super().__init__(componentname, componentinstancenumber)
-      #self.connectors = {}
+
 
   # Overwrite onSendToChannel
   # Channels are broadcast, that is why we have to check channel id's using hdr.interfaceid for P2P
@@ -105,7 +103,7 @@ class P2PFIFOPerfectChannel(GenericChannel):
     hdr = eventobj.eventcontent.header
     if hdr.nexthop != MessageDestinationIdentifiers.LINKLAYERBROADCAST:
       if set(hdr.interfaceid.split("-")) == set(self.componentinstancenumber.split("-")):
-        print(f"Will forward message since {hdr.interfaceid} and {self.componentinstancenumber}")
+        #print(f"Will forward message since {hdr.interfaceid} and {self.componentinstancenumber}")
         myevent = Event(eventobj.eventsource, ChannelEventTypes.INCH, eventobj.eventcontent)
         self.channelqueue.put_nowait(myevent)
       else:
@@ -119,7 +117,7 @@ class P2PFIFOPerfectChannel(GenericChannel):
       callee = self.connectors[connector]
       callee_id = callee.componentinstancenumber
       # return
-      print(f"I am connected to {callee}. Will check if I have to distribute it to {callee_id}")
+      #print(f"I am connected to {callee}. Will check if I have to distribute it to {callee_id}")
       if callee_id == caller_id:
         pass
       else:
