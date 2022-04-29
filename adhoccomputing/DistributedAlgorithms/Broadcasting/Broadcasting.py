@@ -39,17 +39,11 @@ class ControlledFlooding(GenericModel):
     self.send_down(Event(self, EventTypes.MFRT, broadcastmessage))
     self.broadcastdb.append(broadcastmessage.uniqueid)
 
-  def update_topology(self):
-    Topology().nodecolors[self.componentinstancenumber] = 'r'
-    Topology().plot()
-
   def on_broadcast(self, eventobj: Event):
-    self.update_topology()
     self.uniquebroadcastidentifier = self.uniquebroadcastidentifier + 1
     self.senddownbroadcast(eventobj, self.componentinstancenumber, self.uniquebroadcastidentifier)
 
   def on_message_from_top(self, eventobj: Event):
-    self.update_topology()
     evt = Event(self, BroadcastingEventTypes.BROADCAST, eventobj.eventcontent)
     self.send_self(evt)
 
@@ -63,14 +57,13 @@ class ControlledFlooding(GenericModel):
           pass  # we have already handled this flooded message
         else:
           # Send to higher layers
-          self.update_topology()
           self.send_up(Event(self, EventTypes.MFRB, payload))
           # Also continue flooding once
           time.sleep(random.randint(1, 3))
           self.senddownbroadcast(eventobj, eventobj.eventcontent.header.messagefrom,
                                  eventobj.eventcontent.header.sequencenumber)
 
-  def __init__(self, componentname, componentinstancenumber):
-    super().__init__(componentname, componentinstancenumber)
+  def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None):
+    super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology)
     self.eventhandlers[BroadcastingEventTypes.BROADCAST] = self.on_broadcast
     # add events here

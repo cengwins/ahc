@@ -58,7 +58,8 @@ class GenericModel:
                 p.trigger_event(event)
                 #self.connectors[ConnectorTypes.DOWN].on_message_from_top(event)
         except Exception as e:
-            raise(f"Cannot send message to Down Connector {self.componentname } -- {self.componentinstancenumber}")
+            #raise(f"Cannot send message to Down Connector {self.componentname } -- {self.componentinstancenumber}")
+            pass
 
 
     def send_up(self, event: Event):
@@ -67,14 +68,16 @@ class GenericModel:
             for p in self.connectors[ConnectorTypes.UP]:
                 p.trigger_event(event)
         except Exception as e:
-            raise(f"Cannot send message to UP Connector {self.componentname } -- {self.componentinstancenumber}")
+            pass
+            #raise(f"Cannot send message to UP Connector {self.componentname } -- {self.componentinstancenumber}")
 
     def send_peer(self, event: Event):
         try:
             for p in self.connectors[ConnectorTypes.PEER]:
                 p.trigger_event(event)
         except Exception as e:
-            raise(f"Cannot send message to UP Connector {self.componentname } -- {self.componentinstancenumber}")
+            pass
+            #raise(f"Cannot send message to UP Connector {self.componentname } -- {self.componentinstancenumber}")
 
     def connect_me_to_component(self, name, component):
         #self.connectors[name] = component
