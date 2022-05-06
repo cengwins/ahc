@@ -8,6 +8,7 @@ inf = float('inf')
 class Topology:
   nodes = {}
   channels = {}
+  G = None
 
   def __init__(self, name=None) -> None:
 #      print("Constructing topology", name)

@@ -35,8 +35,6 @@ class NodeMark(Enum):
   father = "father"
   son = "son"
 
-topo = Topology()
-
 # define your own message header structure
 class ApplicationLayerMessageHeader(GenericMessageHeader):
   pass
@@ -51,7 +49,7 @@ class ApplicationLayerComponent_Cidon(GenericModel):
 
   def on_init(self, eventobj: Event):
     print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
-    self.NeighbourList = topo.get_neighbors(self.componentinstancenumber)
+    self.NeighbourList = self.topology.get_neighbors(self.componentinstancenumber)
     self.state = NodeState.IDLE
     self.mark = {}
     for i in self.NeighbourList:
@@ -160,10 +158,11 @@ class ApplicationLayerComponent_Cidon(GenericModel):
           print(f"I am Node-{self.componentinstancenumber} local number messages sent is {self.numMesg}")
           return
 
-  def __init__(self, componentname, componentinstancenumber):
+  def __init__(self, componentname, componentinstancenumber, topology=None):
     super().__init__(componentname, componentinstancenumber)
     self.eventhandlers["start"] = self.on_start
     self.eventhandlers["token"] = self.on_token
     self.eventhandlers["visited"] = self.on_visited
+    self.topology = topology
 
 
