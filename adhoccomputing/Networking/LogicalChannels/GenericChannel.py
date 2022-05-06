@@ -115,14 +115,15 @@ class P2PFIFOPerfectChannel(GenericChannel):
     caller_id = eventobj.eventsource.componentinstancenumber
     for connector in self.connectors:
       callee = self.connectors[connector]
-      callee_id = callee.componentinstancenumber
-      # return
-      #print(f"I am connected to {callee}. Will check if I have to distribute it to {callee_id}")
-      if callee_id == caller_id:
-        pass
-      else:
-        myevent = Event(eventobj.eventsource, EventTypes.MFRB, eventobj.eventcontent, self.componentinstancenumber)
-        callee.trigger_event(myevent)
+      for caller in callee:
+        callee_id = caller.componentinstancenumber
+        # return
+        #print(f"I am connected to {callee}. Will check if I have to distribute it to {callee_id}")
+        if callee_id == caller_id:
+          pass
+        else:
+          myevent = Event(eventobj.eventsource, EventTypes.MFRB, eventobj.eventcontent, self.componentinstancenumber)
+          caller.trigger_event(myevent)
 
   def connect_me_to_component(self, name, component):
     try:

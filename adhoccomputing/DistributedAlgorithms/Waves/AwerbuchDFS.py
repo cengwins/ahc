@@ -16,7 +16,6 @@ from ...Experimentation.Topology import Topology
 from ...GenericModel import GenericModel, GenericMessageHeader, GenericMessagePayload, GenericMessage
 from ...Generics import *
 
-topo = Topology() 
 # hocam artik boyle cagirinca topology yi yeni bir class olusuyor ondan dolayi bu tur cagirmalari 
 # mainde yaparsaniz daha iyi olabilir kod anlasilabilirligi acisindan 
 # topology bilgisini kendi kurdugunuz AdHocNode classina mesela atabilirsiniz topology classini extend ederek vs. 
@@ -39,7 +38,7 @@ class ApplicationLayerMessagePayload(GenericMessagePayload):
 class WaveAwerbuchComponent(GenericModel):
   def on_init(self, eventobj: Event):
     print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
-    neighbour_list = topo.get_neighbors(self.componentinstancenumber)
+    neighbour_list = self.topology.get_neighbors(self.componentinstancenumber)
     self.NeighbourList = neighbour_list
     self.Unvisited = neighbour_list.copy()
     self.father = self.componentinstancenumber
@@ -158,12 +157,13 @@ class WaveAwerbuchComponent(GenericModel):
 
 
 
-  def __init__(self, componentname, componentinstancenumber):
+  def __init__(self, componentname, componentinstancenumber, topology):
     super().__init__(componentname, componentinstancenumber)
     self.eventhandlers["discover"] = self.on_discover
     self.eventhandlers["return"] = self.on_return
     self.eventhandlers["visited"] = self.on_visited
     self.eventhandlers["ack"] = self.on_ack
+    self.topology = topology
 
 
 
