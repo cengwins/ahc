@@ -11,6 +11,7 @@ from threading import Thread, Lock
 import numpy as np
 import inspect
 
+from ...Generics import UsrpConfiguration
 
 class AhcUhdUtils:
     INIT_DELAY = 0.05  # 50mS initial delay before transmit
@@ -34,18 +35,20 @@ class AhcUhdUtils:
     def on_init(self):
         pass
     
-    def configureUsrp(self, devicename, type="b200", freq =2162000000.0, bandwidth = 1000000, chan = 0, hw_tx_gain = 50.0, hw_rx_gain = 20.0):
+    defaultusrpconfig = UsrpConfiguration(freq =2162000000.0, bandwidth = 1000000, chan = 0, hw_tx_gain = 50.0, hw_rx_gain = 20.0, sw_tx_gain=-12.0)
+
+    def configureUsrp(self, devicename, type="b200", usrpconfig=defaultusrpconfig):
             
         self.devicename = devicename
-        self.freq = freq
-        self.bandwidth = bandwidth
-        self.chan = chan
-        self.hw_tx_gain = hw_tx_gain
-        self.hw_rx_gain = hw_rx_gain
+        self.freq = usrpconfig.freq
+        self.bandwidth = usrpconfig.bandwidth
+        self.chan = usrpconfig.chan
+        self.hw_tx_gain = usrpconfig.hw_tx_gain
+        self.hw_rx_gain = usrpconfig.hw_rx_gain
         self.tx_rate= self.bandwidth
         self.rx_rate= self.bandwidth
-        print(f"Configuring type={type},devicename={devicename}, freq={freq}, bandwidth={bandwidth}, channel={chan}, hw_tx_gain={hw_tx_gain}, hw_rx_gain={hw_rx_gain}")
-        self.usrp = uhd.usrp.MultiUSRP(f"name={devicename}")
+        print(f"Configuring type={type},devicename={self.devicename}, freq={self.freq}, bandwidth={self.bandwidth}, channel={self.chan}, hw_tx_gain={self.hw_tx_gain}, hw_rx_gain={self.hw_rx_gain}")
+        self.usrp = uhd.usrp.MultiUSRP(f"name={self.devicename}")
         
         self.usrp.set_rx_bandwidth(self.bandwidth, self.chan)
         self.usrp.set_tx_bandwidth(self.bandwidth, self.chan)

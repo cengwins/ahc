@@ -90,3 +90,13 @@ class ConnectorList(dict):
     except KeyError:
       super(ConnectorList, self).__setitem__(key, [])
     self[key].append(value)
+
+
+class UsrpConfiguration():
+  def __init__(self, freq =2162000000.0, bandwidth = 250000, chan = 0, hw_tx_gain = 50.0, hw_rx_gain = 20.0, sw_tx_gain=-12.0):
+      self.freq= freq
+      self.bandwidth = bandwidth
+      self.chan=chan
+      self.hw_tx_gain=hw_tx_gain
+      self.hw_rx_gain=hw_rx_gain
+      self.sw_tx_gain=sw_tx_gain

@@ -30,24 +30,12 @@ class UsrpB210PhyMessagePayload(GenericMessagePayload):
 
 class FrameHandlerBase(GenericModel):
 
-    def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None, framers=None):
+    def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, usrpconfig=None, num_worker_threads=1, topology=None, framers=None):
         super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology)
-
-#    def __init__(self,componentname, componentinstancenumber, framers):
-#        super().__init__(componentname, componentinstancenumber)
-
-        self.chan = 0
-        self.bandwidth = 250000
-        self.freq = 2462000000.0
-        self.lo_offset = 0
-        self.rate = self.bandwidth
-        self.hw_tx_gain = 70.0  # hardware tx antenna gain
-        self.hw_rx_gain = 20.0  # hardware rx antenna gain
-        self.sw_tx_gain = -12.0  # software gain
-        self.duration = 1
+        self.usrpconfig = usrpconfig # should be UsrpConfiguration
         self.ahcuhd = AhcUhdUtils(self.componentinstancenumber)
         framers.add_framer(id(self), self)
-        self.ahcuhd.configureUsrp("winslab_b210_" + str(self.componentinstancenumber))
+        self.ahcuhd.configureUsrp("winslab_b210_" + str(self.componentinstancenumber),usrpconfig=self.usrpconfig)
         print("Configuring", "winslab_b210_" + str(self.componentinstancenumber))
         self.configure()
         self.eventhandlers[UsrpB210PhyEventTypes.RECV] = self.on_recv
