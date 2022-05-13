@@ -66,8 +66,23 @@ class AhcUhdUtils:
         self.usrp.set_tx_gain(self.hw_tx_gain, self.chan)
 
         #self.usrp.set_rx_agc(True, self.chan)
+        print("------- USRP(", self.devicename, ") CONFIG --------------------")
+        print("------> CHANNEL= ", self.chan)
+        print("------> RX-BANDWIDTH= ", self.usrp.get_rx_bandwidth(self.chan))
+        print("------> TX-BANDWIDTH= ", self.usrp.get_tx_bandwidth(self.chan))
+        print("------> RX-FREQ= ", self.usrp.get_rx_freq(self.chan))
+        print("------> TX-FREQ= ", self.usrp.get_tx_freq(self.chan))
+        print("------> RX-RATE= ", self.usrp.get_rx_rate(self.chan))
+        print("------> TX-RATE= ", self.usrp.get_tx_rate(self.chan))
+        print("------> RX-GAIN-NAMES= ", self.usrp.get_rx_gain_names(self.chan))
+        print("------> TX-GAIN-NAMES= ", self.usrp.get_tx_gain_names(self.chan))
+        print("------> RX-GAIN= ", self.usrp.get_rx_gain(self.chan))
+        print("------> TX-GAIN= ", self.usrp.get_tx_gain(self.chan))
+        print("------> USRP-INFO= ", self.usrp.get_pp_string())
+        #print("------> POWER-RANGE= ", self.usrp.get_rx_power_range())
         
 
+    
         stream_args = uhd.usrp.StreamArgs('fc32', 'sc16')
         stream_args.channels = [self.chan]
         
