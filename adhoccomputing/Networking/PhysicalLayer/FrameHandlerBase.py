@@ -1,5 +1,7 @@
 from ...GenericModel import GenericModel
-from .UhdUtils import AhcUhdUtils, SDRUtils, BladeRFUtils
+from .UhdUtils import AhcUhdUtils
+from .SDRUtils import SDRUtils
+from .BladeRFUtils import BladeRFUtils
 from .LiquidDspUtils import *
 from enum import Enum
 from ...Generics import *
