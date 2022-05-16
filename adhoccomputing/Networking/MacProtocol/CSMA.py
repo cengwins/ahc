@@ -32,7 +32,7 @@ class MacCsmaPPersistent(GenericMac):
             #print("handle_frame", "queue not empty")
             randval = random.random()
             if randval < self.p: # TODO: Check if correct
-                clearmi, powerdb  = self.ahcuhd.ischannelclear(threshold=-35)
+                clearmi, powerdb  = self.sdrdev.ischannelclear(threshold=-35)
                 #print("Component:", self.componentinstancenumber, "clear mi=", clearmi, " Power=", powerdb)
                 if  clearmi == True:
                     try:

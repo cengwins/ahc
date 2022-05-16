@@ -40,7 +40,7 @@ def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_uint32, payload:POINTE
 
 
   
-class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
+class BladeRFOfdmFlexFramePhy(FrameHandlerBase):
     
     def on_init(self, eventobj: Event):
         #print("initialize LiquidDspOfdmFlexFrameHandler")

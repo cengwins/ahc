@@ -66,18 +66,18 @@ class Event:
 
 class FramerObjects():
   framerobjects = {}
-  ahcuhdubjects = {}
+  sdrobjects = {}
   def add_framer(self, id, obj):
     self.framerobjects[id] = obj
 
   def get_framer_by_id(self, id):
     return self.framerobjects[id]
 
-  def add_ahcuhd(self, id, obj):
-    self.ahcuhdubjects[id] = obj
+  def add_sdrdev(self, id, obj):
+    self.sdrobjects[id] = obj
 
-  def get_ahcuhd_by_id(self, id):
-    return self.ahcuhdubjects[id]
+  def get_sdrdev_by_id(self, id):
+    return self.sdrobjects[id]
 
 
 
@@ -92,7 +92,7 @@ class ConnectorList(dict):
     self[key].append(value)
 
 
-class UsrpConfiguration():
+class SDRConfiguration():
   def __init__(self, freq =2162000000.0, bandwidth = 250000, chan = 0, hw_tx_gain = 50.0, hw_rx_gain = 20.0, sw_tx_gain=-12.0):
       self.freq= freq
       self.bandwidth = bandwidth

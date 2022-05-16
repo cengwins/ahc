@@ -55,11 +55,11 @@ class UsrpB210FlexFramePhy(FrameHandlerBase):
             
             last_symbol = flexframegen_write_samples(self.fg, fgbuffer.ctypes.data_as(POINTER(struct_c__SA_liquid_float_complex)), self.fgbuffer_len)
             try:
-                self.ahcuhd.transmit_samples(fgbuffer)
+                self.sdrdev.transmit_samples(fgbuffer)
                 # self.rx_callback(self.fgbuffer_len, npfgbuffer) #loopback for trial
             except Exception as e:
                 print("Exception in transmit", e)
-        self.ahcuhd.finalize_transmit_samples()
+        self.sdrdev.finalize_transmit_samples()
             
    
         
@@ -86,7 +86,7 @@ class UsrpB210FlexFramePhy(FrameHandlerBase):
         except Exception as ex:
             print("Exception2", ex) 
         
-        self.ahcuhd.start_rx(self.rx_callback, self)
+        self.sdrdev.start_rx(self.rx_callback, self)
         flexframegen_reset(self.fg)
         flexframesync_reset(self.fs)
         

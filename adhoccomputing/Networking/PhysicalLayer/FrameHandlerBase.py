@@ -1,5 +1,5 @@
 from ...GenericModel import GenericModel
-from .UhdUtils import AhcUhdUtils
+from .UhdUtils import SDRUtils
 from .LiquidDspUtils import *
 from enum import Enum
 from ...Generics import *
@@ -7,21 +7,21 @@ from ctypes import *
 import pickle
 
 # define your own message types
-class UsrpB210PhyMessageTypes(Enum):
+class PhyMessageTypes(Enum):
   PHYFRAMEDATA = "PHYFRAMEDATA"
 
 
-class UsrpB210PhyEventTypes(Enum):
+class PhyEventTypes(Enum):
   RECV = "recv"
 
 
 # define your own message header structure
-class UsrpB210PhyMessageHeader(GenericMessageHeader):
+class PhyMessageHeader(GenericMessageHeader):
     pass
 
 
 # define your own message payload structure
-class UsrpB210PhyMessagePayload(GenericMessagePayload):
+class PhyMessagePayload(GenericMessagePayload):
 
   def __init__(self, header, payload):
     self.phyheader = header
@@ -29,16 +29,15 @@ class UsrpB210PhyMessagePayload(GenericMessagePayload):
 
 
 class FrameHandlerBase(GenericModel):
-
-    def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, usrpconfig=None, num_worker_threads=1, topology=None, framers=None):
+    #SDR type can be b200 or x115 for ettus and bladerf respectively.
+    def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, usrpconfig=None, num_worker_threads=1, topology=None, framers=None, SDRType="b200"):
         super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology)
         self.usrpconfig = usrpconfig # should be UsrpConfiguration
-        self.ahcuhd = AhcUhdUtils(self.componentinstancenumber)
         framers.add_framer(id(self), self)
-        self.ahcuhd.configureUsrp("winslab_b210_" + str(self.componentinstancenumber),usrpconfig=self.usrpconfig)
-        print("Configuring", "winslab_b210_" + str(self.componentinstancenumber))
+        self.sdrdev = SDRUtils(self.componentinstancenumber)
+        self.sdrdev.configureSdr(type=SDRType, usrpconfig=self.usrpconfig)
         self.configure()
-        self.eventhandlers[UsrpB210PhyEventTypes.RECV] = self.on_recv
+        self.eventhandlers[PhyEventTypes.RECV] = self.on_recv
 
     def on_recv(self, eventobj: Event):
         #print("Node", self.componentinstancenumber, " Received message type:", eventobj.eventcontent.header.messagetype, "  from ", eventobj.eventcontent.payload.phyheader.messagefrom)
@@ -57,8 +56,8 @@ class FrameHandlerBase(GenericModel):
         byte_arr_header = bytearray(str_header, 'utf-8')
         header = (c_ubyte * hlen)(*(byte_arr_header))
 
-        hdr = UsrpB210PhyMessageHeader(UsrpB210PhyMessageTypes.PHYFRAMEDATA, self.componentinstancenumber,MessageDestinationIdentifiers.LINKLAYERBROADCAST)
-        pld = UsrpB210PhyMessagePayload(eventobj.eventcontent.header, eventobj.eventcontent.payload )
+        hdr = PhyMessageHeader(PhyMessageTypes.PHYFRAMEDATA, self.componentinstancenumber,MessageDestinationIdentifiers.LINKLAYERBROADCAST)
+        pld = PhyMessagePayload(eventobj.eventcontent.header, eventobj.eventcontent.payload )
         msg = GenericMessage(hdr, pld)
         byte_arr_msg = bytearray(pickle.dumps(msg))
         plen = len(byte_arr_msg)
