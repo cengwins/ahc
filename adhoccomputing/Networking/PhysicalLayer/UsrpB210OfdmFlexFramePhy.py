@@ -112,5 +112,5 @@ class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
 
     def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, usrpconfig=None, num_worker_threads=1, topology=None):
         self.framers = framers
-        super().__init__(componentname, componentinstancenumber, context, configurationparameters, usrpconfig, num_worker_threads, topology, framers)
+        super().__init__(componentname, componentinstancenumber, context, configurationparameters, usrpconfig, num_worker_threads, topology, framers, SDRType="b200")
         

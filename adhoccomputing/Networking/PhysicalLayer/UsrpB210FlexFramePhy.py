@@ -21,7 +21,7 @@ def flexframe_callback(header:POINTER(c_ubyte), header_valid:c_uint32, payload:P
             #print("pload=", pload)
             phymsg = pickle.loads(pload)
             msg = GenericMessage(phymsg.header, phymsg.payload)
-            framer.send_self(Event(framer, UsrpB210PhyEventTypes.RECV, msg))
+            framer.send_self(Event(framer, PhyEventTypes.RECV, msg))
             #print("Header=", msg.header.messagetype, " Payload=", msg.payload, " RSSI=", stats.rssi)
         #else:
             #pass
@@ -36,7 +36,7 @@ def flexframe_callback(header:POINTER(c_ubyte), header_valid:c_uint32, payload:P
 
   
 class UsrpB210FlexFramePhy(FrameHandlerBase):
-    
+
     def on_init(self, eventobj: Event):
         pass
     
@@ -95,5 +95,5 @@ class UsrpB210FlexFramePhy(FrameHandlerBase):
 
     def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, usrpconfig=None, num_worker_threads=1, topology=None):
         self.framers = framers
-        super().__init__(componentname, componentinstancenumber, context, configurationparameters, usrpconfig, num_worker_threads, topology, framers)
+        super().__init__(componentname, componentinstancenumber, context, configurationparameters, usrpconfig, num_worker_threads, topology, framers, SDRType="b200")
         
