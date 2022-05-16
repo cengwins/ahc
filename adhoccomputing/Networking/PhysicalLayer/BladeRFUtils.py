@@ -22,6 +22,7 @@ class BladeRFUtils(SDRUtils):
     def __init__(self, componentinstancenumber) -> None:
         super().__init__(componentinstancenumber)
         self.mutex = Lock()
+        self.cca = True
 
     defaultbladerfconfig = SDRConfiguration(freq =2.350e9, bandwidth = 61.44e6, chan = 0, hw_tx_gain = 30, hw_rx_gain = 0, sw_tx_gain=-12.0)
 
@@ -169,6 +170,8 @@ class BladeRFUtils(SDRUtils):
         self.start_sdr_rx()
 
 
+    def ischannelclear(self, threshold=-70, pout=100):
+        return True, 0 #TODO: TO BE IMPLEMENTED
 
     def configureSdr(self, type="x115", sdrconfig=defaultbladerfconfig):
         self.devicename = self.bladerfs[self.componentinstancenumber] #get the list of devices online (should be done once!) and match serial to componentinstancenumber

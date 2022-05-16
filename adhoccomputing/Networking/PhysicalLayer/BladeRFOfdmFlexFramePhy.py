@@ -68,12 +68,12 @@ class BladeRFOfdmFlexFramePhy(FrameHandlerBase):
             last_symbol = ofdmflexframegen_write(self.fg, fgbuffer.ctypes.data_as(POINTER(struct_c__SA_liquid_float_complex)), self.fgbuffer_len)
             #for i in range(self.fgbuffer_len):
             #    fgbuffer[i] = fgbuffer[i] * 2
-            try:
-                self.sdrdev.transmit_samples(fgbuffer)
-                # self.rx_callback(self.fgbuffer_len, npfgbuffer) #loopback for trial
-            except Exception as e:
-                print("Exception in transmit", e)
-        self.sdrdev.finalize_transmit_samples()
+            #try:
+            #    self.sdrdev.transmit_samples(fgbuffer)
+            #    # self.rx_callback(self.fgbuffer_len, npfgbuffer) #loopback for trial
+            #except Exception as e:
+            #    print("Exception in transmit", e)
+        #self.sdrdev.finalize_transmit_samples()
         #ofdmflexframesync_print(self.fs) 
             
    

@@ -1,7 +1,7 @@
 from ...GenericModel import GenericModel
-from .UhdUtils import AhcUhdUtils
+
 from .SDRUtils import SDRUtils
-from .BladeRFUtils import BladeRFUtils
+
 from .LiquidDspUtils import *
 from enum import Enum
 from ...Generics import *
@@ -37,10 +37,12 @@ class FrameHandlerBase(GenericModel):
         self.usrpconfig = usrpconfig # should be UsrpConfiguration
         framers.add_framer(id(self), self)
         if SDRType=="b200":
+          from .UhdUtils import AhcUhdUtils
           print("Generating USRP B210", self.componentinstancenumber)
           self.sdrdev = AhcUhdUtils(self.componentinstancenumber)
         else:
           if SDRType=="x115":
+            from .BladeRFUtils import BladeRFUtils
             print("Generating Bladerf", self.componentinstancenumber)
             self.sdrdev = BladeRFUtils(self.componentinstancenumber)
           else:
