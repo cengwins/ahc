@@ -109,7 +109,7 @@ class AhcUhdUtils(SDRUtils):
         self.framer = framer
         self.rx_callback = rx_callback
         self.rx_rate = self.usrp.get_rx_rate()
-        self.start_usrp_rx()
+        self.start_sdr_rx()
         t = Thread(target=self.rx_thread, args=[])
         t.daemon = True
         t.start()
