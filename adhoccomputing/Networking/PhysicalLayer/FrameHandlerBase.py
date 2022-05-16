@@ -37,11 +37,14 @@ class FrameHandlerBase(GenericModel):
         self.usrpconfig = usrpconfig # should be UsrpConfiguration
         framers.add_framer(id(self), self)
         if type=="b200":
+          print("Generating USRP B210", self.componentinstancenumber)
           self.sdrdev = AhcUhdUtils(self.componentinstancenumber)
         else:
           if type=="x115":
+            print("Generating Bladerf", self.componentinstancenumber)
             self.sdrdev = BladeRFUtils(self.componentinstancenumber)
           else:
+            print("Generating GenericSDR", self.componentinstancenumber)
             self.sdrdev = SDRUtils(self.componentinstancenumber)
         self.sdrdev.configureSdr(type=SDRType, sdrconfig=self.usrpconfig)
         self.configure()
