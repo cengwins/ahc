@@ -35,7 +35,7 @@ class FrameHandlerBase(GenericModel):
         self.usrpconfig = usrpconfig # should be UsrpConfiguration
         framers.add_framer(id(self), self)
         self.sdrdev = SDRUtils(self.componentinstancenumber)
-        self.sdrdev.configureSdr(type=SDRType, usrpconfig=self.usrpconfig)
+        self.sdrdev.configureSdr(type=SDRType, sdrconfig=self.usrpconfig)
         self.configure()
         self.eventhandlers[PhyEventTypes.RECV] = self.on_recv
 
