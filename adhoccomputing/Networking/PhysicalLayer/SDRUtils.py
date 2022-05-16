@@ -21,10 +21,12 @@ class SDRUtils():
         print("Not implemented configureSdr, ", type)
         if type=="b200":
             devicename = "winslab_b210_" + str(self.componentinstancenumber) #device names are configured properly on devices
+            print("Calling configureUsrp")
             self.configureUsrp(devicename, type, sdrconfig)
         else:
             if type=="x115":
                 devicename = self.bladerfs[self.componentinstancenumber] #get the list of devices online (should be done once!) and match serial to componentinstancenumber
+                print("Calling configureBladeRF")
                 self.configureBladeRF(devicename, type, sdrconfig)
 
     def ischannelclear(self, threshold=-70, pout=100):
