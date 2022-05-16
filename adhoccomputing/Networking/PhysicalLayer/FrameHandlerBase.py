@@ -1,5 +1,5 @@
 from ...GenericModel import GenericModel
-from .UhdUtils import SDRUtils
+from .UhdUtils import AhcUhdUtils, SDRUtils, BladeRFUtils
 from .LiquidDspUtils import *
 from enum import Enum
 from ...Generics import *
@@ -34,7 +34,13 @@ class FrameHandlerBase(GenericModel):
         super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology)
         self.usrpconfig = usrpconfig # should be UsrpConfiguration
         framers.add_framer(id(self), self)
-        self.sdrdev = SDRUtils(self.componentinstancenumber)
+        if type=="b200":
+          self.sdrdev = AhcUhdUtils(self.componentinstancenumber)
+        else:
+          if type=="x115":
+            self.sdrdev = BladeRFUtils(self.componentinstancenumber)
+          else:
+            self.sdrdev = SDRUtils(self.componentinstancenumber)
         self.sdrdev.configureSdr(type=SDRType, sdrconfig=self.usrpconfig)
         self.configure()
         self.eventhandlers[PhyEventTypes.RECV] = self.on_recv

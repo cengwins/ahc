@@ -11,6 +11,14 @@ class BladeRFUtils(SDRUtils):
     
     fpgalocation = "/usr/local/share/hostedx115-latest.rbf"
 
+
+    bladerfs={
+        0: "9419c6d87985ee1d13edde236573b65e",
+        1: "5be03a9f833d94ffae498960e3d420df",
+        2: "361ab51785f20b1ff3654438c1ddb4d6"
+    }
+
+
     def __init__(self, componentinstancenumber) -> None:
         super().__init__(componentinstancenumber)
         self.mutex = Lock()
@@ -162,11 +170,11 @@ class BladeRFUtils(SDRUtils):
 
 
 
-    def configureBladeRF(self, devicename, type="x115", sdrconfig=defaultbladerfconfig):
-        self.devicename = devicename
+    def configureSdr(self, type="x115", sdrconfig=defaultbladerfconfig):
+        self.devicename = self.bladerfs[self.componentinstancenumber] #get the list of devices online (should be done once!) and match serial to componentinstancenumber
         self.sdrconfig = sdrconfig
 
-        self.bladerfdevice_identifier = self.probe_specific_bladerf(bytes(devicename,'utf-8')) #devicename is the serial of bladerf
+        self.bladerfdevice_identifier = self.probe_specific_bladerf(bytes(self.devicename,'utf-8')) #devicename is the serial of bladerf
         print(self.bladerfdevice_identifier)
         if( self.bladerfdevice_identifier == None ):
             print( "No bladeRFs detected. Exiting." )
@@ -206,7 +214,7 @@ class BladeRFUtils(SDRUtils):
 
         self.configure_tx_channel()
 
-        print("------- BALDERF(", self.bladerfdevice.get_serial(), ") CONFIG --------------------")
+        print("------- BLADERF(", self.bladerfdevice.get_serial(), ") CONFIG --------")
         print("----> ", self.bladerfdevice.devinfo)
         print("----> TX_CHAN", self.tx_chan)
         print("----> RX_CHAN", self.rx_chan)

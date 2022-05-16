@@ -25,9 +25,9 @@ class AhcUhdUtils(SDRUtils):
     
     defaultusrpconfig = SDRConfiguration(freq =2162000000.0, bandwidth = 1000000, chan = 0, hw_tx_gain = 50.0, hw_rx_gain = 20.0, sw_tx_gain=-12.0)
 
-    def configureUsrp(self, devicename, type="b200", sdrconfig=defaultusrpconfig):
+    def configureSdr(self, type="b200", sdrconfig=defaultusrpconfig):
         self.sdrconfig = sdrconfig
-        self.devicename = devicename
+        self.devicename = "winslab_b210_" + str(self.componentinstancenumber) #device names are configured properly on devices
         self.freq = self.sdrconfig.freq
         self.bandwidth = self.sdrconfig.bandwidth
         self.chan = self.sdrconfig.chan
