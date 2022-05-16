@@ -13,10 +13,8 @@ class MacCsmaPPersistentConfigurationParameters (ComponentConfigurationParameter
 class MacCsmaPPersistent(GenericMac):
     
     #Constructor
-    def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None, uhd=None):
-        super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology, uhd)
-    #def __init__(self, componentname, componentinstancenumber, configurationparameters:MacCsmaPPersistentConfigurationParameters, uhd=uhd):
-    #    super().__init__(componentname, componentinstancenumber, uhd)
+    def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None, sdr=None):
+        super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology, sdr)
         self.p = configurationparameters.p
     
     #on_init will be called from topo.start to initialize components
