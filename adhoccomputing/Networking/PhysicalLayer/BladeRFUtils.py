@@ -13,12 +13,17 @@ class BladeRFUtils(SDRUtils):
     fpgalocation = "/usr/local/share/hostedx115-latest.rbf"
 
 
-    bladerfs={
-        0: "9419c6d87985ee1d13edde236573b65e",
-        2: "5be03a9f833d94ffae498960e3d420df",
-        1: "361ab51785f20b1ff3654438c1ddb4d6"
-    }
+    # bladerfs={
+    #     0: "9419c6d87985ee1d13edde236573b65e",
+    #     2: "5be03a9f833d94ffae498960e3d420df",
+    #     1: "361ab51785f20b1ff3654438c1ddb4d6"
+    # }
 
+
+    bladerfs={
+        0: "c2863e4c6b8ed16e9ebe51e233da9931",
+        1: "6f22dd084ce6d7f0ee649545f1d35a07"
+    }
 
     def __init__(self, componentinstancenumber) -> None:
         super().__init__(componentinstancenumber)

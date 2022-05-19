@@ -42,9 +42,9 @@ class UsrpB210FlexFramePhy(FrameHandlerBase):
     
     def rx_callback(self, num_rx_samps, recv_buffer):
         try:
-            flexframesync_execute(self.fs, recv_buffer.ctypes.data_as(POINTER(struct_c__SA_liquid_float_complex)) , num_rx_samps)
+            flexframesync_execute(self.fs, recv_buffer, num_rx_samps)
         except Exception as ex:
-            print("Exception1", ex)
+            print("Exception in rx_callback", ex)
 
     
     def transmit(self, _header, _payload, _payload_len, _mod, _fec0, _fec1):
@@ -53,7 +53,7 @@ class UsrpB210FlexFramePhy(FrameHandlerBase):
         while (last_symbol == 0):
             fgbuffer = np.zeros(self.fgbuffer_len, dtype=np.complex64)
             
-            last_symbol = flexframegen_write_samples(self.fg, fgbuffer.ctypes.data_as(POINTER(struct_c__SA_liquid_float_complex)), self.fgbuffer_len)
+            last_symbol = flexframegen_write_samples(self.fg, fgbuffer, self.fgbuffer_len)
             try:
                 self.sdrdev.transmit_samples(fgbuffer)
                 # self.rx_callback(self.fgbuffer_len, npfgbuffer) #loopback for trial

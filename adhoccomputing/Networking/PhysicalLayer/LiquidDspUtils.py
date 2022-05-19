@@ -4252,10 +4252,10 @@ flexframegen_getframelen.restype = ctypes.c_uint32
 flexframegen_getframelen.argtypes = [flexframegen]
 flexframegen_assemble = liquiddsp.flexframegen_assemble
 flexframegen_assemble.restype = ctypes.c_int32
-flexframegen_assemble.argtypes = [flexframegen, ctypes.POINTER(ctypes.c_ubyte), ctypes.POINTER(ctypes.c_ubyte), ctypes.c_uint32]
+flexframegen_assemble.argtypes = [flexframegen, np.ctypeslib.ndpointer(dtype=np.ubyte, ndim=1, flags='C_CONTIGUOUS'), np.ctypeslib.ndpointer(dtype=np.ubyte, ndim=1, flags='C_CONTIGUOUS'), ctypes.c_uint32]
 flexframegen_write_samples = liquiddsp.flexframegen_write_samples
 flexframegen_write_samples.restype = ctypes.c_int32
-flexframegen_write_samples.argtypes = [flexframegen, ctypes.POINTER(struct_c__SA_liquid_float_complex), ctypes.c_uint32]
+flexframegen_write_samples.argtypes = [flexframegen, np.ctypeslib.ndpointer(dtype=np.complex64, ndim=1, flags='C_CONTIGUOUS'), ctypes.c_uint32]
 class struct_flexframesync_s(Structure):
     pass
 
@@ -4289,7 +4289,7 @@ flexframesync_set_header_props.restype = ctypes.c_int32
 flexframesync_set_header_props.argtypes = [flexframesync, ctypes.POINTER(struct_c__SA_flexframegenprops_s)]
 flexframesync_execute = liquiddsp.flexframesync_execute
 flexframesync_execute.restype = ctypes.c_int32
-flexframesync_execute.argtypes = [flexframesync, ctypes.POINTER(struct_c__SA_liquid_float_complex), ctypes.c_uint32]
+flexframesync_execute.argtypes = [flexframesync, np.ctypeslib.ndpointer(dtype=np.complex64, ndim=1, flags='C_CONTIGUOUS'), ctypes.c_uint32]
 flexframesync_reset_framedatastats = liquiddsp.flexframesync_reset_framedatastats
 flexframesync_reset_framedatastats.restype = ctypes.c_int32
 flexframesync_reset_framedatastats.argtypes = [flexframesync]

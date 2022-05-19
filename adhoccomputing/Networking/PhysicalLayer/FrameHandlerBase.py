@@ -54,7 +54,7 @@ class FrameHandlerBase(GenericModel):
         self.eventhandlers[PhyEventTypes.RECV] = self.on_recv
 
     def on_recv(self, eventobj: Event):
-        print("Node", self.componentinstancenumber, " Received message type:", eventobj.eventcontent.header.messagetype, "  from ", eventobj.eventcontent.payload.phyheader.messagefrom)
+        #print("Node", self.componentinstancenumber, " Received message type:", eventobj.eventcontent.header.messagetype, "  from ", eventobj.eventcontent.payload.phyheader.messagefrom)
 
         if eventobj.eventcontent.payload.phyheader.messagefrom != self.componentinstancenumber:
           msg = GenericMessage(eventobj.eventcontent.payload.phyheader, eventobj.eventcontent.payload.phypayload)
@@ -85,11 +85,11 @@ class FrameHandlerBase(GenericModel):
           #plen = len(byte_arr_msg)
           #payload = (c_ubyte * plen)(*(byte_arr_msg))
           #payload_len = plen
-          payload =np.zeros(payload_len, dtype=np.ubyte)
+          #payload =np.zeros(payload_len, dtype=np.ubyte)
           #payload_len = 10
-          for i in range(payload_len):
-            payload[i] = byte_arr_msg[i]
-
+          #for i in range(payload_len):
+          #  payload[i] = byte_arr_msg[i]
+          payload = np.frombuffer(byte_arr_msg, dtype=np.ubyte)
           #print("bytearry:", byte_arr_msg, "Payload:",payload, " payload_len:", payload_len)
           self.transmit(header, payload, payload_len, LIQUID_MODEM_QPSK, LIQUID_FEC_NONE, LIQUID_FEC_HAMMING74 )  # TODO: Check params
           #print("sentpload=", string_at(payload, payload_len))
