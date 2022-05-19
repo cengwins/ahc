@@ -10,8 +10,8 @@ import numpy as np
 
 class BladeRFUtils(SDRUtils):
     
-    fpgalocation = "/usr/local/share/hostedx115-latest.rbf"
-
+    #fpgalocation = "/usr/local/share/hostedx115.rbf"
+    fpgalocation = "/usr/share/Nuand/bladeRF/hostedx115.rbf"
 
     # bladerfs={
     #     0: "9419c6d87985ee1d13edde236573b65e",
@@ -148,12 +148,12 @@ class BladeRFUtils(SDRUtils):
             print( "TX: Invalid device handle." )
             return -1
 
-        if( self.tx_chan == None ):
+        if( self.tx_ch == None ):
             print( "TX: Invalid channel." )
             return -1
 
         # Configure bladeRF
-        self.bladerfdevice_tx_ch              = self.bladerfdevice.Channel(self.tx_chan)
+        self.bladerfdevice_tx_ch              = self.bladerfdevice.Channel(self.tx_ch)
         self.bladerfdevice_tx_ch.frequency   = self.tx_freq
         self.bladerfdevice_tx_ch.sample_rate = self.tx_rate
         self.bladerfdevice_tx_ch.gain        = self.tx_gain
@@ -181,12 +181,12 @@ class BladeRFUtils(SDRUtils):
             print( "RX: Invalid device handle." )
             return -1
 
-        if( self.rx_chan == None ):
+        if( self.rx_ch == None ):
             print( "RX: Invalid channel." )
             return -1
 
         # Configure BladeRF
-        self.bladerfdevice_rx_ch             = self.bladerfdevice.Channel(self.rx_chan)
+        self.bladerfdevice_rx_ch             = self.bladerfdevice.Channel(self.rx_ch)
         self.bladerfdevice_rx_ch.frequency   = self.rx_freq
         self.bladerfdevice_rx_ch.sample_rate = self.rx_rate
         self.bladerfdevice_rx_ch.gain        = self.rx_gain
@@ -244,10 +244,10 @@ class BladeRFUtils(SDRUtils):
 
         status = self.print_versions( device = self.bladerfdevice )
 
-        self.tx_chan = int(self.sdrconfig.chan)
-        self.rx_chan = int(self.sdrconfig.chan)
-        self.tx_ch = _bladerf.CHANNEL_TX(self.tx_chan)
-        self.rx_ch = _bladerf.CHANNEL_TX(self.rx_chan)
+        tx_chan = int(self.sdrconfig.chan)
+        rx_chan = int(self.sdrconfig.chan)
+        self.tx_ch = _bladerf.CHANNEL_TX(tx_chan)
+        self.rx_ch = _bladerf.CHANNEL_RX(rx_chan)
         print(self.tx_ch, self.rx_ch)
         self.rx_freq = self.tx_freq = int(self.sdrconfig.freq)
         self.rx_rate = self.tx_rate = int(self.sdrconfig.bandwidth)
@@ -261,16 +261,16 @@ class BladeRFUtils(SDRUtils):
 
         print("------- BLADERF(", self.bladerfdevice.get_serial(), ") CONFIG --------")
         print("----> ", self.bladerfdevice.devinfo)
-        print("----> TX_CHAN", self.tx_chan)
-        print("----> RX_CHAN", self.rx_chan)
-        print("----> TX_FREQ", self.bladerfdevice.get_frequency(self.tx_chan))
-        print("----> RX_FREQ", self.bladerfdevice.get_frequency(self.rx_chan))
-        print("----> TX_BANDWIDTH", self.bladerfdevice.get_bandwidth(self.tx_chan))
-        print("----> RX_BANDWIDTH", self.bladerfdevice.get_bandwidth(self.rx_chan))
-        print("----> TX_SAMPLING_RATE", self.bladerfdevice.get_sample_rate(self.tx_chan))
-        print("----> RX_SAMPLING_RATE", self.bladerfdevice.get_sample_rate(self.rx_chan))
-        print("----> TX_GAIN", self.bladerfdevice.get_gain(self.tx_chan))
-        print("----> RX_GAIN", self.bladerfdevice.get_gain(self.rx_chan))
+        print("----> TX_CHAN", self.tx_ch)
+        print("----> RX_CHAN", self.rx_ch)
+        print("----> TX_FREQ", self.bladerfdevice.get_frequency(self.tx_ch))
+        print("----> RX_FREQ", self.bladerfdevice.get_frequency(self.rx_ch))
+        print("----> TX_BANDWIDTH", self.bladerfdevice.get_bandwidth(self.tx_ch))
+        print("----> RX_BANDWIDTH", self.bladerfdevice.get_bandwidth(self.rx_ch))
+        print("----> TX_SAMPLING_RATE", self.bladerfdevice.get_sample_rate(self.tx_ch))
+        print("----> RX_SAMPLING_RATE", self.bladerfdevice.get_sample_rate(self.rx_ch))
+        print("----> TX_GAIN", self.bladerfdevice.get_gain(self.tx_ch))
+        print("----> RX_GAIN", self.bladerfdevice.get_gain(self.rx_ch))
 #        self.configure_rx_channel()
 
 
