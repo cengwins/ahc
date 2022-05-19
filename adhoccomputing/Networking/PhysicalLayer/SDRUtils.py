@@ -38,3 +38,6 @@ class SDRUtils():
     def transmit_samples(self, transmit_buffer):
         print("Not implemented transmit_samples")
         pass
+
+    def finalize_transmit_samples(self):
+        pass

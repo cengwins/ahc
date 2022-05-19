@@ -297,9 +297,4 @@ class BladeRFUtils(SDRUtils):
         finally:
             #self.mutex.release()
             self.start_sdr_rx()
-
-    def float_to_sc16q11(indata, outdata, n):
-        pass
-
-    def  sc16q11_to_float(indata, outdata,n):
-        pass
+     
