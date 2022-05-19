@@ -49,7 +49,8 @@ class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
     def rx_callback(self, num_rx_samps, recv_buffer):
         try:
             #print("Self.fs", self.fs)
-            ofdmflexframesync_execute(self.fs, recv_buffer.ctypes.data_as(POINTER(struct_c__SA_liquid_float_complex)) , num_rx_samps)
+            #ofdmflexframesync_execute(self.fs, recv_buffer.ctypes.data_as(POINTER(struct_c__SA_liquid_float_complex)) , num_rx_samps)
+            ofdmflexframesync_execute(self.fs, recv_buffer , num_rx_samps)
         except Exception as ex:
             print("Exception1", ex)
 
@@ -64,8 +65,8 @@ class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
         last_symbol = False
         while (last_symbol == 0):
             fgbuffer = np.zeros(self.fgbuffer_len, dtype=np.complex64)
-            
-            last_symbol = ofdmflexframegen_write(self.fg, fgbuffer.ctypes.data_as(POINTER(struct_c__SA_liquid_float_complex)), self.fgbuffer_len)
+            #last_symbol = ofdmflexframegen_write(self.fg, fgbuffer.ctypes.data_as(POINTER(struct_c__SA_liquid_float_complex)), self.fgbuffer_len)
+            last_symbol = ofdmflexframegen_write(self.fg, fgbuffer, self.fgbuffer_len)
             #for i in range(self.fgbuffer_len):
             #    fgbuffer[i] = fgbuffer[i] * 2
             try:
