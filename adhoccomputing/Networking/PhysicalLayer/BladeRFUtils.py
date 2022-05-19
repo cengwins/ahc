@@ -6,6 +6,7 @@ from bladerf              import _bladerf
 from ...Generics import SDRConfiguration
 from threading import Thread, Lock
 from .SDRUtils import SDRUtils
+import numpy as np
 
 class BladeRFUtils(SDRUtils):
     
@@ -14,15 +15,16 @@ class BladeRFUtils(SDRUtils):
 
     bladerfs={
         0: "9419c6d87985ee1d13edde236573b65e",
-        1: "5be03a9f833d94ffae498960e3d420df",
-        2: "361ab51785f20b1ff3654438c1ddb4d6"
+        2: "5be03a9f833d94ffae498960e3d420df",
+        1: "361ab51785f20b1ff3654438c1ddb4d6"
     }
 
 
     def __init__(self, componentinstancenumber) -> None:
         super().__init__(componentinstancenumber)
         self.mutex = Lock()
-        self.cca = True
+        self.cca = False
+        self.bytes_per_sample = 4 # 2 int16 for complex number sc16q11
 
     defaultbladerfconfig = SDRConfiguration(freq =2.350e9, bandwidth = 61.44e6, chan = 0, hw_tx_gain = 30, hw_rx_gain = 0, sw_tx_gain=-12.0)
 
@@ -152,9 +154,9 @@ class BladeRFUtils(SDRUtils):
 
         # Configure BladeRF
         self.bladerfdevice_rx_ch             = self.bladerfdevice.Channel(self.rx_chan)
-        self.bladerfdevice_rx_ch .frequency   = self.rx_freq
-        self.bladerfdevice_rx_ch .sample_rate = self.rx_rate
-        self.bladerfdevice_rx_ch .gain        = self.rx_gain
+        self.bladerfdevice_rx_ch.frequency   = self.rx_freq
+        self.bladerfdevice_rx_ch.sample_rate = self.rx_rate
+        self.bladerfdevice_rx_ch.gain        = self.rx_gain
 
         # Setup synchronous stream
         self.bladerfdevice.sync_config(layout         = _bladerf.ChannelLayout.RX_X1,
@@ -167,7 +169,7 @@ class BladeRFUtils(SDRUtils):
         # Enable module
         
         #self.bladerfdevice_rx_ch .enable = True
-        self.start_sdr_rx()
+        #self.start_sdr_rx()
 
 
     def ischannelclear(self, threshold=-70, pout=100):
@@ -225,8 +227,8 @@ class BladeRFUtils(SDRUtils):
         print("----> RX_FREQ", self.bladerfdevice.get_frequency(self.rx_chan))
         print("----> TX_BANDWIDTH", self.bladerfdevice.get_bandwidth(self.tx_chan))
         print("----> RX_BANDWIDTH", self.bladerfdevice.get_bandwidth(self.rx_chan))
-        print("----> TX_RATE", self.bladerfdevice.get_sample_rate(self.tx_chan))
-        print("----> RX_RATE", self.bladerfdevice.get_sample_rate(self.rx_chan))
+        print("----> TX_SAMPLING_RATE", self.bladerfdevice.get_sample_rate(self.tx_chan))
+        print("----> RX_SAMPLING_RATE", self.bladerfdevice.get_sample_rate(self.rx_chan))
         print("----> TX_GAIN", self.bladerfdevice.get_gain(self.tx_chan))
         print("----> RX_GAIN", self.bladerfdevice.get_gain(self.rx_chan))
 #        self.configure_rx_channel()
@@ -235,11 +237,11 @@ class BladeRFUtils(SDRUtils):
     def start_sdr_rx(self):
         #print(f"start_usrp_rx on usrp winslab_b210_{self.componentinstancenumber}")
         self.bladerfdevice_rx_ch.enable = True
-        print( "RX: Start" )
+        #print( "RX: Start" )
         
     def stop_sdr_rx(self):
         self.bladerfdevice_rx_ch.enable = False
-        print( "RX: Stop" )
+        #print( "RX: Stop" )
 
       
     def start_rx(self, rx_callback, framer):
@@ -249,39 +251,50 @@ class BladeRFUtils(SDRUtils):
         t = Thread(target=self.rx_thread, args=[])
         t.daemon = True
         t.start()
-        
+        self.start_sdr_rx()
      
     def rx_thread(self):
         print(f"rx_thread on bladerf{self.devicename}-->{self.componentinstancenumber}")
         #print(f"max_samps_per_packet={max_samps_per_packet}")
-        bytes_per_sample = 4
-        buf = bytearray(1024*bytes_per_sample)
-        num_samples_read = 0
-        num_samples = 1024
+        
+        num_samples = 256
+        buf = bytearray(num_samples*self.bytes_per_sample)
         #print(f"recv_buffer={recv_buffer")
+        
         while(True):
+            self.cca = False #TODO
             if self.cca == False:
                 self.mutex.acquire(1)
-                #print(f"rx_thread on usrp winslab_b210_{self.componentinstancenumber} ---> {self.devicename}")
+                #print(f"rx_thread on usrp bladerf_{self.componentinstancenumber} ---> {self.devicename}")
                 try:
-                    if num_samples > 0 and num_samples_read == num_samples:
-                        break
-                    elif num_samples > 0:
-                        num = min(len(buf)//bytes_per_sample,
-                                num_samples-num_samples_read)
-                    else:
-                        num = len(buf)//bytes_per_sample
-
-                    # Read into buffer
-                    self.bladerfdevice.sync_rx(buf, num)
-                    num_samples_read += num
-                    self.rx_callback(num_samples_read, buf[:num*bytes_per_sample])
+                    self.bladerfdevice.sync_rx(buf, num_samples)
+                    mybuf = np.frombuffer(buf, dtype=np.int16)
+                    self.rx_callback( num_samples, mybuf)
+                    #print("Length of received samples mybuf", len(mybuf), " num samples ", num_samples)
                 except RuntimeError as ex:
                     print("Runtime error in receive: %s", ex)
                 finally:
                     self.mutex.release()
+                    #print("Released mutex")
                 
     def transmit_samples(self, transmit_buffer):
-        bytes_per_sample = 4
-        num = len(transmit_buffer)//bytes_per_sample
-        self.bladerfdevice.sync_tx(transmit_buffer, num)
+        try:
+            #self.mutex.acquire(1)
+            #self.stop_sdr_rx()
+            bytes_per_sample = 4
+            #num = len(transmit_buffer)//bytes_per_sample
+            num = len(transmit_buffer)//self.bytes_per_sample
+            #print("Number of samples to transmit", num)
+            self.bladerfdevice.sync_tx(transmit_buffer, num)
+            #print("transmitted", num)
+        except RuntimeError as ex:
+            print("Runtime error in receive: %s", ex)
+        finally:
+            #self.mutex.release()
+            self.start_sdr_rx()
+
+    def float_to_sc16q11(indata, outdata, n):
+        pass
+
+    def  sc16q11_to_float(indata, outdata,n):
+        pass

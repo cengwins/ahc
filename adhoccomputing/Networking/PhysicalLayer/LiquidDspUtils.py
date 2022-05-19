@@ -11,7 +11,7 @@
 #
 import ctypes
 import platform
-
+import numpy as np
 
 class FunctionFactoryStub:
     def __getattr__(self, _):
@@ -209,6 +209,19 @@ liquid_error_str = [] # Variable ctypes.POINTER(ctypes.c_char) * 12
 liquid_error_info = liquiddsp.liquid_error_info
 liquid_error_info.restype = ctypes.POINTER(ctypes.c_char)
 liquid_error_info.argtypes = [liquid_error_code]
+
+class struct_c__SA_liquid_int16_complex(Structure):
+    pass
+
+struct_c__SA_liquid_int16_complex._pack_ = 1 # source:False
+struct_c__SA_liquid_int16_complex._fields_ = [
+    ('real', ctypes.c_int16),
+    ('imag', ctypes.c_int16),
+]
+
+liquid_int16_complex = struct_c__SA_liquid_int16_complex
+
+
 class struct_c__SA_liquid_float_complex(Structure):
     pass
 
@@ -219,6 +232,7 @@ struct_c__SA_liquid_float_complex._fields_ = [
 ]
 
 liquid_float_complex = struct_c__SA_liquid_float_complex
+
 class struct_c__SA_liquid_double_complex(Structure):
     pass
 
@@ -4569,6 +4583,82 @@ dsssframesync_debug_print.argtypes = [dsssframesync, ctypes.POINTER(ctypes.c_cha
 dsssframesync_get_framedatastats = liquiddsp.dsssframesync_get_framedatastats
 dsssframesync_get_framedatastats.restype = framedatastats_s
 dsssframesync_get_framedatastats.argtypes = [dsssframesync]
+
+
+class struct_ofdmframegen_s(Structure):
+    pass
+
+ofdmframegen = ctypes.POINTER(struct_ofdmframegen_s)
+ofdmframegen_create = liquiddsp.ofdmframegen_create
+ofdmframegen_create.restype = ofdmframegen
+ofdmframegen_create.argtypes = [ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32, ctypes.POINTER(ctypes.c_ubyte)]
+ofdmframegen_destroy = liquiddsp.ofdmframegen_destroy
+ofdmframegen_destroy.restype = ctypes.c_int32
+ofdmframegen_destroy.argtypes = [ofdmframegen]
+ofdmframegen_print = liquiddsp.ofdmframegen_print
+ofdmframegen_print.restype = ctypes.c_int32
+ofdmframegen_print.argtypes = [ofdmframegen]
+ofdmframegen_reset = liquiddsp.ofdmframegen_reset
+ofdmframegen_reset.restype = ctypes.c_int32
+ofdmframegen_reset.argtypes = [ofdmframegen]
+ofdmframegen_write_S0a = liquiddsp.ofdmframegen_write_S0a
+ofdmframegen_write_S0a.restype = ctypes.c_int32
+ofdmframegen_write_S0a.argtypes = [ofdmframegen, ctypes.POINTER(struct_c__SA_liquid_float_complex)]
+ofdmframegen_write_S0b = liquiddsp.ofdmframegen_write_S0b
+ofdmframegen_write_S0b.restype = ctypes.c_int32
+ofdmframegen_write_S0b.argtypes = [ofdmframegen, ctypes.POINTER(struct_c__SA_liquid_float_complex)]
+ofdmframegen_write_S1 = liquiddsp.ofdmframegen_write_S1
+ofdmframegen_write_S1.restype = ctypes.c_int32
+ofdmframegen_write_S1.argtypes = [ofdmframegen, ctypes.POINTER(struct_c__SA_liquid_float_complex)]
+ofdmframegen_writesymbol = liquiddsp.ofdmframegen_writesymbol
+ofdmframegen_writesymbol.restype = ctypes.c_int32
+ofdmframegen_writesymbol.argtypes = [ofdmframegen, ctypes.POINTER(struct_c__SA_liquid_float_complex), ctypes.POINTER(struct_c__SA_liquid_float_complex)]
+ofdmframegen_writetail = liquiddsp.ofdmframegen_writetail
+ofdmframegen_writetail.restype = ctypes.c_int32
+ofdmframegen_writetail.argtypes = [ofdmframegen, ctypes.POINTER(struct_c__SA_liquid_float_complex)]
+ofdmframesync_callback = ctypes.CFUNCTYPE(ctypes.c_int32, ctypes.POINTER(struct_c__SA_liquid_float_complex), ctypes.POINTER(ctypes.c_ubyte), ctypes.c_uint32, ctypes.POINTER(None))
+class struct_ofdmframesync_s(Structure):
+    pass
+
+ofdmframesync = ctypes.POINTER(struct_ofdmframesync_s)
+ofdmframesync_create = liquiddsp.ofdmframesync_create
+ofdmframesync_create.restype = ofdmframesync
+ofdmframesync_create.argtypes = [ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32, ctypes.POINTER(ctypes.c_ubyte), ofdmframesync_callback, ctypes.POINTER(None)]
+ofdmframesync_destroy = liquiddsp.ofdmframesync_destroy
+ofdmframesync_destroy.restype = ctypes.c_int32
+ofdmframesync_destroy.argtypes = [ofdmframesync]
+ofdmframesync_print = liquiddsp.ofdmframesync_print
+ofdmframesync_print.restype = ctypes.c_int32
+ofdmframesync_print.argtypes = [ofdmframesync]
+ofdmframesync_reset = liquiddsp.ofdmframesync_reset
+ofdmframesync_reset.restype = ctypes.c_int32
+ofdmframesync_reset.argtypes = [ofdmframesync]
+ofdmframesync_is_frame_open = liquiddsp.ofdmframesync_is_frame_open
+ofdmframesync_is_frame_open.restype = ctypes.c_int32
+ofdmframesync_is_frame_open.argtypes = [ofdmframesync]
+ofdmframesync_execute = liquiddsp.ofdmframesync_execute
+ofdmframesync_execute.restype = ctypes.c_int32
+ofdmframesync_execute.argtypes = [ofdmframesync, ctypes.POINTER(struct_c__SA_liquid_float_complex), ctypes.c_uint32]
+ofdmframesync_get_rssi = liquiddsp.ofdmframesync_get_rssi
+ofdmframesync_get_rssi.restype = ctypes.c_float
+ofdmframesync_get_rssi.argtypes = [ofdmframesync]
+ofdmframesync_get_cfo = liquiddsp.ofdmframesync_get_cfo
+ofdmframesync_get_cfo.restype = ctypes.c_float
+ofdmframesync_get_cfo.argtypes = [ofdmframesync]
+ofdmframesync_set_cfo = liquiddsp.ofdmframesync_set_cfo
+ofdmframesync_set_cfo.restype = ctypes.c_int32
+ofdmframesync_set_cfo.argtypes = [ofdmframesync, ctypes.c_float]
+ofdmframesync_debug_enable = liquiddsp.ofdmframesync_debug_enable
+ofdmframesync_debug_enable.restype = ctypes.c_int32
+ofdmframesync_debug_enable.argtypes = [ofdmframesync]
+ofdmframesync_debug_disable = liquiddsp.ofdmframesync_debug_disable
+ofdmframesync_debug_disable.restype = ctypes.c_int32
+ofdmframesync_debug_disable.argtypes = [ofdmframesync]
+ofdmframesync_debug_print = liquiddsp.ofdmframesync_debug_print
+ofdmframesync_debug_print.restype = ctypes.c_int32
+ofdmframesync_debug_print.argtypes = [ofdmframesync, ctypes.POINTER(ctypes.c_char)]
+
+
 class struct_c__SA_ofdmflexframegenprops_s(Structure):
     pass
 
@@ -4586,12 +4676,29 @@ ofdmflexframegenprops_init_default.restype = ctypes.c_int32
 ofdmflexframegenprops_init_default.argtypes = [ctypes.POINTER(struct_c__SA_ofdmflexframegenprops_s)]
 class struct_ofdmflexframegen_s(Structure):
     pass
-struct_ofdmflexframegen_s._pack_ = 1
-struct_ofdmflexframegen_s._fields_ = [
-    ('M', ctypes.c_uint32),
-    ('cp_len', ctypes.c_uint32),
-    ('taper_len', ctypes.c_uint32),
-]
+# struct_ofdmflexframegen_s._pack_ = 1
+# struct_ofdmflexframegen_s._fields_ = [
+#     ('M', ctypes.c_uint),
+#     ('cp_len', ctypes.c_uint),
+#     ('taper_len', ctypes.c_uint),
+#     ('p', ctypes.POINTER(ctypes.c_ubyte)),
+#     ('dummy1',ctypes.c_int),
+#     ('M_null', ctypes.c_uint),
+#     ('M_pilot', ctypes.c_uint),
+#     ('M_data', ctypes.c_uint),
+#     ('M_S0', ctypes.c_uint),
+#     ('M_S1', ctypes.c_uint),
+#     ('frame_len', ctypes.c_uint),
+#     ('X', ctypes.POINTER(struct_c__SA_liquid_float_complex)),
+#     ('dummy2',ctypes.c_int),
+#     ('buf_tx', ctypes.POINTER(struct_c__SA_liquid_float_complex)),
+#     ('dummy3',ctypes.c_int),
+#     ('buf_index', ctypes.c_uint32),
+#     ('fg', ctypes.POINTER(ofdmframegen)),
+#     ('dummy4',ctypes.c_int),
+#     ('num_symbols_header', ctypes.c_uint32),
+#     ('num_symbols_payload', ctypes.c_uint32),
+# ]
 
 ofdmflexframegen = ctypes.POINTER(struct_ofdmflexframegen_s)
 ofdmflexframegen_create = liquiddsp.ofdmflexframegen_create
@@ -4626,10 +4733,16 @@ ofdmflexframegen_getframelen.restype = ctypes.c_uint32
 ofdmflexframegen_getframelen.argtypes = [ofdmflexframegen]
 ofdmflexframegen_assemble = liquiddsp.ofdmflexframegen_assemble
 ofdmflexframegen_assemble.restype = ctypes.c_int32
-ofdmflexframegen_assemble.argtypes = [ofdmflexframegen, ctypes.POINTER(ctypes.c_ubyte), ctypes.POINTER(ctypes.c_ubyte), ctypes.c_uint32]
+#ofdmflexframegen_assemble.argtypes = [ofdmflexframegen, ctypes.POINTER(ctypes.c_ubyte), ctypes.POINTER(ctypes.c_ubyte), ctypes.c_uint32]
+ofdmflexframegen_assemble.argtypes = [ofdmflexframegen, np.ctypeslib.ndpointer(dtype=np.ubyte, ndim=1, flags='C_CONTIGUOUS'), np.ctypeslib.ndpointer(dtype=np.ubyte, ndim=1, flags='C_CONTIGUOUS'), ctypes.c_uint32]
 ofdmflexframegen_write = liquiddsp.ofdmflexframegen_write
 ofdmflexframegen_write.restype = ctypes.c_int32
-ofdmflexframegen_write.argtypes = [ofdmflexframegen, ctypes.POINTER(struct_c__SA_liquid_float_complex), ctypes.c_uint32]
+#ofdmflexframegen_write.argtypes = [ofdmflexframegen, ctypes.POINTER(struct_c__SA_liquid_float_complex), ctypes.c_uint32]
+ofdmflexframegen_write.argtypes = [ofdmflexframegen, np.ctypeslib.ndpointer(dtype=np.complex64, ndim=1, flags='C_CONTIGUOUS'), ctypes.c_uint32]
+ofdmflexframegen_write_sc16q11 = liquiddsp.ofdmflexframegen_write_sc16q11
+ofdmflexframegen_write_sc16q11.restype = ctypes.c_int32
+ofdmflexframegen_write_sc16q11.argtypes = [ofdmflexframegen, np.ctypeslib.ndpointer(dtype=np.int16, ndim=1, flags='C_CONTIGUOUS'), ctypes.c_uint32]
+
 class struct_ofdmflexframesync_s(Structure):
     pass
 
@@ -4663,7 +4776,11 @@ ofdmflexframesync_is_frame_open.restype = ctypes.c_int32
 ofdmflexframesync_is_frame_open.argtypes = [ofdmflexframesync]
 ofdmflexframesync_execute = liquiddsp.ofdmflexframesync_execute
 ofdmflexframesync_execute.restype = ctypes.c_int32
-ofdmflexframesync_execute.argtypes = [ofdmflexframesync, ctypes.POINTER(struct_c__SA_liquid_float_complex), ctypes.c_uint32]
+#ofdmflexframesync_execute.argtypes = [ofdmflexframesync, ctypes.POINTER(struct_c__SA_liquid_float_complex), ctypes.c_uint32]
+ofdmflexframesync_execute.argtypes = [ofdmflexframesync, np.ctypeslib.ndpointer(dtype=np.complex64, ndim=1, flags='C_CONTIGUOUS'), ctypes.c_uint32]
+ofdmflexframesync_execute_sc16q11 = liquiddsp.ofdmflexframesync_execute_sc16q11
+ofdmflexframesync_execute_sc16q11.restype = ctypes.c_int32
+ofdmflexframesync_execute_sc16q11.argtypes = [ofdmflexframesync, np.ctypeslib.ndpointer(dtype=np.int16, ndim=1, flags='C_CONTIGUOUS'), ctypes.c_uint32]
 ofdmflexframesync_get_rssi = liquiddsp.ofdmflexframesync_get_rssi
 ofdmflexframesync_get_rssi.restype = ctypes.c_float
 ofdmflexframesync_get_rssi.argtypes = [ofdmflexframesync]
@@ -6492,78 +6609,6 @@ ofdmframe_validate_sctype.argtypes = [ctypes.POINTER(ctypes.c_ubyte), ctypes.c_u
 ofdmframe_print_sctype = liquiddsp.ofdmframe_print_sctype
 ofdmframe_print_sctype.restype = ctypes.c_int32
 ofdmframe_print_sctype.argtypes = [ctypes.POINTER(ctypes.c_ubyte), ctypes.c_uint32]
-class struct_ofdmframegen_s(Structure):
-    pass
-
-ofdmframegen = ctypes.POINTER(struct_ofdmframegen_s)
-ofdmframegen_create = liquiddsp.ofdmframegen_create
-ofdmframegen_create.restype = ofdmframegen
-ofdmframegen_create.argtypes = [ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32, ctypes.POINTER(ctypes.c_ubyte)]
-ofdmframegen_destroy = liquiddsp.ofdmframegen_destroy
-ofdmframegen_destroy.restype = ctypes.c_int32
-ofdmframegen_destroy.argtypes = [ofdmframegen]
-ofdmframegen_print = liquiddsp.ofdmframegen_print
-ofdmframegen_print.restype = ctypes.c_int32
-ofdmframegen_print.argtypes = [ofdmframegen]
-ofdmframegen_reset = liquiddsp.ofdmframegen_reset
-ofdmframegen_reset.restype = ctypes.c_int32
-ofdmframegen_reset.argtypes = [ofdmframegen]
-ofdmframegen_write_S0a = liquiddsp.ofdmframegen_write_S0a
-ofdmframegen_write_S0a.restype = ctypes.c_int32
-ofdmframegen_write_S0a.argtypes = [ofdmframegen, ctypes.POINTER(struct_c__SA_liquid_float_complex)]
-ofdmframegen_write_S0b = liquiddsp.ofdmframegen_write_S0b
-ofdmframegen_write_S0b.restype = ctypes.c_int32
-ofdmframegen_write_S0b.argtypes = [ofdmframegen, ctypes.POINTER(struct_c__SA_liquid_float_complex)]
-ofdmframegen_write_S1 = liquiddsp.ofdmframegen_write_S1
-ofdmframegen_write_S1.restype = ctypes.c_int32
-ofdmframegen_write_S1.argtypes = [ofdmframegen, ctypes.POINTER(struct_c__SA_liquid_float_complex)]
-ofdmframegen_writesymbol = liquiddsp.ofdmframegen_writesymbol
-ofdmframegen_writesymbol.restype = ctypes.c_int32
-ofdmframegen_writesymbol.argtypes = [ofdmframegen, ctypes.POINTER(struct_c__SA_liquid_float_complex), ctypes.POINTER(struct_c__SA_liquid_float_complex)]
-ofdmframegen_writetail = liquiddsp.ofdmframegen_writetail
-ofdmframegen_writetail.restype = ctypes.c_int32
-ofdmframegen_writetail.argtypes = [ofdmframegen, ctypes.POINTER(struct_c__SA_liquid_float_complex)]
-ofdmframesync_callback = ctypes.CFUNCTYPE(ctypes.c_int32, ctypes.POINTER(struct_c__SA_liquid_float_complex), ctypes.POINTER(ctypes.c_ubyte), ctypes.c_uint32, ctypes.POINTER(None))
-class struct_ofdmframesync_s(Structure):
-    pass
-
-ofdmframesync = ctypes.POINTER(struct_ofdmframesync_s)
-ofdmframesync_create = liquiddsp.ofdmframesync_create
-ofdmframesync_create.restype = ofdmframesync
-ofdmframesync_create.argtypes = [ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32, ctypes.POINTER(ctypes.c_ubyte), ofdmframesync_callback, ctypes.POINTER(None)]
-ofdmframesync_destroy = liquiddsp.ofdmframesync_destroy
-ofdmframesync_destroy.restype = ctypes.c_int32
-ofdmframesync_destroy.argtypes = [ofdmframesync]
-ofdmframesync_print = liquiddsp.ofdmframesync_print
-ofdmframesync_print.restype = ctypes.c_int32
-ofdmframesync_print.argtypes = [ofdmframesync]
-ofdmframesync_reset = liquiddsp.ofdmframesync_reset
-ofdmframesync_reset.restype = ctypes.c_int32
-ofdmframesync_reset.argtypes = [ofdmframesync]
-ofdmframesync_is_frame_open = liquiddsp.ofdmframesync_is_frame_open
-ofdmframesync_is_frame_open.restype = ctypes.c_int32
-ofdmframesync_is_frame_open.argtypes = [ofdmframesync]
-ofdmframesync_execute = liquiddsp.ofdmframesync_execute
-ofdmframesync_execute.restype = ctypes.c_int32
-ofdmframesync_execute.argtypes = [ofdmframesync, ctypes.POINTER(struct_c__SA_liquid_float_complex), ctypes.c_uint32]
-ofdmframesync_get_rssi = liquiddsp.ofdmframesync_get_rssi
-ofdmframesync_get_rssi.restype = ctypes.c_float
-ofdmframesync_get_rssi.argtypes = [ofdmframesync]
-ofdmframesync_get_cfo = liquiddsp.ofdmframesync_get_cfo
-ofdmframesync_get_cfo.restype = ctypes.c_float
-ofdmframesync_get_cfo.argtypes = [ofdmframesync]
-ofdmframesync_set_cfo = liquiddsp.ofdmframesync_set_cfo
-ofdmframesync_set_cfo.restype = ctypes.c_int32
-ofdmframesync_set_cfo.argtypes = [ofdmframesync, ctypes.c_float]
-ofdmframesync_debug_enable = liquiddsp.ofdmframesync_debug_enable
-ofdmframesync_debug_enable.restype = ctypes.c_int32
-ofdmframesync_debug_enable.argtypes = [ofdmframesync]
-ofdmframesync_debug_disable = liquiddsp.ofdmframesync_debug_disable
-ofdmframesync_debug_disable.restype = ctypes.c_int32
-ofdmframesync_debug_disable.argtypes = [ofdmframesync]
-ofdmframesync_debug_print = liquiddsp.ofdmframesync_debug_print
-ofdmframesync_debug_print.restype = ctypes.c_int32
-ofdmframesync_debug_print.argtypes = [ofdmframesync, ctypes.POINTER(ctypes.c_char)]
 
 # values for enumeration 'c__EA_liquid_ncotype'
 c__EA_liquid_ncotype__enumvalues = {
@@ -7967,13 +8012,13 @@ __all__ = \
     'ofdmflexframegen_is_assembled', 'ofdmflexframegen_print',
     'ofdmflexframegen_reset', 'ofdmflexframegen_set_header_len',
     'ofdmflexframegen_set_header_props', 'ofdmflexframegen_setprops',
-    'ofdmflexframegen_write', 'ofdmflexframegenprops_init_default',
+    'ofdmflexframegen_write', 'ofdmflexframegen_write_sc16q11', 'ofdmflexframegenprops_init_default',
     'ofdmflexframegenprops_s', 'ofdmflexframesync',
     'ofdmflexframesync_create', 'ofdmflexframesync_debug_disable',
     'ofdmflexframesync_debug_enable', 'ofdmflexframesync_debug_print',
     'ofdmflexframesync_decode_header_soft',
     'ofdmflexframesync_decode_payload_soft',
-    'ofdmflexframesync_destroy', 'ofdmflexframesync_execute',
+    'ofdmflexframesync_destroy', 'ofdmflexframesync_execute','ofdmflexframesync_execute_sc16q11',
     'ofdmflexframesync_get_cfo',
     'ofdmflexframesync_get_framedatastats',
     'ofdmflexframesync_get_rssi', 'ofdmflexframesync_is_frame_open',
