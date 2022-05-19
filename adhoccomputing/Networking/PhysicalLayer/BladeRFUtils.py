@@ -19,17 +19,20 @@ class BladeRFUtils(SDRUtils):
     #     1: "361ab51785f20b1ff3654438c1ddb4d6"
     # }
 
+    bladerfs = {}
 
-    bladerfs={
-        0: "c2863e4c6b8ed16e9ebe51e233da9931",
-        1: "6f22dd084ce6d7f0ee649545f1d35a07"
-    }
+    # bladerfs={
+    #     0: "c2863e4c6b8ed16e9ebe51e233da9931",
+    #     1: "6f22dd084ce6d7f0ee649545f1d35a07"
+    # }
 
     def __init__(self, componentinstancenumber) -> None:
         super().__init__(componentinstancenumber)
         self.mutex = Lock()
         self.cca = False
         self.bytes_per_sample = 4 # 2 int16 for complex number sc16q11
+        if not bool (self.bladerfs):
+            self.probe_bladerfs()
 
     defaultbladerfconfig = SDRConfiguration(freq =2.350e9, bandwidth = 61.44e6, chan = 0, hw_tx_gain = 30, hw_rx_gain = 0, sw_tx_gain=-12.0)
 
@@ -73,11 +76,36 @@ class BladeRFUtils(SDRUtils):
             devinfos = _bladerf.get_device_list()
             print(devinfos)
             for devinfo in devinfos:
-                print(type(devinfo.serial))
                 if devinfo.serial == serial:
                     device = "{backend}:device={usb_bus}:{usb_addr}".format(**devinfo._asdict())
                     print(devinfo.serial)
                     return device
+
+        except _bladerf.BladeRFError:
+            print( "No bladeRF devices found." )
+            pass
+
+        return device
+
+    # =============================================================================
+    # Search for a bladeRF device attached to the host system
+    # Returns a bladeRF device handle.
+    # =============================================================================
+    def probe_bladerfs(self):
+        device = None
+        print( "Searching for bladeRF devices..." )
+        try:
+            devinfos = _bladerf.get_device_list()
+            print(devinfos)
+            cnt = 0;
+            for devinfo in devinfos:
+                self.bladerfs[cnt] = devinfo.serial
+                print("Bladerf ", cnt, " has serial ", self.bladerfs[cnt])
+                cnt = cnt + 1
+                #if devinfo.serial == serial:
+                #    device = "{backend}:device={usb_bus}:{usb_addr}".format(**devinfo._asdict())
+                #    print(devinfo.serial)
+                #    return device
 
         except _bladerf.BladeRFError:
             print( "No bladeRF devices found." )
@@ -181,10 +209,17 @@ class BladeRFUtils(SDRUtils):
         return True, 0 #TODO: TO BE IMPLEMENTED
 
     def configureSdr(self, type="x115", sdrconfig=defaultbladerfconfig):
-        self.devicename = self.bladerfs[self.componentinstancenumber] #get the list of devices online (should be done once!) and match serial to componentinstancenumber
+        try:
+            print("SDR my componentinstancenumber is ", self.componentinstancenumber)
+            self.devicename = self.bladerfs[self.componentinstancenumber] #get the list of devices online (should be done once!) and match serial to componentinstancenumber
+        except Exception as ex:
+            self.devicename = "none"
+            print("While probing bladerfs ", ex)
+        print("WILL CONFIGURE BLADERF with serial ", self.devicename, " for sdr devices ", self.componentinstancenumber)
         self.sdrconfig = sdrconfig
 
-        self.bladerfdevice_identifier = self.probe_specific_bladerf(bytes(self.devicename,'utf-8')) #devicename is the serial of bladerf
+#        self.bladerfdevice_identifier = self.probe_specific_bladerf(bytes(self.devicename,'utf-8')) #devicename is the serial of bladerf
+        self.bladerfdevice_identifier = self.probe_specific_bladerf(self.devicename) #devicename is the serial of bladerf
         print(self.bladerfdevice_identifier)
         if( self.bladerfdevice_identifier == None ):
             print( "No bladeRFs detected. Exiting." )
@@ -275,7 +310,7 @@ class BladeRFUtils(SDRUtils):
                     self.bladerfdevice.sync_rx(buf, num_samples)
                     mybuf = np.frombuffer(buf, dtype=np.int16)
                     self.rx_callback( num_samples, mybuf)
-                    #print("Length of received samples mybuf", len(mybuf), " num samples ", num_samples)
+                    #print(self.componentinstancenumber, ": length of received samples mybuf", len(mybuf), " num samples ", num_samples)
                 except RuntimeError as ex:
                     print("Runtime error in receive: %s", ex)
                 finally:

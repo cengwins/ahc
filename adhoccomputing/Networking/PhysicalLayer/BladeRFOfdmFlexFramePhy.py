@@ -39,6 +39,7 @@ class BladeRFOfdmFlexFramePhy(FrameHandlerBase):
     def rx_callback(self, num_rx_samps, recv_buffer):
         try:
             ofdmflexframesync_execute_sc16q11(self.fs, recv_buffer , num_rx_samps)
+            print(self.componentinstancenumber, ": ", num_rx_samps)
         except Exception as ex:
             print("Exception in rx_callback: ", ex)
 
