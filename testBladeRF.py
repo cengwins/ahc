@@ -79,11 +79,11 @@ class BladeRFNode(GenericModel):
         
         #macconfig = MacCsmaPPersistentConfigurationParameters(0.5)
         usrpconfig = SDRConfiguration(freq =900000000.0, bandwidth = 250000, chan = 0, hw_tx_gain = 50.0, hw_rx_gain = 20.0, sw_tx_gain = -12.0)
-        bladerfconfig = SDRConfiguration(freq =1977500000, bandwidth = int(56.0e6), chan = 0, hw_tx_gain = 30, hw_rx_gain = 0, sw_tx_gain = -12.0)
+        bladerfconfig = SDRConfiguration(freq =900000000, bandwidth = int(1500000), chan = 0, hw_tx_gain = 30, hw_rx_gain = 15, sw_tx_gain = -12.0)
         
         self.appl = UsrpApplicationLayer("UsrpApplicationLayer", componentinstancenumber, topology=topology)
         self.phy = BladeRFOfdmFlexFramePhy("BladeRFOfdmFlexFramePhy", componentinstancenumber, usrpconfig=bladerfconfig, topology=topology)
-        print(self.phy.sdrdev)
+        #print(self.phy.sdrdev)
         #self.mac = MacCsmaPPersistent("MacCsmaPPersistent", componentinstancenumber,  configurationparameters=macconfig, sdr=self.phy.sdrdev,topology=topology)
         
         self.components.append(self.appl)

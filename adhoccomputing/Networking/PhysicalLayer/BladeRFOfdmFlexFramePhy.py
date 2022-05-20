@@ -1,3 +1,6 @@
+#import matplotlib
+#matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 from ctypes import *
 import pickle
 from threading import Lock
@@ -5,7 +8,7 @@ from .FrameHandlerBase import *
 from ...Generics import *
 from .LiquidDspUtils import *
 import numpy as np
-
+import time
 mutex = Lock()
 
 framers: FramerObjects = FramerObjects()
@@ -15,7 +18,7 @@ def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_int, payload:POINTER(c
     mutex.acquire(1)
     try:
         framer = framers.get_framer_by_id(userdata)
-        #print("RSSI", stats.rssi)
+        print("RSSI", stats.rssi)
         if payload_valid != 0:
             ofdmflexframesync_print(framer.fs) 
             pload = string_at(payload, payload_len)
@@ -39,6 +42,25 @@ class BladeRFOfdmFlexFramePhy(FrameHandlerBase):
     def rx_callback(self, num_rx_samps, recv_buffer):
         try:
             ofdmflexframesync_execute_sc16q11(self.fs, recv_buffer , num_rx_samps)
+            #print("recvbuffer =", recv_buffer[:5])
+            #print("recvbufferscaled =", recv_buffer[:5]/2048.0)
+            if self.plotenabled==True and self.componentinstancenumber == 0 :
+                x = recv_buffer[::2]
+                y = recv_buffer[1::2]
+                if self.first == True:
+                    self.first = False
+                    
+                    self.plot1, = self.ax.plot(x,y,"*")
+                else:
+                    self.plot1.set_xdata(x)
+                    self.plot1.set_ydata(y)
+                    self.figure.canvas.draw()
+                    self.figure.canvas.flush_events()
+                    time.sleep(0.01)
+                plt.show()
+
+            #for i in range(5):
+            #    print(recv_buffer[i].real(),"+",recv_buffer[i].imag(),"j")
             #print(self.componentinstancenumber, ": ", num_rx_samps)
         except Exception as ex:
             print("Exception in rx_callback: ", ex)
@@ -56,11 +78,11 @@ class BladeRFOfdmFlexFramePhy(FrameHandlerBase):
     def configure(self):
         self.fgprops = ofdmflexframegenprops_s(LIQUID_CRC_32, LIQUID_FEC_NONE, LIQUID_FEC_HAMMING74, LIQUID_MODEM_QPSK)
         res = ofdmflexframegenprops_init_default(byref(self.fgprops))
-        self.fgprops.check = LIQUID_CRC_32
+        self.fgprops.check = LIQUID_CRC_NONE
         self.fgprops.fec0 = LIQUID_FEC_NONE
-        self.fgprops.fec1 = LIQUID_FEC_HAMMING74
-        self.fgprops.mod_scheme = LIQUID_MODEM_QPSK
-        self.M = 512
+        self.fgprops.fec1 = LIQUID_FEC_NONE
+        self.fgprops.mod_scheme = LIQUID_MODEM_BPSK
+        self.M = 256
         self.cp_len = 64
         self.taper_len = 64
         self.fg = ofdmflexframegen_create(self.M, self.cp_len, self.taper_len, None, byref(self.fgprops))
@@ -87,5 +109,13 @@ class BladeRFOfdmFlexFramePhy(FrameHandlerBase):
 
     def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, usrpconfig=None, num_worker_threads=1, topology=None):
         self.framers = framers
+        self.plotenabled=False
+        if self.plotenabled==True and componentinstancenumber == 0:
+            self.figure, self.ax = plt.subplots(figsize=(5,5))
+            self.ax.set_xlim([-200, 200])
+            self.ax.set_ylim([-200, 200])
+            plt.ion()
+            plt.show()
+            self.first = True
         super().__init__(componentname, componentinstancenumber, context, configurationparameters, usrpconfig, num_worker_threads, topology, self.framers, SDRType="x115")
         

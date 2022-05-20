@@ -10,8 +10,8 @@ import numpy as np
 
 class BladeRFUtils(SDRUtils):
     
-    #fpgalocation = "/usr/local/share/hostedx115.rbf"
-    fpgalocation = "/usr/share/Nuand/bladeRF/hostedx115.rbf"
+    fpgalocation = "/usr/local/share/hostedx115.rbf"
+    #fpgalocation = "/usr/share/Nuand/bladeRF/hostedx115.rbf"
 
     # bladerfs={
     #     0: "9419c6d87985ee1d13edde236573b65e",
@@ -154,17 +154,24 @@ class BladeRFUtils(SDRUtils):
 
         # Configure bladeRF
         self.bladerfdevice_tx_ch              = self.bladerfdevice.Channel(self.tx_ch)
-        self.bladerfdevice_tx_ch.frequency   = self.tx_freq
-        self.bladerfdevice_tx_ch.sample_rate = self.tx_rate
+       
+        if self.componentinstancenumber == 0:
+            deltafreq = 1000000
+        else:
+            deltafreq = 0
+        self.bladerfdevice_tx_ch.frequency   = self.tx_freq + deltafreq
+        self.bladerfdevice_tx_ch.sample_rate = self.bandwidth #40000000 #self.tx_rate
         self.bladerfdevice_tx_ch.gain        = self.tx_gain
-
+        self.bladerfdevice_tx_ch.bandwidth   = self.bandwidth
+        #self.bladerfdevice_tx_ch.gain_mode   = _bladerf.GainMode.Manual
+        #self.bladerfdevice.set_gain_mode ( self.bladerfdevice_tx_ch , _bladerf.GainMode.Manual)
         # Setup stream
         self.bladerfdevice.sync_config(layout=_bladerf.ChannelLayout.TX_X1,
                         fmt=_bladerf.Format.SC16_Q11,
                         num_buffers=16,
-                        buffer_size=8192,
+                        buffer_size=8192*2,
                         num_transfers=8,
-                        stream_timeout=3500)
+                        stream_timeout=500)
 
         # Enable module
         print( "TX: Start" )
@@ -187,17 +194,24 @@ class BladeRFUtils(SDRUtils):
 
         # Configure BladeRF
         self.bladerfdevice_rx_ch             = self.bladerfdevice.Channel(self.rx_ch)
-        self.bladerfdevice_rx_ch.frequency   = self.rx_freq
-        self.bladerfdevice_rx_ch.sample_rate = self.rx_rate
-        self.bladerfdevice_rx_ch.gain        = self.rx_gain
 
+        if self.componentinstancenumber == 0:
+            deltafreq = 0
+        else:
+            deltafreq = 1000000
+        self.bladerfdevice_rx_ch.frequency   = self.rx_freq + deltafreq
+        self.bladerfdevice_rx_ch.sample_rate = self.bandwidth #40000000 #self.rx_rate
+        self.bladerfdevice_rx_ch.gain        = self.rx_gain
+        self.bladerfdevice_rx_ch.bandwidth   = self.bandwidth
+        #self.bladerfdevice_rx_ch.gain_mode   = _bladerf.GainMode.Manual
+        #self.bladerfdevice.set_gain_mode ( self.bladerfdevice_rx_ch , _bladerf.GainMode.Manual)
         # Setup synchronous stream
         self.bladerfdevice.sync_config(layout         = _bladerf.ChannelLayout.RX_X1,
                         fmt            = _bladerf.Format.SC16_Q11,
                         num_buffers    = 16,
-                        buffer_size    = 8192,
+                        buffer_size    = 8192*2,
                         num_transfers  = 8,
-                        stream_timeout = 3500)
+                        stream_timeout = 500)
 
         # Enable module
         
@@ -230,6 +244,8 @@ class BladeRFUtils(SDRUtils):
         self.board_name = self.bladerfdevice.board_name
         self.fpga_size  = self.bladerfdevice.fpga_size
 
+        _bladerf.set_verbosity(0)
+
         print( "Loading FPGA on ",self.devicename, "at ", self.fpgalocation )
         try:
             status = self.load_fpga( self.bladerfdevice, self.fpgalocation )
@@ -253,13 +269,25 @@ class BladeRFUtils(SDRUtils):
         self.rx_rate = self.tx_rate = int(self.sdrconfig.bandwidth)
         self.tx_gain = int(self.sdrconfig.hw_tx_gain)
         self.rx_gain = int(self.sdrconfig.hw_rx_gain)
+        self.bandwidth = self.sdrconfig.bandwidth
 
+        self.bladerfdevice.set_gain_mode(tx_chan, _bladerf.GainMode.FastAttack_AGC)
+        self.bladerfdevice.set_gain_mode(rx_chan, _bladerf.GainMode.FastAttack_AGC)
 
+        
+        #TODO FOR TESTING
+        lb = _bladerf.Loopback.BB_TXVGA1_RXLPF
+        self.bladerfdevice.loopback = _bladerf.Loopback.BB_TXVGA1_RXLPF
+        #status  = self.bladerfdevice.set_loopback(lb)
+        #if status < 0:
+        #    print("Cannot do loopback")
+        #else:
+        #    print("Set loopback to ", lb)
+        
         self.configure_rx_channel()
-
         self.configure_tx_channel()
 
-        print("------- BLADERF(", self.bladerfdevice.get_serial(), ") CONFIG --------")
+        print("----> BLADERF(", self.bladerfdevice.get_serial(), ") CONFIG --------")
         print("----> ", self.bladerfdevice.devinfo)
         print("----> TX_CHAN", self.tx_ch)
         print("----> RX_CHAN", self.rx_ch)
@@ -300,21 +328,25 @@ class BladeRFUtils(SDRUtils):
         num_samples = 256
         buf = bytearray(num_samples*self.bytes_per_sample)
         #print(f"recv_buffer={recv_buffer")
-        
+        #buf2 = np.zeros(num_samples*2, dtype=np.int16) # sc16q1 samples
+
         while(True):
             self.cca = False #TODO
             if self.cca == False:
-                self.mutex.acquire(1)
+                #self.mutex.acquire(1)
                 #print(f"rx_thread on usrp bladerf_{self.componentinstancenumber} ---> {self.devicename}")
                 try:
                     self.bladerfdevice.sync_rx(buf, num_samples)
                     mybuf = np.frombuffer(buf, dtype=np.int16)
+                    #mybuf2 = np.frombuffer(buf, dtype=np.complex64)
                     self.rx_callback( num_samples, mybuf)
+                    #print("myuf=", mybuf[:5]/2048.0)
                     #print(self.componentinstancenumber, ": length of received samples mybuf", len(mybuf), " num samples ", num_samples)
                 except RuntimeError as ex:
                     print("Runtime error in receive: %s", ex)
                 finally:
-                    self.mutex.release()
+                    pass
+                    #self.mutex.release()
                     #print("Released mutex")
                 
     def transmit_samples(self, transmit_buffer):
@@ -331,5 +363,6 @@ class BladeRFUtils(SDRUtils):
             print("Runtime error in receive: %s", ex)
         finally:
             #self.mutex.release()
-            self.start_sdr_rx()
+            #self.start_sdr_rx()
+            pass
      
