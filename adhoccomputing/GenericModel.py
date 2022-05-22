@@ -14,7 +14,7 @@ class GenericModel:
         self.context = context
         self.configurationparameters = configurationparameters
         self.eventhandlers = {EventTypes.INIT: self.on_init, EventTypes.MFRB: self.on_message_from_bottom,
-                            EventTypes.MFRT: self.on_message_from_top, EventTypes.MFRP: self.on_message_from_peer}
+                            EventTypes.MFRT: self.on_message_from_top, EventTypes.MFRP: self.on_message_from_peer, EventTypes.EXIT: self.on_exit}
         # Add default handlers to all instantiated components.
         # If a component overwrites the __init__ method it has to call the super().__init__ method
         self.inputqueue = queue.Queue()
@@ -50,6 +50,12 @@ class GenericModel:
         for c in self.components:
             c.inputqueue.put_nowait(Event(self, EventTypes.INIT, None))
         self.inputqueue.put_nowait(Event(self, EventTypes.INIT, None))
+
+
+    def exit_process(self):
+        for c in self.components:
+            c.inputqueue.put_nowait(Event(self, EventTypes.EXIT, None))
+        self.inputqueue.put_nowait(Event(self, EventTypes.EXIT, None))
 
 
     def send_down(self, event: Event):
@@ -96,6 +102,9 @@ class GenericModel:
     def on_message_from_peer(self, eventobj: Event):
         print(f"{EventTypes.MFRP}  {self.componentname}.{self.componentinstancenumber}")
 
+    def on_exit(self, eventobj: Event):
+        print(f"{EventTypes.EXIT}  {self.componentname}.{self.componentinstancenumber}")
+    
 
     def on_init(self, eventobj: Event):
 #        if self.componentinstancenumber == 0:

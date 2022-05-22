@@ -60,6 +60,8 @@ class FrameHandlerBase(GenericModel):
           msg = GenericMessage(eventobj.eventcontent.payload.phyheader, eventobj.eventcontent.payload.phypayload)
           self.send_up(Event(self, EventTypes.MFRB, msg))
 
+    def on_exit(self, eventobj: Event):
+        self.sdrdev.shutdown(0)
 
     def on_message_from_top(self, eventobj: Event):
     # channel receives the input message and will process the message by the process event in the next pipeline stage

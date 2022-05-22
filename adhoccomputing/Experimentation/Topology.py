@@ -103,6 +103,15 @@ class Topology:
       ch = self.channels[i]
       ch.initiate_process()
 
+
+  def exit(self):
+    for i in self.G.nodes:
+      node = self.nodes[i]
+      node.exit_process()
+    for i in self.channels:
+      ch = self.channels[i]
+      ch.exit_process()
+
     # self.nodecolors = ['b'] * N
     # self.lock = Lock()
 

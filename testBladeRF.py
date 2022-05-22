@@ -3,6 +3,7 @@ import sys
 import time, random, math
 from enum import Enum
 from pickle import FALSE
+import signal
 
 
 
@@ -105,12 +106,12 @@ class BladeRFNode(GenericModel):
         # self.connect_me_to_component(ConnectorTypes.DOWN, self.appl)
     
         
-
+topo = Topology()
 def main():
-    topo = Topology()
+    
 # Note that the topology has to specific: usrp winslab_b210_0 is run by instance 0 of the component
 # Therefore, the usrps have to have names winslab_b210_x where x \in (0 to nodecount-1)
-    topo.construct_winslab_topology_without_channels(2, BladeRFNode)
+    topo.construct_winslab_topology_without_channels(1, BladeRFNode)
   # topo.construct_winslab_topology_with_channels(2, UsrpNode, FIFOBroadcastPerfectChannel)
   
   # time.sleep(1)
@@ -127,5 +128,13 @@ def main():
 
     time.sleep(200)
 
+
+def signal_handler(sig, frame):
+    print('You pressed Ctrl+C!')
+    topo.exit()
+    time.sleep(5)
+    sys.exit(0)
+
 if __name__ == "__main__":
+    signal.signal(signal.SIGINT, signal_handler)
     main()

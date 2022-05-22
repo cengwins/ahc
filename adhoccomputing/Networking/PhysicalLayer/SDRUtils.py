@@ -41,3 +41,6 @@ class SDRUtils():
 
     def finalize_transmit_samples(self):
         pass
+
+    def shutdown(self, error = 0):
+        print("Not implemented shutdown")

@@ -28,6 +28,7 @@ class EventTypes(Enum):
   MFRB = "msgfrombottom"
   MFRT = "msgfromtop"
   MFRP = "msgfrompeer"
+  EXIT = "exit"
 
 class ConnectorTypes(Enum):
   DOWN = "DOWN"
