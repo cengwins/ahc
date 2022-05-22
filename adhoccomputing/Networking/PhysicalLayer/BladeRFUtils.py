@@ -266,8 +266,10 @@ class BladeRFUtils(SDRUtils):
         self.tx_ch = _bladerf.CHANNEL_TX(tx_chan)
         self.rx_ch = _bladerf.CHANNEL_RX(rx_chan)
         print(self.tx_ch, self.rx_ch)
-        self.rx_freq = self.tx_freq = int(self.sdrconfig.freq)
-        self.rx_rate = self.tx_rate = int(self.sdrconfig.bandwidth)
+        self.rx_freq = int(self.sdrconfig.freq)
+        self.tx_freq = int(self.sdrconfig.freq)
+        self.rx_rate = int(self.sdrconfig.bandwidth)
+        self.tx_rate = int(self.sdrconfig.bandwidth)
         self.tx_gain = int(self.sdrconfig.hw_tx_gain)
         self.rx_gain = int(self.sdrconfig.hw_rx_gain)
         self.bandwidth = self.sdrconfig.bandwidth
@@ -291,13 +293,12 @@ class BladeRFUtils(SDRUtils):
         self.configure_rx_channel()
         self.configure_tx_channel()
 
-        _tool._print_channel_details(self.bladerfdevice_rx_ch,0)
-        _tool._print_channel_details(self.bladerfdevice_tx_ch,0)
-
         print("----> BLADERF(", self.bladerfdevice.get_serial(), ") CONFIG --------")
         print("----> ", self.bladerfdevice.devinfo)
         print("----> TX_CHAN", self.tx_ch)
+        _tool._print_channel_details(self.bladerfdevice_tx_ch,0)
         print("----> RX_CHAN", self.rx_ch)
+        _tool._print_channel_details(self.bladerfdevice_rx_ch,0)
         print("----> TX_FREQ", self.bladerfdevice.get_frequency(self.tx_ch))
         print("----> RX_FREQ", self.bladerfdevice.get_frequency(self.rx_ch))
         print("----> TX_BANDWIDTH", self.bladerfdevice.get_bandwidth(self.tx_ch))
@@ -329,7 +330,7 @@ class BladeRFUtils(SDRUtils):
         self.start_sdr_rx()
      
     def rx_thread(self):
-        print(f"rx_thread on bladerf{self.devicename}-->{self.componentinstancenumber}")
+        #print(f"rx_thread on bladerf{self.devicename}-->{self.componentinstancenumber}")
         #print(f"max_samps_per_packet={max_samps_per_packet}")
         
         num_samples = 1024
@@ -347,7 +348,7 @@ class BladeRFUtils(SDRUtils):
                     
                     #mybuf = np.frombuffer(buf, dtype=np.int16)
                     #mybuf2 = np.frombuffer(buf, dtype=np.complex64)
-                    mybuf2 = np.frombuffer(buf, dtype=np.int16).flatten (order="C") 
+                    mybuf2 = np.frombuffer(buf, dtype=np.int16).flatten (order="C") #// int(self.sdrconfig.sw_tx_gain)
                     self.rx_callback( num_samples, mybuf2)
                     #print("myuf=", mybuf[:5]/2048.0)
                     #print(self.componentinstancenumber, ": length of received samples mybuf", len(mybuf), " num samples ", num_samples)
@@ -363,8 +364,7 @@ class BladeRFUtils(SDRUtils):
         try:
             #self.mutex.acquire(1)
             #self.stop_sdr_rx()
-            bytes_per_sample = 4
-            num = len(transmit_buffer)//bytes_per_sample
+            num = (len(transmit_buffer)//self.bytes_per_sample)*2
             #num = len(transmit_buffer)#//self.bytes_per_sample
             #print("Number of samples to transmit", num)
             self.bladerfdevice.sync_tx(transmit_buffer.flatten(order="C"), num)

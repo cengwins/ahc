@@ -18,7 +18,7 @@ def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_int, payload:POINTER(c
     #mutex.acquire(1)
     try:
         framer = framers.get_framer_by_id(userdata)
-        print("RSSI", stats.rssi)
+        print("Node",framer.componentinstancenumber,"RSSI", stats.rssi)
         if payload_valid != 0:
             ofdmflexframesync_print(framer.fs) 
             pload = string_at(payload, payload_len)
@@ -80,10 +80,10 @@ class BladeRFOfdmFlexFramePhy(FrameHandlerBase):
     def configure(self):
         self.fgprops = ofdmflexframegenprops_s(LIQUID_CRC_32, LIQUID_FEC_NONE, LIQUID_FEC_HAMMING74, LIQUID_MODEM_QPSK)
         res = ofdmflexframegenprops_init_default(byref(self.fgprops))
-        self.fgprops.check = LIQUID_CRC_32
+        self.fgprops.check = LIQUID_CRC_NONE
         self.fgprops.fec0 = LIQUID_FEC_NONE
-        self.fgprops.fec1 = LIQUID_FEC_HAMMING74
-        self.fgprops.mod_scheme = LIQUID_MODEM_QPSK
+        self.fgprops.fec1 = LIQUID_FEC_NONE
+        self.fgprops.mod_scheme = LIQUID_MODEM_BPSK
         self.M = 256
         self.cp_len = 64
         self.taper_len = 64

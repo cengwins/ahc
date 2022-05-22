@@ -80,7 +80,7 @@ class BladeRFNode(GenericModel):
         
         #macconfig = MacCsmaPPersistentConfigurationParameters(0.5)
         usrpconfig = SDRConfiguration(freq =900000000.0, bandwidth = 250000, chan = 0, hw_tx_gain = 50.0, hw_rx_gain = 20.0, sw_tx_gain = -12.0)
-        bladerfconfig = SDRConfiguration(freq =915000000, bandwidth = 2000000, chan = 0, hw_tx_gain = 73, hw_rx_gain = 43, sw_tx_gain = -12.0)
+        bladerfconfig = SDRConfiguration(freq =915000000, bandwidth = 2000000, chan = 0, hw_tx_gain = 73, hw_rx_gain = 43, sw_tx_gain = -1.0)
         
         self.appl = UsrpApplicationLayer("UsrpApplicationLayer", componentinstancenumber, topology=topology)
         self.phy = BladeRFOfdmFlexFramePhy("BladeRFOfdmFlexFramePhy", componentinstancenumber, usrpconfig=bladerfconfig, topology=topology)
@@ -122,7 +122,7 @@ def main():
     while(i < 100):
         for k in range(num_nodes):
             topo.nodes[k].appl.send_self(Event(topo.nodes[k], UsrpApplicationLayerEventTypes.STARTBROADCAST, None))
-        time.sleep(3)
+        time.sleep(0.3)
         #topo.nodes[0].appl.send_self(Event(topo.nodes[0], UsrpApplicationLayerEventTypes.STARTBROADCAST, None))
         #time.sleep(0.1)
         i = i + 1
