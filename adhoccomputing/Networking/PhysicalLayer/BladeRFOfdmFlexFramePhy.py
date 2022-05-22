@@ -15,7 +15,7 @@ framers: FramerObjects = FramerObjects()
 
 #def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_uint32, payload:POINTER(c_ubyte), payload_len:c_uint32, payload_valid:c_int32, stats:struct_c__SA_framesyncstats_s, userdata:POINTER(None)):
 def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_int, payload:POINTER(c_ubyte), payload_len:c_uint, payload_valid:c_int, stats:struct_c__SA_framesyncstats_s, userdata:c_void_p ):
-    mutex.acquire(1)
+    #mutex.acquire(1)
     try:
         framer = framers.get_framer_by_id(userdata)
         print("RSSI", stats.rssi)
@@ -28,7 +28,7 @@ def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_int, payload:POINTER(c
             #print("Header=", msg.header.messagetype, " Payload=", msg.payload, " RSSI=", stats.rssi)   
     except Exception as e:
         print("Exception_ofdm_callback:", e)
-    mutex.release()
+    #mutex.release()
     ofdmflexframesync_reset(framer.fs)
     return 0
 
@@ -42,6 +42,7 @@ class BladeRFOfdmFlexFramePhy(FrameHandlerBase):
     def rx_callback(self, num_rx_samps, recv_buffer):
         try:
             ofdmflexframesync_execute_sc16q11(self.fs, recv_buffer , num_rx_samps)
+            #ofdmflexframesync_execute(self.fs, recv_buffer , num_rx_samps)
             #print("recvbuffer =", recv_buffer[:5])
             #print("recvbufferscaled =", recv_buffer[:5]/2048.0)
             if self.plotenabled==True and self.componentinstancenumber == 0 :
@@ -71,24 +72,26 @@ class BladeRFOfdmFlexFramePhy(FrameHandlerBase):
         last_symbol = 0
         while (last_symbol == 0):
             last_symbol = ofdmflexframegen_write_sc16q11(self.fg, self.fgbuffer, c_uint32(self.fgbuffer_len))
-            #self.rx_callback( c_uint32(self.fgbuffer_len), self.fgbuffer)  #loopback for trial
+            #last_symbol = ofdmflexframegen_write(self.fg, self.fgbuffer, c_uint32(self.fgbuffer_len))
+            #self.rx_callback( c_uint32(self.fgbuffer_len), self.fgbuffer.flatten (order="C"))  #loopback for trial
             self.sdrdev.transmit_samples(self.fgbuffer)
         self.sdrdev.finalize_transmit_samples()
         
     def configure(self):
         self.fgprops = ofdmflexframegenprops_s(LIQUID_CRC_32, LIQUID_FEC_NONE, LIQUID_FEC_HAMMING74, LIQUID_MODEM_QPSK)
         res = ofdmflexframegenprops_init_default(byref(self.fgprops))
-        self.fgprops.check = LIQUID_CRC_NONE
+        self.fgprops.check = LIQUID_CRC_32
         self.fgprops.fec0 = LIQUID_FEC_NONE
-        self.fgprops.fec1 = LIQUID_FEC_NONE
-        self.fgprops.mod_scheme = LIQUID_MODEM_BPSK
+        self.fgprops.fec1 = LIQUID_FEC_HAMMING74
+        self.fgprops.mod_scheme = LIQUID_MODEM_QPSK
         self.M = 256
         self.cp_len = 64
         self.taper_len = 64
         self.fg = ofdmflexframegen_create(self.M, self.cp_len, self.taper_len, None, byref(self.fgprops))
        
-        self.fgbuffer_len = self.M + self.cp_len
+        self.fgbuffer_len = 1024 #self.M + self.cp_len
         self.fgbuffer = np.zeros(self.fgbuffer_len*self.sdrdev.bytes_per_sample//sizeof(c_int16), dtype=np.int16) # sc16q1 samples
+        #self.fgbuffer = np.zeros(self.fgbuffer_len, dtype=np.complex64) # sc16q1 samples
 
         res = ofdmflexframegen_print(self.fg)
         

@@ -80,7 +80,7 @@ class BladeRFNode(GenericModel):
         
         #macconfig = MacCsmaPPersistentConfigurationParameters(0.5)
         usrpconfig = SDRConfiguration(freq =900000000.0, bandwidth = 250000, chan = 0, hw_tx_gain = 50.0, hw_rx_gain = 20.0, sw_tx_gain = -12.0)
-        bladerfconfig = SDRConfiguration(freq =900000000, bandwidth = int(1500000), chan = 0, hw_tx_gain = 30, hw_rx_gain = 15, sw_tx_gain = -12.0)
+        bladerfconfig = SDRConfiguration(freq =915000000, bandwidth = 2000000, chan = 0, hw_tx_gain = 73, hw_rx_gain = 43, sw_tx_gain = -12.0)
         
         self.appl = UsrpApplicationLayer("UsrpApplicationLayer", componentinstancenumber, topology=topology)
         self.phy = BladeRFOfdmFlexFramePhy("BladeRFOfdmFlexFramePhy", componentinstancenumber, usrpconfig=bladerfconfig, topology=topology)
@@ -108,10 +108,10 @@ class BladeRFNode(GenericModel):
         
 topo = Topology()
 def main():
-    
+    num_nodes = 3
 # Note that the topology has to specific: usrp winslab_b210_0 is run by instance 0 of the component
 # Therefore, the usrps have to have names winslab_b210_x where x \in (0 to nodecount-1)
-    topo.construct_winslab_topology_without_channels(1, BladeRFNode)
+    topo.construct_winslab_topology_without_channels(num_nodes, BladeRFNode)
   # topo.construct_winslab_topology_with_channels(2, UsrpNode, FIFOBroadcastPerfectChannel)
   
   # time.sleep(1)
@@ -120,8 +120,9 @@ def main():
     topo.start()
     i = 0
     while(i < 100):
-        topo.nodes[0].appl.send_self(Event(topo.nodes[0], UsrpApplicationLayerEventTypes.STARTBROADCAST, None))
-        time.sleep(0.1)
+        for k in range(num_nodes):
+            topo.nodes[k].appl.send_self(Event(topo.nodes[k], UsrpApplicationLayerEventTypes.STARTBROADCAST, None))
+        time.sleep(3)
         #topo.nodes[0].appl.send_self(Event(topo.nodes[0], UsrpApplicationLayerEventTypes.STARTBROADCAST, None))
         #time.sleep(0.1)
         i = i + 1
@@ -129,12 +130,20 @@ def main():
     time.sleep(200)
 
 
-def signal_handler(sig, frame):
+def ctrlc_signal_handler(sig, frame):
+    print('You pressed Ctrl+C!')
+    topo.exit()
+    time.sleep(5)
+    sys.exit(0)
+
+
+def segfault_signal_handler(sig, frame):
     print('You pressed Ctrl+C!')
     topo.exit()
     time.sleep(5)
     sys.exit(0)
 
 if __name__ == "__main__":
-    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGINT, ctrlc_signal_handler)
+    signal.signal(signal.SIGSEGV, segfault_signal_handler)
     main()
