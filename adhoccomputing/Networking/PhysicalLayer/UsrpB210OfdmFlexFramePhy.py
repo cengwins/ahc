@@ -36,6 +36,7 @@ class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
     
     def rx_callback(self, num_rx_samps, recv_buffer):
         try:
+            #print("rx callback")
             ofdmflexframesync_execute(self.fs, recv_buffer , num_rx_samps)
         except Exception as ex:
             print("Exception in rx_callback: ", ex)

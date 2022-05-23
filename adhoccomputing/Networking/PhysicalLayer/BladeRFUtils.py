@@ -22,7 +22,6 @@ class BladeRFUtils(SDRUtils):
     #     1: "361ab51785f20b1ff3654438c1ddb4d6"
     # }
 
-    bladerfs = {}
 
     # bladerfs={
     #     0: "c2863e4c6b8ed16e9ebe51e233da9931",
@@ -32,13 +31,13 @@ class BladeRFUtils(SDRUtils):
     def __init__(self, componentinstancenumber) -> None:
         super().__init__(componentinstancenumber)
         self.mutex = Lock()
-        self.rssi = -90
+        
         self.bytes_per_sample = 4 # 2 int16 for complex number sc16q11
         self.receiveenabled = False
         if not bool (self.bladerfs):
             self.probe_bladerfs()
 
-    defaultbladerfconfig = SDRConfiguration(freq =2.350e9, bandwidth = 61.44e6, chan = 0, hw_tx_gain = 30, hw_rx_gain = 0, sw_tx_gain=-12.0)
+    #defaultbladerfconfig = SDRConfiguration(freq =2.350e9, bandwidth = 61.44e6, chan = 0, hw_tx_gain = 30, hw_rx_gain = 0, sw_tx_gain=-12.0)
 
 
     # =============================================================================
@@ -224,13 +223,8 @@ class BladeRFUtils(SDRUtils):
         #self.start_sdr_rx()
 
 
-    def ischannelclear(self, threshold=-70, pout=100):
-        if self.rssi < threshold:
-            return True, self.rssi #TODO: TO BE IMPLEMENTED
-        else:
-            return False, self.rssi
 
-    def configureSdr(self, type="x115", sdrconfig=defaultbladerfconfig):
+    def configureSdr(self, type="x115", sdrconfig=None):
         try:
             print("SDR my componentinstancenumber is ", self.componentinstancenumber)
             self.devicename = self.bladerfs[self.componentinstancenumber] #get the list of devices online (should be done once!) and match serial to componentinstancenumber
@@ -238,7 +232,10 @@ class BladeRFUtils(SDRUtils):
             self.devicename = "none"
             print("While probing bladerfs ", ex)
         print("WILL CONFIGURE BLADERF with serial ", self.devicename, " for sdr devices ", self.componentinstancenumber)
-        self.sdrconfig = sdrconfig
+        if sdrconfig == None:
+            self.sdrconfig = self.defaultsdrconfig
+        else:
+            self.sdrconfig = sdrconfig
 
 #        self.bladerfdevice_identifier = self.probe_specific_bladerf(bytes(self.devicename,'utf-8')) #devicename is the serial of bladerf
         self.bladerfdevice_identifier = self.probe_specific_bladerf(self.devicename) #devicename is the serial of bladerf
@@ -337,16 +334,6 @@ class BladeRFUtils(SDRUtils):
         t.start()
         self.start_sdr_rx()
     
-    def computeRSSI(self, num_samples, buffer):
-        g:float = 0
-        for i in range(num_samples):
-            val:float = math.fabs(buffer[i])
-            g += val * val
-            #print("Val ", val, g)
-
-        g = g / num_samples
-        self.rssi = 10 * math.log10(math.sqrt(g)/(2048.0*1000) )
-        #print("CHANNEL RSSI = ", g, self.rssi)
         
 
     def rx_thread(self):
@@ -368,7 +355,8 @@ class BladeRFUtils(SDRUtils):
                 #mybuf2 = np.frombuffer(buf, dtype=np.complex64)
                 mybuf2 = np.frombuffer(buf, dtype=np.int16).flatten (order="C") #// int(self.sdrconfig.sw_tx_gain)
                 self.rx_callback( num_samples, mybuf2)
-                self.computeRSSI( num_samples, mybuf2)
+                if num_samples*2 > self.samps_per_est:
+                    self.computeRSSI( self.samps_per_est*2, mybuf2[:self.samps_per_est*2],type="sc16")
                 #print("myuf=", mybuf[:5]/2048.0)
                 #print(self.componentinstancenumber, ": length of received samples mybuf", len(mybuf2), " num samples ", num_samples)
             except RuntimeError as ex:

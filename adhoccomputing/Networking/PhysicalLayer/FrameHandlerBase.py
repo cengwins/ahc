@@ -102,6 +102,7 @@ class FrameHandlerBase(GenericModel):
       #  payload[i] = byte_arr_msg[i]
       payload = np.frombuffer(byte_arr_msg, dtype=np.ubyte)
       #print("bytearry:", byte_arr_msg, "Payload:",payload, " payload_len:", payload_len)
+      #print("Trasnmit in on_message_from_top")
       self.transmit(header, payload, payload_len, LIQUID_MODEM_QPSK, LIQUID_FEC_NONE, LIQUID_FEC_HAMMING74 )  # TODO: Check params
       #print("sentpload=", string_at(payload, payload_len))
       #pload = string_at(payload, payload_len)
