@@ -1,6 +1,3 @@
-#import matplotlib
-#matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 from ctypes import *
 import pickle
 from threading import Lock
@@ -8,7 +5,7 @@ from .FrameHandlerBase import *
 from ...Generics import *
 from .LiquidDspUtils import *
 import numpy as np
-import time
+
 mutex = Lock()
 
 framers: FramerObjects = FramerObjects()
@@ -50,7 +47,6 @@ class BladeRFOfdmFlexFramePhy(FrameHandlerBase):
         self.fgbuffer[:] = 0
         while (last_symbol == 0):
             last_symbol = ofdmflexframegen_write_sc16q11(self.fg, self.fgbuffer, c_uint32(self.fgbuffer_len))
-            #last_symbol = ofdmflexframegen_write(self.fg, self.fgbuffer, c_uint32(self.fgbuffer_len))
             #self.rx_callback( c_uint32(self.fgbuffer_len), self.fgbuffer.flatten (order="C"))  #loopback for trial
             self.sdrdev.transmit_samples(self.fgbuffer)
         self.sdrdev.finalize_transmit_samples()
@@ -60,7 +56,7 @@ class BladeRFOfdmFlexFramePhy(FrameHandlerBase):
         res = ofdmflexframegenprops_init_default(byref(self.fgprops))
         self.fgprops.check = LIQUID_CRC_32
         self.fgprops.fec0 = LIQUID_FEC_NONE
-        self.fgprops.fec1 = LIQUID_FEC_HAMMING128
+        self.fgprops.fec1 = LIQUID_FEC_HAMMING74
         self.fgprops.mod_scheme = LIQUID_MODEM_QPSK
         self.M = 256
         self.cp_len = 64
@@ -69,8 +65,7 @@ class BladeRFOfdmFlexFramePhy(FrameHandlerBase):
        
         self.fgbuffer_len = 1024 #self.M + self.cp_len
         self.fgbuffer = np.zeros(self.fgbuffer_len*self.sdrdev.bytes_per_sample//sizeof(c_int16), dtype=np.int16) # sc16q1 samples
-        #self.fgbuffer = np.zeros(self.fgbuffer_len, dtype=np.complex64) # sc16q1 samples
-
+        
         res = ofdmflexframegen_print(self.fg)
         
         self.ofdm_callback_function = framesync_callback(ofdm_callback)
@@ -80,7 +75,6 @@ class BladeRFOfdmFlexFramePhy(FrameHandlerBase):
             self.fs :ofdmflexframesync = ofdmflexframesync_create(self.M, self.cp_len, self.taper_len, None, self.ofdm_callback_function, id(self))
         except Exception as ex:
             print("Exception2", ex) 
-        
         
         ofdmflexframegen_reset(self.fg)
         ofdmflexframesync_reset(self.fs)

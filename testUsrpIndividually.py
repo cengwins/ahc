@@ -1,64 +1,17 @@
 import os
 import sys, getopt
-import time, random, math
-from enum import Enum
-from pickle import FALSE
+import time
+import signal
 sys.path.insert(0, os.getcwd())
 
-
 from adhoccomputing.GenericModel import GenericModel
-from adhoccomputing.Generics import Event, EventTypes, ConnectorTypes, GenericMessageHeader,GenericMessage,SDRConfiguration, MessageDestinationIdentifiers
+from adhoccomputing.Generics import Event, ConnectorTypes, SDRConfiguration
 from adhoccomputing.Experimentation.Topology import Topology
 from adhoccomputing.Networking.PhysicalLayer.UsrpB210OfdmFlexFramePhy import  UsrpB210OfdmFlexFramePhy
 from adhoccomputing.Networking.MacProtocol.CSMA import MacCsmaPPersistent, MacCsmaPPersistentConfigurationParameters
-
-# define your own message types
-class ApplicationLayerMessageTypes(Enum):
-    BROADCAST = "BROADCAST"
+from adhoccomputing.Networking.ApplicationLayer.PingPongApplicationLayer import *
 
 
-# define your own message header structure
-class ApplicationLayerMessageHeader(GenericMessageHeader):
-    pass
-
-
-class UsrpApplicationLayerEventTypes(Enum):
-    STARTBROADCAST = "startbroadcast"
-
-
-class UsrpApplicationLayer(GenericModel):
-    def on_init(self, eventobj: Event):
-        self.counter = 0
-    
-    def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None):
-        super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology)
-        self.eventhandlers[UsrpApplicationLayerEventTypes.STARTBROADCAST] = self.on_startbroadcast
-
-    def on_message_from_top(self, eventobj: Event):
-    # print(f"I am {self.componentname}.{self.componentinstancenumber},sending down eventcontent={eventobj.eventcontent}\n")
-        self.send_down(Event(self, EventTypes.MFRT, eventobj.eventcontent))
-    
-    def on_message_from_bottom(self, eventobj: Event):
-        evt = Event(self, EventTypes.MFRT, eventobj.eventcontent)
-        print(f"I am Node.{self.componentinstancenumber}, received from Node.{eventobj.eventcontent.header.messagefrom} a message: {eventobj.eventcontent.payload}")
-        evt.eventcontent.header.messageto = MessageDestinationIdentifiers.LINKLAYERBROADCAST
-        evt.eventcontent.header.messagefrom = self.componentinstancenumber
-        evt.eventcontent.payload = eventobj.eventcontent.payload + "-" + str(self.componentinstancenumber)
-        #print(f"I am {self.componentname}.{self.componentinstancenumber}, sending down eventcontent={eventobj.eventcontent.payload}\n")
-        time.sleep(0.1)
-        self.send_down(evt)  # PINGPONG
-    
-    def on_startbroadcast(self, eventobj: Event):
-        hdr = ApplicationLayerMessageHeader(ApplicationLayerMessageTypes.BROADCAST, self.componentinstancenumber, MessageDestinationIdentifiers.LINKLAYERBROADCAST)
-        self.counter = self.counter + 1
-        
-        payload = "USRP-BMSG-" + str(self.counter) + ": " + str(self.componentinstancenumber) 
-        broadcastmessage = GenericMessage(hdr, payload)
-        evt = Event(self, EventTypes.MFRT, broadcastmessage)
-        # time.sleep(3)
-        self.send_down(evt)
-        #print("Starting broadcast")
-    
          
 class UsrpNode(GenericModel):
     counter = 0
@@ -69,18 +22,16 @@ class UsrpNode(GenericModel):
         super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology)
         # SUBCOMPONENTS
         
-        macconfig = MacCsmaPPersistentConfigurationParameters(0.5)
-        usrpconfig = SDRConfiguration(freq =915000000.0, bandwidth = 2000000, chan = 0, hw_tx_gain = 50.0, hw_rx_gain = 20.0, sw_tx_gain = -12.0)
-        
+        macconfig = MacCsmaPPersistentConfigurationParameters(0.5, -30)
+        sdrconfig = SDRConfiguration(freq =915000000.0, bandwidth = 2000000, chan = 0, hw_tx_gain = 50, hw_rx_gain = 20, sw_tx_gain = -12.0)
 
-        self.appl = UsrpApplicationLayer("UsrpApplicationLayer", componentinstancenumber, topology=topology)
-        self.phy = UsrpB210OfdmFlexFramePhy("UsrpB210OfdmFlexFramePhy", componentinstancenumber, usrpconfig=usrpconfig, topology=topology)
+        self.appl = PingPongApplicationLayer("PingPongApplicationLayer", componentinstancenumber, topology=topology)
+        self.phy = UsrpB210OfdmFlexFramePhy("UsrpB210OfdmFlexFramePhy", componentinstancenumber, usrpconfig=sdrconfig, topology=topology)
         self.mac = MacCsmaPPersistent("MacCsmaPPersistent", componentinstancenumber,  configurationparameters=macconfig, sdr=self.phy.sdrdev, topology=topology)
         
         self.components.append(self.appl)
         self.components.append(self.phy)
         self.components.append(self.mac)
-        
         
         # CONNECTIONS AMONG SUBCOMPONENTS
         self.appl.connect_me_to_component(ConnectorTypes.UP, self) #Not required if nodemodel will do nothing
@@ -95,7 +46,10 @@ class UsrpNode(GenericModel):
         
         # self.phy.connect_me_to_component(ConnectorTypes.DOWN, self)
         # self.connect_me_to_component(ConnectorTypes.DOWN, self.appl)
-    
+
+
+topo = Topology()
+
 def main(argv):
     id = 0 #default 0 if arg -i is not given
     try:
@@ -110,7 +64,7 @@ def main(argv):
         elif opt in ("-i", "--ifile"):
             id = arg
 
-    topo = Topology()
+    
 # Note that the topology has to specific: usrp winslab_b210_0 is run by instance 0 of the component
 # Therefore, the usrps have to have names winslab_b210_x where x \in (0 to nodecount-1)
     topo.construct_winslab_topology_without_channels_for_docker(UsrpNode, id)
@@ -122,9 +76,26 @@ def main(argv):
     topo.start()
     
     while(True):
-        topo.nodes[0].appl.send_self(Event(topo.nodes[0], UsrpApplicationLayerEventTypes.STARTBROADCAST, None))
+        topo.nodes[0].appl.send_self(Event(topo.nodes[0], PingPongApplicationLayerEventTypes.STARTBROADCAST, None))
         time.sleep(0.2)
 
+    #time.sleep(5)
+    #topo.exit()
+    
 
+def ctrlc_signal_handler(sig, frame):
+    print('You pressed Ctrl+C!')
+    topo.exit()
+    time.sleep(5)
+    sys.exit(0)
+
+
+def segfault_signal_handler(sig, frame):
+    print('Segmentation Fault')
+    topo.exit()
+    time.sleep(5)
+    sys.exit(0)
 if __name__ == "__main__":
+    signal.signal(signal.SIGINT, ctrlc_signal_handler)
+    signal.signal(signal.SIGSEGV, segfault_signal_handler)
     main(sys.argv[1:])

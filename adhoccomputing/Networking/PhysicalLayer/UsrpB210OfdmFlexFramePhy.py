@@ -15,7 +15,7 @@ def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_int, payload:POINTER(c
     #mutex.acquire(1)
     try:
         framer = framers.get_framer_by_id(userdata)
-        #print("RSSI", stats.rssi)
+        #print("Node",framer.componentinstancenumber,"RSSI", stats.rssi, framer.sdrdev.rssi)
         if payload_valid != 0:
             #ofdmflexframesync_print(framer.fs) 
             pload = string_at(payload, payload_len)
@@ -33,8 +33,6 @@ def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_int, payload:POINTER(c
   
 class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
     
-    def on_init(self, eventobj: Event):
-        pass
     
     def rx_callback(self, num_rx_samps, recv_buffer):
         try:
@@ -46,6 +44,7 @@ class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
     def transmit(self, _header, _payload, _payload_len, _mod, _fec0, _fec1):
         ofdmflexframegen_assemble(self.fg, _header, _payload, c_uint32(_payload_len))
         last_symbol = 0
+        self.fgbuffer[:] = 0
         while (last_symbol == 0):
             last_symbol = ofdmflexframegen_write(self.fg, self.fgbuffer, c_uint32(self.fgbuffer_len))
             # self.rx_callback(self.fgbuffer_len, self.fgbuffer) #loopback for trial
@@ -77,7 +76,6 @@ class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
         except Exception as ex:
             print("Exception2", ex) 
         
-        self.sdrdev.start_rx(self.rx_callback, self)
         ofdmflexframegen_reset(self.fg)
         ofdmflexframesync_reset(self.fs)
         

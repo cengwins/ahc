@@ -1,66 +1,18 @@
 import os
-import sys
-import time, random, math
-from enum import Enum
-from pickle import FALSE
+import sys, getopt
+import time
 import signal
+sys.path.insert(0, os.getcwd())
 
 from adhoccomputing.GenericModel import GenericModel
-from adhoccomputing.Generics import Event, EventTypes, ConnectorTypes, GenericMessageHeader,GenericMessage,SDRConfiguration, MessageDestinationIdentifiers
+from adhoccomputing.Generics import Event, ConnectorTypes, SDRConfiguration
 from adhoccomputing.Experimentation.Topology import Topology
 from adhoccomputing.Networking.PhysicalLayer.BladeRFOfdmFlexFramePhy import  BladeRFOfdmFlexFramePhy
 from adhoccomputing.Networking.MacProtocol.CSMA import MacCsmaPPersistent, MacCsmaPPersistentConfigurationParameters
-
-sys.path.append(os.getcwd())
-
-# define your own message types
-class ApplicationLayerMessageTypes(Enum):
-    BROADCAST = "BROADCAST"
+from adhoccomputing.Networking.ApplicationLayer.PingPongApplicationLayer import *
 
 
-# define your own message header structure
-class ApplicationLayerMessageHeader(GenericMessageHeader):
-    pass
 
-
-class UsrpApplicationLayerEventTypes(Enum):
-    STARTBROADCAST = "startbroadcast"
-
-
-class UsrpApplicationLayer(GenericModel):
-    def on_init(self, eventobj: Event):
-        self.counter = 0
-    
-    def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None):
-        super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology)
-        self.eventhandlers[UsrpApplicationLayerEventTypes.STARTBROADCAST] = self.on_startbroadcast
-
-    def on_message_from_top(self, eventobj: Event):
-    # print(f"I am {self.componentname}.{self.componentinstancenumber},sending down eventcontent={eventobj.eventcontent}\n")
-        self.send_down(Event(self, EventTypes.MFRT, eventobj.eventcontent))
-    
-    def on_message_from_bottom(self, eventobj: Event):
-        evt = Event(self, EventTypes.MFRT, eventobj.eventcontent)
-        print(f"I am Node.{self.componentinstancenumber}, received from Node.{eventobj.eventcontent.header.messagefrom} a message: {eventobj.eventcontent.payload}")    
-        evt.eventcontent.header.messageto = MessageDestinationIdentifiers.LINKLAYERBROADCAST
-        evt.eventcontent.header.messagefrom = self.componentinstancenumber
-        evt.eventcontent.payload = eventobj.eventcontent.payload + "-" + str(self.componentinstancenumber)
-        #print(f"I am {self.componentname}.{self.componentinstancenumber}, sending down eventcontent={eventobj.eventcontent.payload}\n")
-        time.sleep(0.1)
-        self.send_down(evt)  # PINGPONG
-    
-    def on_startbroadcast(self, eventobj: Event):
-        hdr = ApplicationLayerMessageHeader(ApplicationLayerMessageTypes.BROADCAST, self.componentinstancenumber, MessageDestinationIdentifiers.LINKLAYERBROADCAST)
-        self.counter = self.counter + 1
-        
-        payload = "BLADERF-BMSG-" + str(self.counter) + ": " + str(self.componentinstancenumber) 
-        broadcastmessage = GenericMessage(hdr, payload)
-        evt = Event(self, EventTypes.MFRT, broadcastmessage)
-        #time.sleep(0.1)
-        self.send_down(evt)
-        #print("Starting broadcast", self.componentinstancenumber)
-    
-         
 class BladeRFNode(GenericModel):
     counter = 0
     def on_init(self, eventobj: Event):
@@ -71,13 +23,11 @@ class BladeRFNode(GenericModel):
         # SUBCOMPONENTS
         
         macconfig = MacCsmaPPersistentConfigurationParameters(0.5, -30)
-        usrpconfig = SDRConfiguration(freq =900000000.0, bandwidth = 250000, chan = 0, hw_tx_gain = 50.0, hw_rx_gain = 20.0, sw_tx_gain = -12.0)
-        bladerfconfig = SDRConfiguration(freq =915000000, bandwidth = 2000000, chan = 0, hw_tx_gain = 30, hw_rx_gain = 0, sw_tx_gain = -1.0)
+        sdrconfig = SDRConfiguration(freq =915000000.0, bandwidth = 2000000, chan = 0, hw_tx_gain = 30, hw_rx_gain = 0, sw_tx_gain = -12.0)
         
-        self.appl = UsrpApplicationLayer("UsrpApplicationLayer", componentinstancenumber, topology=topology)
-        self.phy = BladeRFOfdmFlexFramePhy("BladeRFOfdmFlexFramePhy", componentinstancenumber, usrpconfig=bladerfconfig, topology=topology)
-        #print(self.phy.sdrdev)
-        self.mac = MacCsmaPPersistent("MacCsmaPPersistent", componentinstancenumber,  configurationparameters=macconfig, sdr=self.phy.sdrdev,topology=topology)
+        self.appl = PingPongApplicationLayer("PingPongApplicationLayer", componentinstancenumber, topology=topology)
+        self.phy = BladeRFOfdmFlexFramePhy("BladeRFOfdmFlexFramePhy", componentinstancenumber, usrpconfig=sdrconfig, topology=topology)
+        self.mac = MacCsmaPPersistent("MacCsmaPPersistent", componentinstancenumber,  configurationparameters=macconfig, sdr=self.phy.sdrdev, topology=topology)
         
         self.components.append(self.appl)
         self.components.append(self.phy)
@@ -99,7 +49,7 @@ class BladeRFNode(GenericModel):
     
         
 topo = Topology()
-def main():
+def main(argv):
     num_nodes = 3
 # Note that the topology has to specific: usrp winslab_b210_0 is run by instance 0 of the component
 # Therefore, the usrps have to have names winslab_b210_x where x \in (0 to nodecount-1)
@@ -113,7 +63,7 @@ def main():
     i = 0
     while(i < 10000):
         for k in range(num_nodes):
-            topo.nodes[k].appl.send_self(Event(topo.nodes[k], UsrpApplicationLayerEventTypes.STARTBROADCAST, None))
+            topo.nodes[k].appl.send_self(Event(topo.nodes[k], PingPongApplicationLayerEventTypes.STARTBROADCAST, None))
             time.sleep(0.1)
             pass
         #time.sleep(0.1)
@@ -142,4 +92,4 @@ def segfault_signal_handler(sig, frame):
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, ctrlc_signal_handler)
     signal.signal(signal.SIGSEGV, segfault_signal_handler)
-    main()
+    main(sys.argv[1:])
