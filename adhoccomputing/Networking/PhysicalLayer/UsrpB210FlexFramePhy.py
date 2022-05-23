@@ -69,7 +69,7 @@ class UsrpB210FlexFramePhy(FrameHandlerBase):
         self.fgprops.check = LIQUID_CRC_32
         self.fgprops.fec0 = LIQUID_FEC_NONE
         self.fgprops.fec1 = LIQUID_FEC_HAMMING74
-        self.fgprops.mod_scheme = LIQUID_MODEM_BPSK
+        self.fgprops.mod_scheme = LIQUID_MODEM_QPSK
         self.fgbuffer_len = 64
         self.fg = flexframegen_create(self.fgprops)
 

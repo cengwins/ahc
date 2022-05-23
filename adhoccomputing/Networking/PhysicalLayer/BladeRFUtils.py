@@ -7,6 +7,9 @@ from ...Generics import SDRConfiguration
 from threading import Thread, Lock
 from .SDRUtils import SDRUtils
 import numpy as np
+from ...Generics import *
+from .LiquidDspUtils import *
+import math
 
 class BladeRFUtils(SDRUtils):
     
@@ -29,8 +32,9 @@ class BladeRFUtils(SDRUtils):
     def __init__(self, componentinstancenumber) -> None:
         super().__init__(componentinstancenumber)
         self.mutex = Lock()
-        self.cca = False
+        self.rssi = -90
         self.bytes_per_sample = 4 # 2 int16 for complex number sc16q11
+        self.receiveenabled = False
         if not bool (self.bladerfs):
             self.probe_bladerfs()
 
@@ -221,8 +225,10 @@ class BladeRFUtils(SDRUtils):
 
 
     def ischannelclear(self, threshold=-70, pout=100):
-    
-        return True, 0 #TODO: TO BE IMPLEMENTED
+        if self.rssi < threshold:
+            return True, self.rssi #TODO: TO BE IMPLEMENTED
+        else:
+            return False, self.rssi
 
     def configureSdr(self, type="x115", sdrconfig=defaultbladerfconfig):
         try:
@@ -313,10 +319,12 @@ class BladeRFUtils(SDRUtils):
     def start_sdr_rx(self):
         #print(f"start_usrp_rx on usrp winslab_b210_{self.componentinstancenumber}")
         self.bladerfdevice_rx_ch.enable = True
+        self.receiveenabled = True
         #print( "RX: Start" )
         
     def stop_sdr_rx(self):
         self.bladerfdevice_rx_ch.enable = False
+        self.receiveenabled = False
         #print( "RX: Stop" )
 
       
@@ -328,7 +336,19 @@ class BladeRFUtils(SDRUtils):
         t.daemon = True
         t.start()
         self.start_sdr_rx()
-     
+    
+    def computeRSSI(self, num_samples, buffer):
+        g:float = 0
+        for i in range(num_samples):
+            val:float = math.fabs(buffer[i])
+            g += val * val
+            #print("Val ", val, g)
+
+        g = g / num_samples
+        self.rssi = 10 * math.log10(math.sqrt(g)/(2048.0*1000) )
+        #print("CHANNEL RSSI = ", g, self.rssi)
+        
+
     def rx_thread(self):
         #print(f"rx_thread on bladerf{self.devicename}-->{self.componentinstancenumber}")
         #print(f"max_samps_per_packet={max_samps_per_packet}")
@@ -338,28 +358,26 @@ class BladeRFUtils(SDRUtils):
         #print(f"recv_buffer={recv_buffer")
         #buf2 = np.zeros(num_samples*2, dtype=np.int16) # sc16q1 samples
         num_samples_read = 0
-        while(True):
-            self.cca = False #TODO
-            if self.cca == False:
-                #self.mutex.acquire(1)
-                #print(f"rx_thread on usrp bladerf_{self.componentinstancenumber} ---> {self.devicename}")
-                try:
-                    self.bladerfdevice.sync_rx(buf, num_samples)
-                    
-                    #mybuf = np.frombuffer(buf, dtype=np.int16)
-                    #mybuf2 = np.frombuffer(buf, dtype=np.complex64)
-                    mybuf2 = np.frombuffer(buf, dtype=np.int16).flatten (order="C") #// int(self.sdrconfig.sw_tx_gain)
-                    self.rx_callback( num_samples, mybuf2)
-                    #print("myuf=", mybuf[:5]/2048.0)
-                    #print(self.componentinstancenumber, ": length of received samples mybuf", len(mybuf), " num samples ", num_samples)
-                except RuntimeError as ex:
-                    print("Runtime error in receive: %s", ex)
-                finally:
-                    
-                    #self.mutex.release()
-                    pass
-                    #print("Released mutex")
+        while(self.receiveenabled == True):
+            #self.mutex.acquire(1)
+            #print(f"rx_thread on usrp bladerf_{self.componentinstancenumber} ---> {self.devicename}", self.rssi)
+            try:
+                self.bladerfdevice.sync_rx(buf, num_samples)
                 
+                #mybuf = np.frombuffer(buf, dtype=np.int16)
+                #mybuf2 = np.frombuffer(buf, dtype=np.complex64)
+                mybuf2 = np.frombuffer(buf, dtype=np.int16).flatten (order="C") #// int(self.sdrconfig.sw_tx_gain)
+                self.rx_callback( num_samples, mybuf2)
+                self.computeRSSI( num_samples, mybuf2)
+                #print("myuf=", mybuf[:5]/2048.0)
+                #print(self.componentinstancenumber, ": length of received samples mybuf", len(mybuf2), " num samples ", num_samples)
+            except RuntimeError as ex:
+                print("Runtime error in rx_thread: ", ex)
+            finally:   
+                #self.mutex.release()
+                pass
+                #print("Released mutex")
+        print("Will not read samples from the channel any more...")     
     def transmit_samples(self, transmit_buffer):
         try:
             #self.mutex.acquire(1)

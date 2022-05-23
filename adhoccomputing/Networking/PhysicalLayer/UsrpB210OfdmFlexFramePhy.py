@@ -12,7 +12,7 @@ framers: FramerObjects = FramerObjects()
 
 #def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_uint32, payload:POINTER(c_ubyte), payload_len:c_uint32, payload_valid:c_int32, stats:struct_c__SA_framesyncstats_s, userdata:POINTER(None)):
 def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_int, payload:POINTER(c_ubyte), payload_len:c_uint, payload_valid:c_int, stats:struct_c__SA_framesyncstats_s, userdata:c_void_p ):
-    mutex.acquire(1)
+    #mutex.acquire(1)
     try:
         framer = framers.get_framer_by_id(userdata)
         #print("RSSI", stats.rssi)
@@ -25,8 +25,8 @@ def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_int, payload:POINTER(c
             #print("Header=", msg.header.messagetype, " Payload=", msg.payload, " RSSI=", stats.rssi)
     except Exception as e:
         print("Exception_ofdm_callback:", e)
-    mutex.release()
-    ofdmflexframesync_reset(framer.fs)
+    #mutex.release()
+    #ofdmflexframesync_reset(framer.fs)
     return 0
 
 
@@ -59,12 +59,12 @@ class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
         self.fgprops.fec0 = LIQUID_FEC_NONE
         self.fgprops.fec1 = LIQUID_FEC_HAMMING74
         self.fgprops.mod_scheme = LIQUID_MODEM_QPSK
-        self.M = 512
+        self.M = 256
         self.cp_len = 64
         self.taper_len = 64
         self.fg = ofdmflexframegen_create(self.M, self.cp_len, self.taper_len, None, byref(self.fgprops))
 
-        self.fgbuffer_len = self.M + self.cp_len 
+        self.fgbuffer_len = 1024 #self.M + self.cp_len 
         self.fgbuffer = np.zeros(self.fgbuffer_len, dtype=np.complex64)
 
         res = ofdmflexframegen_print(self.fg)

@@ -6,12 +6,13 @@ from .Experimentation.Topology import *
 from .Generics import *
 
 class GenericModel:
-    components  = []
+    
 
     def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None):
         self.topology = topology
         #print("Topology", topology)
         self.context = context
+        self.components  = []
         self.configurationparameters = configurationparameters
         self.eventhandlers = {EventTypes.INIT: self.on_init, EventTypes.MFRB: self.on_message_from_bottom,
                             EventTypes.MFRT: self.on_message_from_top, EventTypes.MFRP: self.on_message_from_peer, EventTypes.EXIT: self.on_exit}
@@ -22,12 +23,15 @@ class GenericModel:
         self.componentinstancenumber = componentinstancenumber
         self.num_worker_threads = num_worker_threads
         #self.connectors = {}
+        self.terminatestarted = False
         self.terminated = False
+        self.initeventgenerated = False
 
+        self.t = [None]*self.num_worker_threads
         for i in range(self.num_worker_threads):
-            t = Thread(target=self.queue_handler, args=[self.inputqueue])
-            t.daemon = True
-            t.start()
+            self.t[i] = Thread(target=self.queue_handler, args=[self.inputqueue])
+            self.t[i].daemon = True
+            self.t[i].start()
 
         try:
             if self.connectors:
@@ -47,15 +51,23 @@ class GenericModel:
 
 
     def initiate_process(self):
+        self.trigger_event(Event(self, EventTypes.INIT, None))
+        self.initeventgenerated = True
         for c in self.components:
-            c.inputqueue.put_nowait(Event(self, EventTypes.INIT, None))
-        self.inputqueue.put_nowait(Event(self, EventTypes.INIT, None))
+            #c.inputqueue.put_nowait(Event(self, EventTypes.INIT, None))
+            #c.trigger_event(Event(self, EventTypes.INIT, None))
+            c.initiate_process()
+        #self.inputqueue.put_nowait(Event(self, EventTypes.INIT, None))
+        
 
 
     def exit_process(self):
         for c in self.components:
-            c.inputqueue.put_nowait(Event(self, EventTypes.EXIT, None))
-        self.inputqueue.put_nowait(Event(self, EventTypes.EXIT, None))
+            #c.inputqueue.put_nowait(Event(self, EventTypes.EXIT, None))
+            c.trigger_event(Event(self, EventTypes.EXIT, None))
+        #self.inputqueue.put_nowait(Event(self, EventTypes.EXIT, None))
+        self.trigger_event(Event(self, EventTypes.EXIT, None))
+        
 
 
     def send_down(self, event: Event):
@@ -103,7 +115,8 @@ class GenericModel:
         print(f"{EventTypes.MFRP}  {self.componentname}.{self.componentinstancenumber}")
 
     def on_exit(self, eventobj: Event):
-        print(f"{EventTypes.EXIT}  {self.componentname}.{self.componentinstancenumber}")
+        print(f"{EventTypes.EXIT}  {self.componentname}.{self.componentinstancenumber} exiting")
+        self.terminated = True
     
 
     def on_init(self, eventobj: Event):
@@ -116,6 +129,7 @@ class GenericModel:
 #            print(f"{self.componentname} - {self.componentinstancenumber} sends an INITIATE to Coordinator")
 #            self.start_time = timer()
         #print("ONINIT:", self.componentname)
+        print(f"{self.componentname} - {self.componentinstancenumber} initiated")
         pass
 
     def queue_handler(self, myqueue):

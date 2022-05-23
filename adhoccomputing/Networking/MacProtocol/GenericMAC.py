@@ -12,7 +12,7 @@ class GenericMac(GenericModel):
 
     def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None, sdr=None):
         super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology)
-        self.framequeue = queue.Queue()
+        self.framequeue = queue.Queue(maxsize=100)
         self.sdrdev = sdr
         print("I am Generic MAC my uhd instance id is ", self.sdrdev.componentinstancenumber)
         self.eventhandlers[GenericMacEventTypes.HANDLEMACFRAME] = self.on_handlemacframe
@@ -37,6 +37,7 @@ class GenericMac(GenericModel):
         # print(f"I am {self.componentname}, eventcontent={eventobj.eventcontent}\n")
         # put message in queue and try accessing the channel
         self.framequeue.put_nowait(eventobj)
+        #print(self.componentinstancenumber, " MAC queue size ", self.framequeue.qsize())
         self.handle_frame()
         #print("Mac put the frame in queueu", eventobj.eventcontent.payload)
 

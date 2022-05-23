@@ -98,7 +98,8 @@ class Topology:
     self.compute_forwarding_table()
     for i in self.G.nodes:
       node = self.nodes[i]
-      node.initiate_process()
+      if node.initeventgenerated == False:
+        node.initiate_process()
     for i in self.channels:
       ch = self.channels[i]
       ch.initiate_process()
@@ -107,10 +108,15 @@ class Topology:
   def exit(self):
     for i in self.G.nodes:
       node = self.nodes[i]
-      node.exit_process()
+      if node.terminatestarted == False:
+        node.exit_process()
+        node.terminatestarted = True
+
     for i in self.channels:
       ch = self.channels[i]
-      ch.exit_process()
+      if ch.terminatestarted == False:
+        ch.exit_process()
+        ch.terminatestarted = True
 
     # self.nodecolors = ['b'] * N
     # self.lock = Lock()

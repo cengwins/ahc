@@ -1,6 +1,8 @@
 import queue
+from audioop import mul
 from enum import Enum
 from threading import Thread
+
 
 from ...Generics import *
 from ...GenericModel import *
@@ -39,7 +41,8 @@ class GenericChannel(GenericModel):
     # Preserve the event id through the pipeline
     myevent = Event(eventobj.eventsource, ChannelEventTypes.INCH,
                     eventobj.eventcontent, eventid=eventobj.eventid)
-    self.channelqueue.put_nowait(myevent)
+    #self.channelqueue.put_nowait(myevent)
+    self.channelqueue.trigger_event(myevent)
 
   # Overwrite onProcessInChannel if you want to do something in interim pipeline stage
   def on_process_in_channel(self, eventobj: Event):
@@ -49,7 +52,8 @@ class GenericChannel(GenericModel):
     myevent = Event(eventobj.eventsource, ChannelEventTypes.DLVR, eventobj.eventcontent, eventid=eventobj.eventid)
     #print("on_process_in_channel", myevent.eventsource)
 
-    self.outputqueue.put_nowait(myevent)
+    #self.outputqueue.put_nowait(myevent)
+    self.outputqueue.trigger_event(myevent)
 
   # Overwrite onDeliverToComponent if you want to do something in the last pipeline stage
   # onDeliver will deliver the message from the channel to the receiver component using messagefromchannel event
@@ -75,19 +79,24 @@ class GenericChannel(GenericModel):
 
   def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None):
     super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology)
-    self.outputqueue = queue.Queue()
-    self.channelqueue = queue.Queue()
+    #self.outputqueue = queue.Queue()
+    #self.channelqueue = queue.Queue()
+    self.outputqueue = self.manager.Queue()
+    self.channelqueue = self.manager.Queue()
     self.eventhandlers[ChannelEventTypes.INCH] = self.on_process_in_channel
     self.eventhandlers[ChannelEventTypes.DLVR] = self.on_deliver_to_component
 
+    self.t = [None]*self.num_worker_threads
+    self.t1 = [None]*self.num_worker_threads
+    
     for i in range(self.num_worker_threads):
       # note that the input queue is handled by the super class...
-      t = Thread(target=self.queue_handler, args=[self.channelqueue])
-      t1 = Thread(target=self.queue_handler, args=[self.outputqueue])
-      t.daemon = True
-      t1.daemon = True
-      t.start()
-      t1.start()
+      self.t[i] = Thread(target=self.queue_handler, args=[self.channelqueue])
+      self.t1[i]  = Thread(target=self.queue_handler, args=[self.outputqueue])
+      self.t[i].daemon = True
+      self.t1[i].daemon = True
+      self.t[i].start()
+      self.t1[i].start()
 
 
 class P2PFIFOPerfectChannel(GenericChannel):
@@ -105,7 +114,8 @@ class P2PFIFOPerfectChannel(GenericChannel):
       if set(hdr.interfaceid.split("-")) == set(self.componentinstancenumber.split("-")):
         #print(f"Will forward message since {hdr.interfaceid} and {self.componentinstancenumber}")
         myevent = Event(eventobj.eventsource, ChannelEventTypes.INCH, eventobj.eventcontent)
-        self.channelqueue.put_nowait(myevent)
+        #self.channelqueue.put_nowait(myevent)
+        self.channelqueue.trigger_event(myevent)
       else:
         # print(f"Will drop message since {hdr.interfaceid} and {self.componentinstancenumber}")
         pass
