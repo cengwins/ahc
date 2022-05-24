@@ -1,3 +1,4 @@
+from platform import node
 import queue
 from audioop import mul
 from enum import Enum
@@ -39,9 +40,10 @@ class GenericChannel(GenericModel):
   def on_message_from_top(self, eventobj: Event):
     # channel receives the input message and will process the message by the process event in the next pipeline stage
     # Preserve the event id through the pipeline
-    myevent = Event(eventobj.eventsource, ChannelEventTypes.INCH,
-                    eventobj.eventcontent, eventid=eventobj.eventid)
+    myevent = Event(self, ChannelEventTypes.INCH,
+                    eventobj.eventcontent, eventid=eventobj.eventid, eventsource_componentname=eventobj.eventsource_componentname, eventsource_componentinstancenumber=eventobj.eventsource_componentinstancenumber)
     self.channelqueue.put_nowait(myevent)
+    print(self.componentname, self.componentinstancenumber, "on_message_from_top", eventobj.eventcontent)
     #self.channelqueue.trigger_event(myevent)
 
   # Overwrite onProcessInChannel if you want to do something in interim pipeline stage
@@ -49,8 +51,8 @@ class GenericChannel(GenericModel):
     # Add delay, drop, change order whatever....
     # Finally put the message in outputqueue with event deliver
     # Preserve the event id through the pipeline
-    myevent = Event(eventobj.eventsource, ChannelEventTypes.DLVR, eventobj.eventcontent, eventid=eventobj.eventid)
-    #print("on_process_in_channel", myevent.eventsource)
+    myevent = Event(self, ChannelEventTypes.DLVR, eventobj.eventcontent, eventid=eventobj.eventid, eventsource_componentname=eventobj.eventsource_componentname, eventsource_componentinstancenumber=eventobj.eventsource_componentinstancenumber)
+    print(self.componentname, self.componentinstancenumber,"on_process_in_channel", myevent.eventsource)
 
     self.outputqueue.put_nowait(myevent)
     #self.outputqueue.trigger_event(myevent)
@@ -58,27 +60,26 @@ class GenericChannel(GenericModel):
   # Overwrite onDeliverToComponent if you want to do something in the last pipeline stage
   # onDeliver will deliver the message from the channel to the receiver component using messagefromchannel event
   def on_deliver_to_component(self, eventobj: Event):
-    callername = eventobj.eventsource.componentinstancenumber
-    #print("on_deliver_to_component", self.componentname)
+    callername = eventobj.eventsource_componentinstancenumber
+    print(self.componentname, self.componentinstancenumber,"on_deliver_to_component", self.componentname, " callername", callername)
+    myevent = Event(self, EventTypes.MFRB,
+                    eventobj.eventcontent, fromchannel=self.componentinstancenumber,
+                    eventid=eventobj.eventid, eventsource_componentname=eventobj.eventsource_componentname, eventsource_componentinstancenumber=eventobj.eventsource_componentinstancenumber)
     for item in self.connectors:
-      #print("item", item)
       callees = self.connectors[item]
       for callee in callees:
         calleename = callee.componentinstancenumber
-        #print(f"I am connected to {calleename}. Will check if I have to distribute it to {item}")
         if calleename == callername:
-          #print("Dont send self")
           pass
         else:
-          # Preserve the event id through the pipeline
-          myevent = Event(eventobj.eventsource, EventTypes.MFRB,
-                          eventobj.eventcontent, self.componentinstancenumber,
-                          eventid=eventobj.eventid)
           callee.trigger_event(myevent)
-          #print("I am delivering to ",callee )
+    # Send to node queues
+    myevent.eventsource=None
+    self.send_up_from_channel(myevent)
 
-  def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None):
-    super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology)
+  def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None, child_conn=None, node_queues=None, channel_queues=None):
+    super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology, child_conn, node_queues, channel_queues)
+    print(self.componentname, self.componentinstancenumber, " is created")
     self.outputqueue = queue.Queue()
     self.channelqueue = queue.Queue()
     #self.outputqueue = self.manager.Queue()
@@ -113,7 +114,7 @@ class P2PFIFOPerfectChannel(GenericChannel):
     if hdr.nexthop != MessageDestinationIdentifiers.LINKLAYERBROADCAST:
       if set(hdr.interfaceid.split("-")) == set(self.componentinstancenumber.split("-")):
         #print(f"Will forward message since {hdr.interfaceid} and {self.componentinstancenumber}")
-        myevent = Event(eventobj.eventsource, ChannelEventTypes.INCH, eventobj.eventcontent)
+        myevent = Event(self, ChannelEventTypes.INCH, eventobj.eventcontent,eventsource_componentname=eventobj.eventsource_componentname, eventsource_componentinstancenumber=eventobj.eventsource_componentinstancenumber)
         self.channelqueue.put_nowait(myevent)
         #self.channelqueue.trigger_event(myevent)
       else:
@@ -122,7 +123,7 @@ class P2PFIFOPerfectChannel(GenericChannel):
 
   def on_deliver_to_component(self, eventobj: Event):
     msg = eventobj.eventcontent
-    caller_id = eventobj.eventsource.componentinstancenumber
+    caller_id = eventobj.eventsource_componentinstancenumber
     for connector in self.connectors:
       callee = self.connectors[connector]
       for caller in callee:
@@ -132,7 +133,7 @@ class P2PFIFOPerfectChannel(GenericChannel):
         if callee_id == caller_id:
           pass
         else:
-          myevent = Event(eventobj.eventsource, EventTypes.MFRB, eventobj.eventcontent, self.componentinstancenumber)
+          myevent = Event(self, EventTypes.MFRB, eventobj.eventcontent, self.componentinstancenumber, eventsource_componentname=eventobj.eventsource_componentname, eventsource_componentinstancenumber=eventobj.eventsource_componentinstancenumber)
           caller.trigger_event(myevent)
 
   def connect_me_to_component(self, name, component):

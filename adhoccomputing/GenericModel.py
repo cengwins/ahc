@@ -1,5 +1,6 @@
 import queue
 from threading import Thread
+from multiprocessing import Queue
 from timeit import default_timer as timer
 
 from .Experimentation.Topology import *
@@ -9,9 +10,11 @@ import pickle
 class GenericModel:
     
 
-    def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None, child_conn=None):
+    def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None, child_conn=None, node_queues=None, channel_queues=None):
         self.topology = topology
         self.child_conn = child_conn
+        self.node_queues=node_queues
+        self.channel_queues=channel_queues
         #print("Topology", topology)
         self.context = context
         self.components  = []
@@ -35,6 +38,10 @@ class GenericModel:
             self.t[i].daemon = True
             self.t[i].start()
 
+        # self.mpqueuethread = Thread(target=self.mp_queue_handler, args=[self.node_queues])
+        # self.mpqueuethread.daemon = True
+        # self.mpqueuethread.start()
+
         # self.mp_conn_thread = Thread(target=self.mp_pipe_handler, args=[])
         # self.mp_conn_thread.daemon = True
         # self.mp_conn_thread.start()
@@ -56,12 +63,6 @@ class GenericModel:
         # self.registry.add_component(self)
 
 
-    # def mp_pipe_handler(self):
-    #     if (self.channel_conns is not None):
-    #         while(True):
-    #             print("will handle pipes")
-    #             time.sleep(1)
-
     def initiate_process(self):
         self.trigger_event(Event(self, EventTypes.INIT, None))
         self.initeventgenerated = True
@@ -81,7 +82,7 @@ class GenericModel:
         self.trigger_event(Event(self, EventTypes.EXIT, None))
         
 
-
+    
     def send_down(self, event: Event):
         try:
             for p in self.connectors[ConnectorTypes.DOWN]:
@@ -90,7 +91,33 @@ class GenericModel:
             #raise(f"Cannot send message to Down Connector {self.componentname } -- {self.componentinstancenumber}")
             #print("Exception ", e)
             pass
+        try:
+            src = int(self.componentinstancenumber)
+            event.eventsource = None # for avoiding thread.lock problem
+            if self.channel_queues is not None:
+                n = len(self.channel_queues[0])
+                for i in range(n):
+                    dest = i
+                    if self.channel_queues[src][dest] is not None:
+                        print("SENDDOWN:", self.componentname, "-", src, " sends message to channel ", src,"-",dest)
+                        self.channel_queues[src][dest].put_nowait(event)
+        except Exception as e:
+            #raise(f"Cannot send message to Down Connector {self.componentname } -- {self.componentinstancenumber}")
+            #print("Exception ", e)
+            pass
 
+    def send_up_from_channel(self, event: Event):
+        try:
+            src = int(event.fromchannel.split("-")[0]) 
+            dest = int(event.fromchannel.split("-")[1])
+            event.eventsource = None # for avoiding thread.lock problem
+            print(self.componentinstancenumber, "Sending", event.eventcontent, event.fromchannel )
+            if self.node_queues is not None:
+                if self.node_queues[src][dest] is not None:
+                    print("Sending from ",self.componentname, self.componentinstancenumber, "to to node queues ", src, "-", dest)
+                    self.node_queues[src][dest].put_nowait(event)
+        except Exception as ex:
+            print("Exception at send_up_from_channel", ex)
 
     def send_up(self, event: Event):
         try:
@@ -135,22 +162,13 @@ class GenericModel:
     
 
     def on_init(self, eventobj: Event):
-#        if self.componentinstancenumber == 0:
-#            message_header = GenericMessageHeader("INITIATE  -> ", +str(self.componentname),
-#                                                  "Component-" + str(self.componentinstancenumber))
-#            message = GenericMessage(message_header, "")
-#            kickstarter = Event(self, EventTypes.MFRT, message)
-#            self.send_down(kickstarter)
-#            print(f"{self.componentname} - {self.componentinstancenumber} sends an INITIATE to Coordinator")
-#            self.start_time = timer()
-        #print("ONINIT:", self.componentname)
-        #print(f"{self.componentname} - {self.componentinstancenumber} initiated")
         pass
 
+         
     def queue_handler(self, myqueue):
         while not self.terminated:
             workitem = myqueue.get()
-            #print(self.componentname, self.componentinstancenumber, ": will process", workitem.event)
+            print(self.componentname, self.componentinstancenumber, ": will process", workitem.event)
             if workitem.event in self.eventhandlers:
                 self.on_pre_event(workitem)
                 self.eventhandlers[workitem.event](eventobj=workitem)  # call the handler

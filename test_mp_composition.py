@@ -5,13 +5,13 @@ sys.path.insert(0, os.getcwd())
 import networkx as nx
 from adhoccomputing.GenericModel import GenericModel
 from adhoccomputing.Generics import Event, EventTypes, ConnectorTypes
-from adhoccomputing.Experimentation.Topology import Topology, mp_construct_sdr_topology_without_channels
+from adhoccomputing.Experimentation.Topology import Topology, mp_construct_sdr_topology_without_channels, mp_construct_sdr_topology
 from adhoccomputing.Networking.LogicalChannels.GenericChannel import GenericChannel
 
 
 class A(GenericModel):
   def on_init(self, eventobj: Event):
-    if self.componentinstancenumber == 0:
+    if self.componentinstancenumber == 1:
       evt = Event(self, EventTypes.MFRT, "A to lower layer")
       self.send_down(evt)
 
@@ -53,7 +53,10 @@ class L(GenericModel):
     print(f"I am {self.componentname}, eventcontent={eventobj.eventcontent}")
     evt = Event(self, EventTypes.MFRB, "L to higher layer")
     self.send_up(evt)
-    evt = Event(self, EventTypes.MFRT, "L to channel")
+    evt = Event(self, EventTypes.MFRT, "L to channel First")
+    self.send_down(evt)
+    time.sleep(1)
+    evt = Event(self, EventTypes.MFRT, "L to channel Second")
     self.send_down(evt)
 
 class Node(GenericModel):
@@ -63,14 +66,21 @@ class Node(GenericModel):
 
   def on_message_from_top(self, eventobj: Event):
     self.send_down(Event(self, EventTypes.MFRT, eventobj.eventcontent))
+    print("send_down at on_message_from_top", self.componentname, self.componentinstancenumber )
+    
 
   def on_message_from_bottom(self, eventobj: Event):
     print(self.componentname, "-", self.componentinstancenumber, " received ", eventobj.event)
     self.send_up(Event(self, EventTypes.MFRB, eventobj.eventcontent))
 
-  def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None, child_conn=None):
-    super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology, child_conn)
+  def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None, child_conn=None, node_queues=None, channel_queues=None):
+    super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology, child_conn, node_queues, channel_queues)
     # SUBCOMPONENTS
+    n=3
+    for i in range(n):
+      for j in range(n):
+       print("NQ[", i, ",", j, "]=", self.node_queues[i][j])
+
     self.A = A("A", componentinstancenumber, topology=topology)
     self.N = N("N", componentinstancenumber, topology=topology)
     self.B = B("B", componentinstancenumber, topology=topology)
@@ -104,12 +114,29 @@ class Node(GenericModel):
 def main():
   topo = Topology()
 
-  numnodes = 10
-  mp_construct_sdr_topology_without_channels( numnodes, Node, topo )
+  # numnodes = 10
+  # mp_construct_sdr_topology_without_channels( numnodes, Node, topo )
+  # topo.start()
+  # time.sleep(1)
+  # topo.exit()
+
+  #G = nx.random_geometric_graph(5, 0.5)
+  G =nx.Graph()
+  G.add_node(0)
+  G.add_node(1)
+  G.add_node(2)
+  G.add_edge(0,1)
+  G.add_edge(1,0)
+  G.add_edge(0,2)
+  G.add_edge(2,0)
+  
+  mp_construct_sdr_topology(G, Node, GenericChannel, topo)
+  time.sleep(3)
   topo.start()
-  time.sleep(1)
+  time.sleep(8)
   topo.exit()
 
 
 if __name__ == "__main__":
+  #freeze_support()
   main()

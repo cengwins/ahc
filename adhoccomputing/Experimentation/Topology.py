@@ -5,10 +5,61 @@ from tkinter import EventType
 import networkx as nx
 from ..Generics import *
 #from ..GenericModel import GenericModel
-from multiprocessing import  Process,Queue,Pipe
+from multiprocessing import  Process,Queue,Pipe, JoinableQueue, Manager
 import time
 import os, sys
 import signal
+
+def mp_construct_sdr_topology(G: nx.Graph, nodetype, channeltype, topo, context=None):
+  print(G)
+  n = G.number_of_nodes()
+  manager = Manager()
+  nd_queues = [[None for i in range(n)] for j in range(n)]
+  ch_queues = [[None for i in range(n)] for j in range(n)]
+
+  for i in range(n):
+    for j in range(n):
+      src = i
+      dest = j
+      if src != dest:
+        if G.has_edge(src,dest): #symmetric links but there will be a channel process in between to two queues are required so two queues per symmetric channel
+          q1 = manager.Queue()
+          ch_queues[src][dest] = q1
+          print("CQ", src, dest, "will be created", ch_queues[src][dest])
+          q2 = manager.Queue()
+          nd_queues[src][dest] = q2
+          print("NQ", src, dest, " will be created", nd_queues[src][dest])
+      else:
+        print(i, j, "EQUAL NO OP")
+        ch_queues[src][dest] = None
+        nd_queues[src][dest] = None
+  for i in range(n):
+    for j in range(n):
+      src = i
+      dest = j
+      if src != dest:
+        if G.has_edge(src,dest): #symmetric links but there will be a channel process in between to two queues are required
+          chname = str(src) + "-" + str(dest)
+          ch_parent_conn, ch_child_conn = Pipe()
+          c = SDRLogicalChannelProcess(channeltype, chname,ch_child_conn,nd_queues, ch_queues )
+          topo.chproc.append(c)
+          topo.chproc_parent_conn.append(ch_parent_conn)
+          c.start()
+      else:
+        pass
+        #print(i, j, "EQUAL NO OP")
+    parent_conn, child_conn = Pipe()
+    p = SDRNodeProcess(nodetype, i, child_conn, nd_queues, ch_queues)
+    topo.nodeproc.append(p)
+    topo.nodeproc_parent_conn.append(parent_conn)
+    p.start()
+  for i in range(n):
+    for j in range(n):
+      print("NQ[", i, ",", j, "]=", nd_queues[i][j])
+  for i in range(n):
+    for j in range(n):
+      print("CQ[", i, ",", j, "]=", ch_queues[i][j])
+
 
 
 # mp_construct_sdr_topology_without_channels creates separate child processess for nodes without any channels
@@ -18,18 +69,78 @@ def mp_construct_sdr_topology_without_channels(numnodes, nodetype, topo,context=
   print(numnodes)
   for i in range(numnodes):
     parent_conn, child_conn = Pipe()
-    p = SDRNodeProcess(nodetype, i, child_conn)
+    p = SDRNodeProcess(nodetype, i, child_conn,None,None)
     topo.nodeproc.append(p)
     topo.nodeproc_parent_conn.append(parent_conn)
     p.start()
 
+  
+class SDRLogicalChannelProcess(Process):
+  def __init__(self,channeltype, componentinstancenumber, child_conn,  node_queues, channel_queues):
+    self.channeltype = channeltype
+    self.componentinstancenumber = componentinstancenumber
+    self.src = int(self.componentinstancenumber.split("-")[0])
+    self.dest = int(self.componentinstancenumber.split("-")[1])
+    print("Ch component ", self.componentinstancenumber, "source", self.src, "dest", self.dest)
+    self.child_conn = child_conn
+    self.node_queues = node_queues
+    self.channel_queues = channel_queues
+    if self.node_queues is not None:
+      self.number_of_nodes = len(self.node_queues[0])
+    else:
+      self.number_of_nodes = 0 
+    super(SDRLogicalChannelProcess,self).__init__()
+
+  def ctrlc_signal_handler(self,sig, frame):
+    print('You pressed Ctrl+C!')
+    #self.cc.exit_process()
+    time.sleep(1)
+    sys.exit(0)
+
+  def run(self):
+    #print('module name:', __name__)
+    #print('parent process:', os.getppid())
+    #print('process id:', os.getpid())
+    signal.signal(signal.SIGINT, self.ctrlc_signal_handler)
+    self.ch = self.channeltype(self.channeltype.__name__, self.componentinstancenumber,child_conn=self.child_conn, node_queues=self.node_queues, channel_queues=self.channel_queues)
+    polltime=0.00001
+    while(True):
+      if self.child_conn.poll(polltime):
+        ev:Event = self.child_conn.recv()
+        match ev.event:
+          case EventTypes.INIT:
+            self.ch.initiate_process()
+          case EventTypes.EXIT:
+            print("EXITING: Channel ", self.ch.componentinstancenumber, os.getppid(), os.getpid())
+            self.ch.exit_process()
+            time.sleep(1) # For clearing up the exit events of components
+            return
+          case _:
+            self.ch.trigger_event(ev)
+      #probe channel queues
+      #for i in range(self.number_of_nodes):
+        #print("loop over channel queues")
+    
+      if self.channel_queues[self.src][self.dest] is not None:
+        try:
+          ev:Event = self.channel_queues[self.src][self.dest].get(block=True, timeout=polltime)
+          if ev is not None:
+            print( "ChannelProcess", self.src, "-", self.dest,"received", ev)
+            self.ch.trigger_event(ev)
+            self.channel_queues[self.src][self.dest].task_done()
+        except:
+          pass      
+
+
 
   
 class SDRNodeProcess(Process):
-  def __init__(self,nodetype, componentinstancenumber, child_conn):
+  def __init__(self,nodetype, componentinstancenumber, child_conn,node_queues, channel_queues):
     self.nodetype = nodetype
     self.componentinstancenumber = componentinstancenumber
     self.child_conn = child_conn
+    self.node_queues = node_queues
+    self.channel_queues = channel_queues
     super(SDRNodeProcess,self).__init__()
 
   def ctrlc_signal_handler(self,sig, frame):
@@ -43,21 +154,52 @@ class SDRNodeProcess(Process):
     #print('parent process:', os.getppid())
     #print('process id:', os.getpid())
     signal.signal(signal.SIGINT, self.ctrlc_signal_handler)
-    self.cc = self.nodetype(self.nodetype.__name__, self.componentinstancenumber, child_conn = self.child_conn)
-    polltime=0.00001
+    self.node = self.nodetype(self.nodetype.__name__, self.componentinstancenumber, child_conn = self.child_conn, node_queues=self.node_queues, channel_queues=self.channel_queues)
+    polltime=0.000001
     while(True):
       if self.child_conn.poll(polltime):
         ev:Event = self.child_conn.recv()
         match ev.event:
           case EventTypes.INIT:
-            self.cc.initiate_process()
+            self.node.initiate_process()
           case EventTypes.EXIT:
-            print("EXITING: ", __name__, os.getppid(), os.getpid())
-            self.cc.exit_process()
+            print("EXITING: Node ", self.node.componentinstancenumber, os.getppid(), os.getpid())
+            self.node.exit_process()
             time.sleep(1) # For clearing up the exit events of components
             return
           case _:
-            self.cc.trigger_event(ev)
+            self.node.trigger_event(ev)
+      # probe queues from channels
+      self.dest = int(self.componentinstancenumber)
+      number_of_nodes = len(self.node_queues[0])
+      #print("Will check node queues", dest)
+      for i in range(number_of_nodes):
+        self.src = i
+        #if self.node_queues[self.src][self.dest] is not None:
+          #print("inqueues ", src, dest, " is not null")
+        try:
+          ev:Event = self.node_queues[src][dest].get(block=True, timeout=polltime)
+          #if ev is not None:
+          print( "Node Process", self.src, "-", self.dest,"received", ev.eventcontent, ev.eventtype)
+          self.node.trigger_event(ev)
+          self.node_queues[src][dest].task_done()
+        except:
+            pass
+            #print("get queue timeout")
+      for i in range(number_of_nodes):
+        src = i
+        #if self.node_queues[self.dest][self.src] is not None:
+          #print("inqueues ", src, dest, " is not null")
+        try:
+          ev:Event = self.node_queues[self.dest][self.src].get(block=True, timeout=polltime)
+          if ev is not None:
+            print( "Node Process", self.src, "-", self.dest,"received", ev.eventcontent, ev.eventtype)
+            self.node.trigger_event(ev)
+            self.node_queues[self.dest][self.src].task_done()
+          else:
+            print("Empty queue ", self.dest)
+        except:
+            pass
             
 
 
@@ -68,6 +210,8 @@ class Topology:
   G = None
   nodeproc = [] 
   nodeproc_parent_conn = [] # Pipe ends that will be used by the main thread to communicate with the child SDRNode processes
+  chproc = [] 
+  chproc_parent_conn = [] # Pipe ends that will be used by the main thread to communicate with the child SDRNode processes
 
   def __init__(self, name=None) -> None:
 #      print("Constructing topology", name)
@@ -182,11 +326,20 @@ class Topology:
     #check and initialize if nodes are created using multiprocessing
     try:
       if self.nodeproc is not None and self.nodeproc_parent_conn is not None:
-        init_event = Event(-1, EventTypes.INIT, None)
+        init_event = Event(None, EventTypes.INIT, None)
         for i in range(len(self.nodeproc)):
           self.nodeproc_parent_conn[i].send(init_event)
     except Exception as ex:
-      print("Exception in topology.start multiprocessing: ", ex)
+      print("Exception in topology.start multiprocessing 1: ", ex)
+    try:
+      if self.chproc is not None and self.chproc_parent_conn is not None:
+        init_event = Event(None, EventTypes.INIT, None)
+        for i in range(len(self.chproc)):
+          self.chproc_parent_conn[i].send(init_event)
+    except Exception as ex:
+      print("Exception in topology.start multiprocessing 2: ", ex)
+
+
 
   def exit(self):
     try:
@@ -205,11 +358,19 @@ class Topology:
       print("Exception in topology.start: ", ex)
     try:
       if self.nodeproc is not None and self.nodeproc_parent_conn is not None:
-        exit_event = Event(-1, EventTypes.EXIT, None)
+        exit_event = Event(None, EventTypes.EXIT, None)
         for i in range(len(self.nodeproc)):
           self.nodeproc_parent_conn[i].send(exit_event)
     except Exception as ex:
       print("Exception in topology.exit multiprocessing: ", ex)
+    try:
+      if self.chproc is not None and self.chproc_parent_conn is not None:
+        exit_event = Event(None, EventTypes.EXIT, None)
+        for i in range(len(self.chproc)):
+          self.chproc_parent_conn[i].send(exit_event)
+    except Exception as ex:
+      print("Exception in topology.exit multiprocessing: ", ex)
+  
   def compute_forwarding_table(self):
     self.ForwardingTable = dict(nx.all_pairs_shortest_path(self.G))
 

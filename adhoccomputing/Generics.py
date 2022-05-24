@@ -1,6 +1,5 @@
 import datetime
 from enum import Enum
-
 class GenericMessagePayload:
 
   def __init__(self, messagepayload):
@@ -43,9 +42,16 @@ class MessageDestinationIdentifiers(Enum):
 class Event:
   curr_event_id = 0
 
-  def __init__(self, eventsource, event, eventcontent, fromchannel=None,
-               eventid=-1):
+  def __init__(self, eventsource, event, eventcontent, fromchannel=None, eventid=-1, eventsource_componentname=None, eventsource_componentinstancenumber=None):
     self.eventsource = eventsource
+    if eventsource is not None and eventsource_componentname is None:
+      self.eventsource_componentname = eventsource.componentname
+    else:
+      self.eventsource_componentname = eventsource_componentname
+    if eventsource is not None and eventsource_componentinstancenumber is None:
+      self.eventsource_componentinstancenumber = eventsource.componentinstancenumber
+    else:
+      self.eventsource_componentinstancenumber = eventsource_componentinstancenumber
     self.event = event
     self.time = datetime.datetime.now()
     self.eventcontent = eventcontent
@@ -67,6 +73,8 @@ class Event:
   def __getstate__(self):
     return {
       'eventsource': self.eventsource,
+      'eventsource_componentname': self.eventsource_componentname,
+      'eventsource_componentinstancenumber': self.eventsource_componentinstancenumber,
       'event': self.event,
       'time': self.time,
       'eventcontent': self.eventcontent,
@@ -75,6 +83,8 @@ class Event:
     }
   def __setstate__(self, d):
     self.eventsource = d['eventsource']
+    self.eventsource_componentname = d['eventsource_componentname']
+    self.eventsource_componentinstancenumber = d['eventsource_componentinstancenumber']
     self.event = d['event']
     self.time = d['time']
     self.eventcontent = d['eventcontent']
