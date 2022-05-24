@@ -41,8 +41,8 @@ class GenericChannel(GenericModel):
     # Preserve the event id through the pipeline
     myevent = Event(eventobj.eventsource, ChannelEventTypes.INCH,
                     eventobj.eventcontent, eventid=eventobj.eventid)
-    #self.channelqueue.put_nowait(myevent)
-    self.channelqueue.trigger_event(myevent)
+    self.channelqueue.put_nowait(myevent)
+    #self.channelqueue.trigger_event(myevent)
 
   # Overwrite onProcessInChannel if you want to do something in interim pipeline stage
   def on_process_in_channel(self, eventobj: Event):
@@ -52,8 +52,8 @@ class GenericChannel(GenericModel):
     myevent = Event(eventobj.eventsource, ChannelEventTypes.DLVR, eventobj.eventcontent, eventid=eventobj.eventid)
     #print("on_process_in_channel", myevent.eventsource)
 
-    #self.outputqueue.put_nowait(myevent)
-    self.outputqueue.trigger_event(myevent)
+    self.outputqueue.put_nowait(myevent)
+    #self.outputqueue.trigger_event(myevent)
 
   # Overwrite onDeliverToComponent if you want to do something in the last pipeline stage
   # onDeliver will deliver the message from the channel to the receiver component using messagefromchannel event
@@ -114,8 +114,8 @@ class P2PFIFOPerfectChannel(GenericChannel):
       if set(hdr.interfaceid.split("-")) == set(self.componentinstancenumber.split("-")):
         #print(f"Will forward message since {hdr.interfaceid} and {self.componentinstancenumber}")
         myevent = Event(eventobj.eventsource, ChannelEventTypes.INCH, eventobj.eventcontent)
-        #self.channelqueue.put_nowait(myevent)
-        self.channelqueue.trigger_event(myevent)
+        self.channelqueue.put_nowait(myevent)
+        #self.channelqueue.trigger_event(myevent)
       else:
         # print(f"Will drop message since {hdr.interfaceid} and {self.componentinstancenumber}")
         pass

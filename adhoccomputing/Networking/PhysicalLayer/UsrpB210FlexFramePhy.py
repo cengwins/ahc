@@ -37,9 +37,6 @@ def flexframe_callback(header:POINTER(c_ubyte), header_valid:c_uint32, payload:P
   
 class UsrpB210FlexFramePhy(FrameHandlerBase):
 
-    def on_init(self, eventobj: Event):
-        pass
-    
     def rx_callback(self, num_rx_samps, recv_buffer):
         try:
             flexframesync_execute(self.fs, recv_buffer, num_rx_samps)
