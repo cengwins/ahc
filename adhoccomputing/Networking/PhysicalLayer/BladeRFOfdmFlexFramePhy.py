@@ -66,7 +66,7 @@ class BladeRFOfdmFlexFramePhy(FrameHandlerBase):
         self.fgbuffer_len = 1024 #self.M + self.cp_len
         self.fgbuffer = np.zeros(self.fgbuffer_len*self.sdrdev.bytes_per_sample//sizeof(c_int16), dtype=np.int16) # sc16q1 samples
         
-        res = ofdmflexframegen_print(self.fg)
+        #res = ofdmflexframegen_print(self.fg)
         
         self.ofdm_callback_function = framesync_callback(ofdm_callback)
         
@@ -85,4 +85,5 @@ class BladeRFOfdmFlexFramePhy(FrameHandlerBase):
     def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, usrpconfig=None, num_worker_threads=1, topology=None):
         self.framers = framers
         super().__init__(componentname, componentinstancenumber, context, configurationparameters, usrpconfig, num_worker_threads, topology, self.framers, SDRType="x115")
+        print("Initialized ", self.componentname, self.componentinstancenumber)
         

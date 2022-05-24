@@ -14,7 +14,7 @@ class GenericMac(GenericModel):
         super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology)
         self.framequeue = queue.Queue(maxsize=100)
         self.sdrdev = sdr
-        print("I am Generic MAC my uhd instance id is ", self.sdrdev.componentinstancenumber)
+        #print("I am Generic MAC my uhd instance id is ", self.sdrdev.componentinstancenumber)
         self.eventhandlers[GenericMacEventTypes.HANDLEMACFRAME] = self.on_handlemacframe
 
     

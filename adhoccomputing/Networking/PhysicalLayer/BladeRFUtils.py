@@ -78,11 +78,11 @@ class BladeRFUtils(SDRUtils):
         print( "Searching for bladeRF devices..." )
         try:
             devinfos = _bladerf.get_device_list()
-            print(devinfos)
+            #print(devinfos)
             for devinfo in devinfos:
                 if devinfo.serial == serial:
                     device = "{backend}:device={usb_bus}:{usb_addr}".format(**devinfo._asdict())
-                    print(devinfo.serial)
+                    #print(devinfo.serial)
                     return device
 
         except _bladerf.BladeRFError:
@@ -100,7 +100,7 @@ class BladeRFUtils(SDRUtils):
         print( "Searching for bladeRF devices..." )
         try:
             devinfos = _bladerf.get_device_list()
-            print(devinfos)
+            #print(devinfos)
             cnt = 0;
             for devinfo in devinfos:
                 self.bladerfs[cnt] = devinfo.serial
@@ -296,20 +296,20 @@ class BladeRFUtils(SDRUtils):
         self.configure_rx_channel()
         self.configure_tx_channel()
 
-        print("----> BLADERF(", self.bladerfdevice.get_serial(), ") CONFIG --------")
-        print("----> ", self.bladerfdevice.devinfo)
-        print("----> TX_CHAN", self.tx_ch)
-        _tool._print_channel_details(self.bladerfdevice_tx_ch,0)
-        print("----> RX_CHAN", self.rx_ch)
-        _tool._print_channel_details(self.bladerfdevice_rx_ch,0)
-        print("----> TX_FREQ", self.bladerfdevice.get_frequency(self.tx_ch))
-        print("----> RX_FREQ", self.bladerfdevice.get_frequency(self.rx_ch))
-        print("----> TX_BANDWIDTH", self.bladerfdevice.get_bandwidth(self.tx_ch))
-        print("----> RX_BANDWIDTH", self.bladerfdevice.get_bandwidth(self.rx_ch))
-        print("----> TX_SAMPLING_RATE", self.bladerfdevice.get_sample_rate(self.tx_ch))
-        print("----> RX_SAMPLING_RATE", self.bladerfdevice.get_sample_rate(self.rx_ch))
-        print("----> TX_GAIN", self.bladerfdevice.get_gain(self.tx_ch))
-        print("----> RX_GAIN", self.bladerfdevice.get_gain(self.rx_ch))
+        #print("----> ", self.bladerfdevice.devinfo)
+        #_tool._print_channel_details(self.bladerfdevice_rx_ch,0)
+        #_tool._print_channel_details(self.bladerfdevice_tx_ch,0)
+        print(  "\n----> BLADERF(", self.bladerfdevice.get_serial(), ") CONFIG" 
+                "\n----> TX_CHAN", self.tx_ch,
+                "\n----> RX_CHAN", self.rx_ch,
+                "\n----> TX_FREQ", self.bladerfdevice.get_frequency(self.tx_ch),
+                "\n----> RX_FREQ", self.bladerfdevice.get_frequency(self.rx_ch),
+                "\n----> TX_BANDWIDTH", self.bladerfdevice.get_bandwidth(self.tx_ch),
+                "\n----> RX_BANDWIDTH", self.bladerfdevice.get_bandwidth(self.rx_ch),
+                "\n----> TX_SAMPLING_RATE", self.bladerfdevice.get_sample_rate(self.tx_ch),
+                "\n----> RX_SAMPLING_RATE", self.bladerfdevice.get_sample_rate(self.rx_ch),
+                "\n----> TX_GAIN", self.bladerfdevice.get_gain(self.tx_ch),
+                "\n----> RX_GAIN", self.bladerfdevice.get_gain(self.rx_ch))
 #        self.configure_rx_channel()
 
 

@@ -64,6 +64,22 @@ class Event:
   def __hash__(self) -> int:
     return self.eventid
 
+  def __getstate__(self):
+    return {
+      'eventsource': self.eventsource,
+      'event': self.event,
+      'time': self.time,
+      'eventcontent': self.eventcontent,
+      'fromchannel': self.fromchannel,
+      'eventid': self.eventid,
+    }
+  def __setstate__(self, d):
+    self.eventsource = d['eventsource']
+    self.event = d['event']
+    self.time = d['time']
+    self.eventcontent = d['eventcontent']
+    self.fromchannel = d['fromchannel']
+    self.eventid = d['eventid']
 
 class FramerObjects():
   framerobjects = {}

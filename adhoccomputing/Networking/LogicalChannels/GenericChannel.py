@@ -79,10 +79,10 @@ class GenericChannel(GenericModel):
 
   def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None):
     super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology)
-    #self.outputqueue = queue.Queue()
-    #self.channelqueue = queue.Queue()
-    self.outputqueue = self.manager.Queue()
-    self.channelqueue = self.manager.Queue()
+    self.outputqueue = queue.Queue()
+    self.channelqueue = queue.Queue()
+    #self.outputqueue = self.manager.Queue()
+    #self.channelqueue = self.manager.Queue()
     self.eventhandlers[ChannelEventTypes.INCH] = self.on_process_in_channel
     self.eventhandlers[ChannelEventTypes.DLVR] = self.on_deliver_to_component
 

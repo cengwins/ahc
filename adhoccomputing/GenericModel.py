@@ -4,12 +4,14 @@ from timeit import default_timer as timer
 
 from .Experimentation.Topology import *
 from .Generics import *
+import pickle
 
 class GenericModel:
     
 
-    def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None):
+    def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None, child_conn=None):
         self.topology = topology
+        self.child_conn = child_conn
         #print("Topology", topology)
         self.context = context
         self.components  = []
@@ -33,6 +35,10 @@ class GenericModel:
             self.t[i].daemon = True
             self.t[i].start()
 
+        # self.mp_conn_thread = Thread(target=self.mp_pipe_handler, args=[])
+        # self.mp_conn_thread.daemon = True
+        # self.mp_conn_thread.start()
+
         try:
             if self.connectors:
                 pass
@@ -49,6 +55,12 @@ class GenericModel:
         # self.registry = ComponentRegistry()
         # self.registry.add_component(self)
 
+
+    # def mp_pipe_handler(self):
+    #     if (self.channel_conns is not None):
+    #         while(True):
+    #             print("will handle pipes")
+    #             time.sleep(1)
 
     def initiate_process(self):
         self.trigger_event(Event(self, EventTypes.INIT, None))
@@ -74,9 +86,9 @@ class GenericModel:
         try:
             for p in self.connectors[ConnectorTypes.DOWN]:
                 p.trigger_event(event)
-                #self.connectors[ConnectorTypes.DOWN].on_message_from_top(event)
         except Exception as e:
             #raise(f"Cannot send message to Down Connector {self.componentname } -- {self.componentinstancenumber}")
+            #print("Exception ", e)
             pass
 
 
@@ -85,6 +97,7 @@ class GenericModel:
             #self.connectors[ConnectorTypes.UP].eventhandlers[EventTypes.MFRB](event)
             for p in self.connectors[ConnectorTypes.UP]:
                 p.trigger_event(event)
+
         except Exception as e:
             pass
             #raise(f"Cannot send message to UP Connector {self.componentname } -- {self.componentinstancenumber}")
@@ -110,12 +123,14 @@ class GenericModel:
 
     def on_message_from_top(self, eventobj: Event):
         print(f"{EventTypes.MFRT}  {self.componentname}.{self.componentinstancenumber}")
+        #if self.child_conn is not None:
+        #    self.child_conn.send("Channel Deneme")
 
     def on_message_from_peer(self, eventobj: Event):
         print(f"{EventTypes.MFRP}  {self.componentname}.{self.componentinstancenumber}")
 
     def on_exit(self, eventobj: Event):
-        print(f"{EventTypes.EXIT}  {self.componentname}.{self.componentinstancenumber} exiting")
+        #print(f"{EventTypes.EXIT}  {self.componentname}.{self.componentinstancenumber} exiting")
         self.terminated = True
     
 
@@ -129,7 +144,7 @@ class GenericModel:
 #            print(f"{self.componentname} - {self.componentinstancenumber} sends an INITIATE to Coordinator")
 #            self.start_time = timer()
         #print("ONINIT:", self.componentname)
-        print(f"{self.componentname} - {self.componentinstancenumber} initiated")
+        #print(f"{self.componentname} - {self.componentinstancenumber} initiated")
         pass
 
     def queue_handler(self, myqueue):

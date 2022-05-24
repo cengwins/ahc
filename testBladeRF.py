@@ -6,7 +6,7 @@ sys.path.insert(0, os.getcwd())
 
 from adhoccomputing.GenericModel import GenericModel
 from adhoccomputing.Generics import Event, ConnectorTypes, SDRConfiguration
-from adhoccomputing.Experimentation.Topology import Topology
+from adhoccomputing.Experimentation.Topology import Topology, mp_construct_sdr_topology_without_channels
 from adhoccomputing.Networking.PhysicalLayer.BladeRFOfdmFlexFramePhy import  BladeRFOfdmFlexFramePhy
 from adhoccomputing.Networking.MacProtocol.CSMA import MacCsmaPPersistent, MacCsmaPPersistentConfigurationParameters
 from adhoccomputing.Networking.ApplicationLayer.PingPongApplicationLayer import *
@@ -16,10 +16,13 @@ from adhoccomputing.Networking.ApplicationLayer.PingPongApplicationLayer import 
 class BladeRFNode(GenericModel):
     counter = 0
     def on_init(self, eventobj: Event):
-        pass
-    
-    def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None):
-        super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology)
+        i = 0
+        while(True):
+            self.appl.send_self(Event(self.componentinstancenumber, PingPongApplicationLayerEventTypes.STARTBROADCAST, None))
+            time.sleep(0.1)    
+        
+    def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None, child_conn=None):
+        super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology, child_conn)
         # SUBCOMPONENTS
         
         macconfig = MacCsmaPPersistentConfigurationParameters(0.5, -30)
@@ -53,34 +56,35 @@ def main(argv):
     num_nodes = 3
 # Note that the topology has to specific: usrp winslab_b210_0 is run by instance 0 of the component
 # Therefore, the usrps have to have names winslab_b210_x where x \in (0 to nodecount-1)
-    topo.construct_winslab_topology_without_channels(num_nodes, BladeRFNode)
+    #topo.construct_winslab_topology_without_channels(num_nodes, BladeRFNode)
+    mp_construct_sdr_topology_without_channels(num_nodes, BladeRFNode, topo)
   # topo.construct_winslab_topology_with_channels(2, UsrpNode, FIFOBroadcastPerfectChannel)
   
   # time.sleep(1)
   # topo.nodes[0].send_self(Event(topo.nodes[0], UsrpNodeEventTypes.STARTBROADCAST, None))
 
     topo.start()
-    i = 0
-    while(i < 10000):
-        for k in range(num_nodes):
-            topo.nodes[k].appl.send_self(Event(topo.nodes[k], PingPongApplicationLayerEventTypes.STARTBROADCAST, None))
-            time.sleep(0.1)
-            pass
+    #i = 0
+    #while(i < 10000):
+    #    for k in range(num_nodes):
+    #        topo.nodes[k].appl.send_self(Event(topo.nodes[k], PingPongApplicationLayerEventTypes.STARTBROADCAST, None))
+    #        time.sleep(0.1)
+    #        pass
         #time.sleep(0.1)
         #topo.nodes[0].appl.send_self(Event(topo.nodes[0], UsrpApplicationLayerEventTypes.STARTBROADCAST, None))
         #time.sleep(0.1)
-        i = i + 1
+    #    i = i + 1
 
     time.sleep(5)
-    topo.exit()
+    #topo.exit()
     
     
 
 def ctrlc_signal_handler(sig, frame):
     print('You pressed Ctrl+C!')
     topo.exit()
-    time.sleep(5)
-    sys.exit(0)
+    time.sleep(1)
+    #sys.exit(0)
 
 
 def segfault_signal_handler(sig, frame):

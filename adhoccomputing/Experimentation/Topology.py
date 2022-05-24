@@ -1,18 +1,89 @@
+from mimetypes import init
 from random import sample
 import itertools
+from tkinter import EventType
 import networkx as nx
 from ..Generics import *
 #from ..GenericModel import GenericModel
+from multiprocessing import  Process,Queue,Pipe
+import time
+import os, sys
+import signal
+
+
+# mp_construct_sdr_topology_without_channels creates separate child processess for nodes without any channels
+# This generator should be used with sdr platforms. Each sdr will be run in a separate process space
+# Note that the classical channel concept will not be applicable, PIPEs will have to be established.
+def mp_construct_sdr_topology_without_channels(numnodes, nodetype, topo,context=None):
+  print(numnodes)
+  for i in range(numnodes):
+    parent_conn, child_conn = Pipe()
+    p = SDRNodeProcess(nodetype, i, child_conn)
+    topo.nodeproc.append(p)
+    topo.nodeproc_parent_conn.append(parent_conn)
+    p.start()
+
+
+  
+class SDRNodeProcess(Process):
+  def __init__(self,nodetype, componentinstancenumber, child_conn):
+    self.nodetype = nodetype
+    self.componentinstancenumber = componentinstancenumber
+    self.child_conn = child_conn
+    super(SDRNodeProcess,self).__init__()
+
+  def ctrlc_signal_handler(self,sig, frame):
+    print('You pressed Ctrl+C!')
+    #self.cc.exit_process()
+    time.sleep(1)
+    sys.exit(0)
+
+  def run(self):
+    #print('module name:', __name__)
+    #print('parent process:', os.getppid())
+    #print('process id:', os.getpid())
+    signal.signal(signal.SIGINT, self.ctrlc_signal_handler)
+    self.cc = self.nodetype(self.nodetype.__name__, self.componentinstancenumber, child_conn = self.child_conn)
+    polltime=0.00001
+    while(True):
+      if self.child_conn.poll(polltime):
+        ev:Event = self.child_conn.recv()
+        match ev.event:
+          case EventTypes.INIT:
+            self.cc.initiate_process()
+          case EventTypes.EXIT:
+            print("EXITING: ", __name__, os.getppid(), os.getpid())
+            self.cc.exit_process()
+            time.sleep(1) # For clearing up the exit events of components
+            return
+          case _:
+            self.cc.trigger_event(ev)
+            
+
 
 inf = float('inf')
 class Topology:
   nodes = {}
   channels = {}
   G = None
+  nodeproc = [] 
+  nodeproc_parent_conn = [] # Pipe ends that will be used by the main thread to communicate with the child SDRNode processes
 
   def __init__(self, name=None) -> None:
 #      print("Constructing topology", name)
     pass
+  def __getstate__(self):
+    return {
+      'nodes': self.nodes,
+      'channels': self.channels,
+      'Graph': self.G,
+      'nodeproc': self.nodeproc
+    }
+  def __setstate__(self, d):
+    self.nodes = d['nodes']
+    self.channels = d['channels']
+    self.G = d['Graph']
+    self.nodeproc = d['nodeproc']
 
   def construct_winslab_topology_with_channels(self, nodecount, nodetype, channeltype, context=None):
 
@@ -48,6 +119,7 @@ class Topology:
     nodes = list(self.G.nodes)
     cc = nodetype(nodetype.__name__, id)
     self.nodes[0] = cc
+
 
   def construct_from_graph(self, G: nx.Graph, nodetype, channeltype, context=None):
     self.G = G
@@ -94,54 +166,51 @@ class Topology:
       print(path[myid][i])
 
   def start(self):
-    N = len(self.G.nodes)
-    self.compute_forwarding_table()
-    for i in self.G.nodes:
-      node = self.nodes[i]
-      if node.initeventgenerated == False:
-        node.initiate_process()
-    for i in self.channels:
-      ch = self.channels[i]
-      ch.initiate_process()
-
+    try:
+      if self.G is not None and self.G.nodes is not None:
+        N = len(self.G.nodes)
+        self.compute_forwarding_table()
+        for i in self.G.nodes:
+          node = self.nodes[i]
+          if node.initeventgenerated == False:
+            node.initiate_process()
+        for i in self.channels:
+          ch = self.channels[i]
+          ch.initiate_process()
+    except Exception as ex:
+      print("Exception in topology.start: ", ex)
+    #check and initialize if nodes are created using multiprocessing
+    try:
+      if self.nodeproc is not None and self.nodeproc_parent_conn is not None:
+        init_event = Event(-1, EventTypes.INIT, None)
+        for i in range(len(self.nodeproc)):
+          self.nodeproc_parent_conn[i].send(init_event)
+    except Exception as ex:
+      print("Exception in topology.start multiprocessing: ", ex)
 
   def exit(self):
-    for i in self.G.nodes:
-      node = self.nodes[i]
-      if node.terminatestarted == False:
-        node.exit_process()
-        node.terminatestarted = True
-
-    for i in self.channels:
-      ch = self.channels[i]
-      if ch.terminatestarted == False:
-        ch.exit_process()
-        ch.terminatestarted = True
-
-    # self.nodecolors = ['b'] * N
-    # self.lock = Lock()
-
+    try:
+      if self.G is not None and self.G.nodes is not None:
+        for i in self.G.nodes:
+          node = self.nodes[i]
+          if node.terminatestarted == False:
+            node.exit_process()
+            node.terminatestarted = True
+        for i in self.channels:
+          ch = self.channels[i]
+          if ch.terminatestarted == False:
+            ch.exit_process()
+            ch.terminatestarted = True
+    except Exception as ex:
+      print("Exception in topology.start: ", ex)
+    try:
+      if self.nodeproc is not None and self.nodeproc_parent_conn is not None:
+        exit_event = Event(-1, EventTypes.EXIT, None)
+        for i in range(len(self.nodeproc)):
+          self.nodeproc_parent_conn[i].send(exit_event)
+    except Exception as ex:
+      print("Exception in topology.exit multiprocessing: ", ex)
   def compute_forwarding_table(self):
-    # N = len(self.G.nodes)
-    # print(f"There are {N} nodes")
-    # for i in range(N):
-    #   for j in range(N):
-    #     try:
-    #       mypath = path[i][j]
-    #       print(f"{i}to{j} path = {path[i][j]} nexthop = {path[i][j][1]}")
-    #       self.ForwardingTable[i][j] = path[i][j][1]
-
-    #       print(f"{i}to{j}path = NONE")
-    #       self.ForwardingTable[i][j] = inf  # No paths
-    #     except IndexError:
-    #       print(f"{i}to{j} nexthop = NONE")
-    #       self.ForwardingTable[i][j] = i  # There is a path but length = 1 (self)
-
-    # all-seeing eye routing table contruction
-    # def print_forwarding_table(self):
-    #   registry.print_components()
-    #   print('\n'.join([''.join(['{:4}'.format(item) for item in row])
-    #                    for row in list(self.ForwardingTable.values())]))
     self.ForwardingTable = dict(nx.all_pairs_shortest_path(self.G))
 
   # returns the all-seeing eye routing based next hop id
