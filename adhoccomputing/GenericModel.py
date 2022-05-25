@@ -47,7 +47,7 @@ class GenericModel:
         # self.mp_conn_thread.start()
 
         try:
-            if self.connectors:
+            if self.connectors is not None:
                 pass
         except AttributeError:
             self.connectors = ConnectorList()
@@ -99,8 +99,8 @@ class GenericModel:
                 for i in range(n):
                     dest = i
                     if self.channel_queues[src][dest] is not None:
-                        print("SENDDOWN:", self.componentname, "-", src, " sends message to channel ", src,"-",dest)
-                        self.channel_queues[src][dest].put_nowait(event)
+                        print("\033[93m SENDDOWN:\033[0m", self.componentname, "-", src, " sends message to channel ", src,"-",dest)
+                        self.channel_queues[src][dest].put(event)
         except Exception as e:
             #raise(f"Cannot send message to Down Connector {self.componentname } -- {self.componentinstancenumber}")
             #print("Exception ", e)
@@ -111,11 +111,17 @@ class GenericModel:
             src = int(event.fromchannel.split("-")[0]) 
             dest = int(event.fromchannel.split("-")[1])
             event.eventsource = None # for avoiding thread.lock problem
-            print(self.componentinstancenumber, "Sending", event.eventcontent, event.fromchannel )
+            #print(self.componentinstancenumber, "Sending", event.eventcontent, event.fromchannel )
             if self.node_queues is not None:
                 if self.node_queues[src][dest] is not None:
-                    print("Sending from ",self.componentname, self.componentinstancenumber, "to to node queues ", src, "-", dest)
-                    self.node_queues[src][dest].put_nowait(event)
+                    print("\033[92m SENDUP:\033[0m",self.componentname, self.componentinstancenumber, "to to node queues ", src, "-", dest)
+                    try:
+                        self.node_queues[src][dest].put(event) 
+                        pass
+                    except Exception as ex:
+                        print("\033[93m" + "Exception when putting to queue")
+                    #myev:Event = self.node_queues[src][dest].get(block=True, timeout=0.0001)
+                    #print("My Event LOOPBACK ", str(myev))
         except Exception as ex:
             print("Exception at send_up_from_channel", ex)
 
@@ -168,7 +174,7 @@ class GenericModel:
     def queue_handler(self, myqueue):
         while not self.terminated:
             workitem = myqueue.get()
-            print(self.componentname, self.componentinstancenumber, ": will process", workitem.event)
+            #print(self.componentname, self.componentinstancenumber, ": will process", workitem.event)
             if workitem.event in self.eventhandlers:
                 self.on_pre_event(workitem)
                 self.eventhandlers[workitem.event](eventobj=workitem)  # call the handler

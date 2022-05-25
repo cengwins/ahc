@@ -70,26 +70,29 @@ class Event:
   def __hash__(self) -> int:
     return self.eventid
 
-  def __getstate__(self):
-    return {
-      'eventsource': self.eventsource,
-      'eventsource_componentname': self.eventsource_componentname,
-      'eventsource_componentinstancenumber': self.eventsource_componentinstancenumber,
-      'event': self.event,
-      'time': self.time,
-      'eventcontent': self.eventcontent,
-      'fromchannel': self.fromchannel,
-      'eventid': self.eventid,
-    }
-  def __setstate__(self, d):
-    self.eventsource = d['eventsource']
-    self.eventsource_componentname = d['eventsource_componentname']
-    self.eventsource_componentinstancenumber = d['eventsource_componentinstancenumber']
-    self.event = d['event']
-    self.time = d['time']
-    self.eventcontent = d['eventcontent']
-    self.fromchannel = d['fromchannel']
-    self.eventid = d['eventid']
+  # def __getstate__(self):
+  #   return {
+  #     #'eventsource': None,#self.eventsource,
+  #     'eventsource_componentname': self.eventsource_componentname,
+  #     'eventsource_componentinstancenumber': self.eventsource_componentinstancenumber,
+  #     'event': self.event,
+  #     'time': self.time,
+  #     'eventcontent': self.eventcontent,
+  #     'fromchannel': self.fromchannel,
+  #     'eventid': self.eventid,
+  #   }
+  # def __setstate__(self, d):
+  #   self.eventsource = None #d['eventsource']
+  #   self.eventsource_componentname = d['eventsource_componentname']
+  #   self.eventsource_componentinstancenumber = d['eventsource_componentinstancenumber']
+  #   self.event = d['event']
+  #   self.time = d['time']
+  #   self.eventcontent = d['eventcontent']
+  #   self.fromchannel = d['fromchannel']
+  #   self.eventid = d['eventid']
+
+  def __str__(self) -> str:
+      return "EVENT: " + str(self.event) + " FROM " + str(self.eventsource_componentname) + "-" + str(self.eventsource_componentinstancenumber) + " RECEIVED FROM CHANNEL " + str(self.fromchannel) + " WITH CONTENT: " + str(self.eventcontent)
 
 class FramerObjects():
   framerobjects = {}

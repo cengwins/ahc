@@ -43,7 +43,7 @@ class GenericChannel(GenericModel):
     myevent = Event(self, ChannelEventTypes.INCH,
                     eventobj.eventcontent, eventid=eventobj.eventid, eventsource_componentname=eventobj.eventsource_componentname, eventsource_componentinstancenumber=eventobj.eventsource_componentinstancenumber)
     self.channelqueue.put_nowait(myevent)
-    print(self.componentname, self.componentinstancenumber, "on_message_from_top", eventobj.eventcontent)
+    #print(self.componentname, self.componentinstancenumber, "on_message_from_top", eventobj.eventcontent)
     #self.channelqueue.trigger_event(myevent)
 
   # Overwrite onProcessInChannel if you want to do something in interim pipeline stage
@@ -52,7 +52,7 @@ class GenericChannel(GenericModel):
     # Finally put the message in outputqueue with event deliver
     # Preserve the event id through the pipeline
     myevent = Event(self, ChannelEventTypes.DLVR, eventobj.eventcontent, eventid=eventobj.eventid, eventsource_componentname=eventobj.eventsource_componentname, eventsource_componentinstancenumber=eventobj.eventsource_componentinstancenumber)
-    print(self.componentname, self.componentinstancenumber,"on_process_in_channel", myevent.eventsource)
+    #print(self.componentname, self.componentinstancenumber,"on_process_in_channel", myevent.eventsource)
 
     self.outputqueue.put_nowait(myevent)
     #self.outputqueue.trigger_event(myevent)
@@ -61,7 +61,7 @@ class GenericChannel(GenericModel):
   # onDeliver will deliver the message from the channel to the receiver component using messagefromchannel event
   def on_deliver_to_component(self, eventobj: Event):
     callername = eventobj.eventsource_componentinstancenumber
-    print(self.componentname, self.componentinstancenumber,"on_deliver_to_component", self.componentname, " callername", callername)
+    #print(self.componentname, self.componentinstancenumber,"on_deliver_to_component", self.componentname, " callername", callername)
     myevent = Event(self, EventTypes.MFRB,
                     eventobj.eventcontent, fromchannel=self.componentinstancenumber,
                     eventid=eventobj.eventid, eventsource_componentname=eventobj.eventsource_componentname, eventsource_componentinstancenumber=eventobj.eventsource_componentinstancenumber)
@@ -79,7 +79,7 @@ class GenericChannel(GenericModel):
 
   def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None, child_conn=None, node_queues=None, channel_queues=None):
     super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology, child_conn, node_queues, channel_queues)
-    print(self.componentname, self.componentinstancenumber, " is created")
+    #print(self.componentname, self.componentinstancenumber, " is created")
     self.outputqueue = queue.Queue()
     self.channelqueue = queue.Queue()
     #self.outputqueue = self.manager.Queue()
