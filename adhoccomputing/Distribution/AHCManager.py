@@ -8,9 +8,6 @@ import sys, os, signal
 import argparse
 import configparser
 
-
-
-
 #Should there be need we can extend
 class AHCBaseManager(BaseManager): pass
 
