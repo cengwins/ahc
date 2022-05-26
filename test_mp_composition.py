@@ -9,7 +9,10 @@ from adhoccomputing.Experimentation.Topology import Topology
 from adhoccomputing.Networking.LogicalChannels.GenericChannel import GenericChannel
 import queue
 from multiprocessing import Manager, freeze_support
+from adhoccomputing.Distribution.AHCManager import AHCManager, AHCManagerType
 
+CRED = '\033[91m'
+CEND = '\033[0m'
 
 class A(GenericModel):
   def on_init(self, eventobj: Event):
@@ -47,7 +50,7 @@ class Node(GenericModel):
     self.A.connect_me_to_component(ConnectorTypes.DOWN, self)
     self.connect_me_to_component(ConnectorTypes.UP, self.A)
 
-def main():
+def main(argv):
   set_start_method = "fork";
   topo = Topology()
 
@@ -69,9 +72,12 @@ def main():
   G.add_edge(1,2)
   G.add_edge(2,1)
   
-
-  manager = Manager()
-  topo.mp_construct_sdr_topology(G, Node, GenericChannel,manager)
+  ahcmanager = AHCManager(AHCManagerType.AHC_CLIENT, argv)
+  try:
+    ahcmanager.connect()
+  except Exception as ex:
+    print(CRED + "Could not connect to AHCManager that helps distributing processes over different machines." + CEND)
+  topo.mp_construct_sdr_topology(G, Node, GenericChannel,ahcmanager)
   topo.start()
   while(True):
     time.sleep(1)
@@ -80,4 +86,4 @@ def main():
 
 if __name__ == "__main__":
   freeze_support()
-  main()
+  main(sys.argv)

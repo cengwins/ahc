@@ -95,6 +95,7 @@ def segfault_signal_handler(sig, frame):
     topo.exit()
     time.sleep(5)
     sys.exit(0)
+    
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, ctrlc_signal_handler)
     signal.signal(signal.SIGSEGV, segfault_signal_handler)

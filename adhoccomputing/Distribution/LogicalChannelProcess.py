@@ -5,7 +5,8 @@ import networkx as nx
 from ..Generics import *
 import time
 import os, sys, signal
-	
+
+
 class LogicalChannelProcess(Process):
 	def __init__(self,channeltype, componentinstancenumber, child_conn,  node_queues, channel_queues):
 		self.channeltype = channeltype

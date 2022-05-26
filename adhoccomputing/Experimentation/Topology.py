@@ -57,7 +57,8 @@ class Topology:
 
   def mp_construct_sdr_topology(self, G: nx.Graph, nodetype, channeltype, manager, context=None):
     print(G)
-    n = G.number_of_nodes()
+    self.G = G
+    n = self.G.number_of_nodes()
     nd_queues = [[None for i in range(n)] for j in range(n)]
     ch_queues = [[None for i in range(n)] for j in range(n)]
 
@@ -68,8 +69,10 @@ class Topology:
         if src != dest:
           if G.has_edge(src,dest): #symmetric links but there will be a channel process in between to two queues are required so two queues per symmetric channel
             ch_queues[src][dest] = Queue(maxsize=100)
+            #ch_queues[src][dest] = manager.get_queue(maxsize=100)
             #print("CQ", src, dest, "will be created", ch_queues[src][dest])
             nd_queues[src][dest] = Queue(maxsize=100)
+            #nd_queues[src][dest] = manager.get_queue(maxsize=100)
             #print("NQ", src, dest, " will be created", nd_queues[src][dest])
         #else:
         #  #print(i, j, "EQUAL NO OP")
