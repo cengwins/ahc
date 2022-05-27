@@ -34,19 +34,22 @@ class ApplicationLayerMessagePayload(GenericMessagePayload):
 
 
 class ApplicationLayerComponent(GenericModel):
+    
+
+    def send_message(self):
+        destination = 1
+        hdr = ApplicationLayerMessageHeader(ApplicationLayerMessageTypes.PROPOSE, self.componentinstancenumber,
+                                                destination)
+        payload = ApplicationLayerMessagePayload("23")
+        proposalmessage = GenericMessage(hdr, payload)
+        self.send_self(Event(self, "propose", proposalmessage))
+
     def on_init(self, eventobj: Event):
         #print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
 
         if self.componentinstancenumber == 0:
-            # destination = random.randint(len(Topology.G.nodes))
-            destination = 1
-            hdr = ApplicationLayerMessageHeader(ApplicationLayerMessageTypes.PROPOSE, self.componentinstancenumber,
-                                                destination)
-            payload = ApplicationLayerMessagePayload("23")
-            proposalmessage = GenericMessage(hdr, payload)
-            randdelay = random.randint(0, 5)
-            time.sleep(randdelay)
-            self.send_self(Event(self, "propose", proposalmessage))
+            self.t = AHCTimer(0.1, self.send_message)
+            self.t.start()
         else:
             pass
 
