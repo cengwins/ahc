@@ -32,6 +32,7 @@ class GenericLinkLayer(GenericModel):
     msg = eventobj.eventcontent
     hdr = msg.header
     payload = msg.payload
+    logger.debug(f"HEADER {str(hdr)}")
     if hdr.messageto == self.componentinstancenumber or hdr.messageto == MessageDestinationIdentifiers.LINKLAYERBROADCAST:
       self.send_up(Event(self, EventTypes.MFRB, payload,
                          fromchannel= eventobj.fromchannel))  # doing decapsulation by just sending the payload

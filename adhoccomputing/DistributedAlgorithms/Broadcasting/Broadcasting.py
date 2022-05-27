@@ -1,5 +1,3 @@
-import random
-import time
 from enum import Enum
 import copy
 from ...Generics import *
@@ -24,8 +22,7 @@ class ControlledFlooding(GenericModel):
   def on_init(self, eventobj: Event):
     self.uniquebroadcastidentifier = 1
     self.broadcastdb = []
-    #if self.componentinstancenumber == 0  :
-    #  self.send_self(Event(self, EventTypes.MFRT, None))
+
 
   def senddownbroadcast(self, eventobj: Event, whosends, sequencenumber):
     applmsg = eventobj.eventcontent
@@ -33,7 +30,7 @@ class ControlledFlooding(GenericModel):
     nexthop = MessageDestinationIdentifiers.LINKLAYERBROADCAST
     logger.info(f"{self.componentinstancenumber} will SEND a message to {destination} over {nexthop}")
     hdr = BroadcastingMessageHeader(BroadcastingMessageTypes.SIMPLEFLOOD, whosends, destination,
-                                    nexthop, sequencenumber)
+                                    nexthop, sequencenumber=sequencenumber)
     payload = applmsg
     broadcastmessage = GenericMessage(hdr, payload)
     self.send_down(Event(self, EventTypes.MFRT, broadcastmessage))
