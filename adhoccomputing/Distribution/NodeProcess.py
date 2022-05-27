@@ -18,7 +18,7 @@ class NodeProcess(Process):
         super(NodeProcess,self).__init__()
 
     def ctrlc_signal_handler(self,sig, frame):
-        print('You pressed Ctrl+C!')
+        #print('You pressed Ctrl+C!')
         #self.cc.exit_process()
         time.sleep(1)
         sys.exit(0)
@@ -34,12 +34,12 @@ class NodeProcess(Process):
         while(True):
             if self.child_conn.poll(polltime):
                 ev:Event = self.child_conn.recv()
-                print("NODEPROCESS-", self.componentinstancenumber, " RECEIVED ", str(ev))
+                #print("NODEPROCESS-", self.componentinstancenumber, " RECEIVED ", str(ev))
                 match ev.event:
                     case EventTypes.INIT:
                         self.node.initiate_process()
                     case EventTypes.EXIT:
-                        print("EXITING: Node ", self.node.componentinstancenumber, os.getppid(), os.getpid())
+                        #print("EXITING: Node ", self.node.componentinstancenumber, os.getppid(), os.getpid())
                         self.node.exit_process()
                         time.sleep(1) # For clearing up the exit events of components
                         return
@@ -54,21 +54,10 @@ class NodeProcess(Process):
                     src = i
                     try:
                         if self.node_queues[dest][src] is not None:
-                            #myev = Event(None, EventTypes.MFRP, "Deneme")
-                            #self.node_queues[src][dest].put(myev)
-                            #print("Node", self.componentinstancenumber, " processing")
-                            #print("PUT")
-                            #if (self.node_queues[src][dest].full() == True):
-                            #  print( "\033[92mNODEPROCESS\033[0m",self.componentinstancenumber, "DENEME-----", os.getpid())
-                            #ev = self.node_queues[dest][src].get(block=True, timeout=polltime)
-                            #ev = self.node_queues[src][dest].get(block=True, timeout=polltime)
                             ev = self.node_queues[src][dest].get(block=True, timeout=polltime)
-                            print( "\033[92mNODEPROCESS\033[0m",self.componentinstancenumber, " received ", str(ev))
+                            #print( "\033[92mNODEPROCESS\033[0m",self.componentinstancenumber, " received ", str(ev))
                             self.node.trigger_event(ev)
-                            #self.node_queues[self.src][self.dest].task_done()
                     except queue.Empty:
-                    #print("queue empty")
-                    #time.sleep(polltime)
                         pass
                     except Exception as ex:
                         print("Exception in polling queues: ", ex)

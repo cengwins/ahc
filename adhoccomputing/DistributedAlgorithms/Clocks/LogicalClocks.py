@@ -32,8 +32,8 @@ class LogicalClock(GenericModel):
   def on_init(self, eventobj: Event): 
     self.counter = 0 
 
-    if self.componentinstancenumber == 0: 
-      self.send_self(Event(self, EventTypes.MFRT, None))
+    # if self.componentinstancenumber == 0: 
+    #   self.send_self(Event(self, EventTypes.MFRT, None))
 
   #this should serve as the on_send  
   def on_message_from_top(self, eventobj: Event): 
@@ -58,7 +58,7 @@ class LogicalClock(GenericModel):
       time.sleep(random.randint(0, 2))
       self.send_down(Event(self, EventTypes.MFRT, message))
 
-      print(f"Messaage sent from node {self.local_time(self.counter)} to node {destination}\n")
+      logger.info(f"Messaage sent from node {self.local_time(self.counter)} to node {destination}")
 
 
   #this should serve as the on_receive
@@ -73,7 +73,7 @@ class LogicalClock(GenericModel):
     payload = incomingtimestamp
     self.counter = self.update_timestamp(incomingtimestamp, self.counter)
 
-    print(f"Messaage received at node {self.local_time(self.counter)} from node {hdr.messagefrom}\n")
+    logger.info(f"Messaage received at node {self.local_time(self.counter)} from node {hdr.messagefrom}")
 
     self.send_up(Event(self, EventTypes.MFRB, payload))
 
@@ -81,7 +81,7 @@ class LogicalClock(GenericModel):
   def on_internal(self, eventobj: Event): 
     #Increment counter so that we know something happened
     self.counter +=1 
-    print(f"Internal event at node {self.local_time(self.counter)}\n")
+    logger.info(f"Internal event at node {self.local_time(self.counter)}")
     randomnumber = random.randint(0,1)
     if randomnumber == 0: 
       self.send_self(Event(self, LogicalClockEventTypes.INTERNAL, None))
@@ -109,10 +109,10 @@ class VectorClock(LogicalClock):
     N = len(self.topology.nodes)
     self.counter = [0] * N
 
-    if self.componentinstancenumber == 0: 
-      self.send_self(Event(self, EventTypes.MFRT, None))
-    else: 
-      pass
+    # if self.componentinstancenumber == 0: 
+    #   self.send_self(Event(self, EventTypes.MFRT, None))
+    # else: 
+    #   pass
 
 
   def on_message_from_top(self, eventobj: Event): 
@@ -136,7 +136,7 @@ class VectorClock(LogicalClock):
     time.sleep(random.randint(0,2))
     self.send_down(Event(self, EventTypes.MFRT, message))
 
-    print(f"Messaage sent from node {self.local_time(self.counter)} to node {destination}\n") 
+    logger.info(f"Messaage sent from node {self.local_time(self.counter)} to node {destination}") 
 
 
   def on_message_from_bottom(self, eventobj: Event):
@@ -150,12 +150,12 @@ class VectorClock(LogicalClock):
     self.update_timestamp(incomingtimestamps, self.counter)
     self.send_up(Event(self, EventTypes.MFRB, None))
 
-    print(f"Messaage received at node {self.local_time(self.counter)} from node {hdr.messagefrom}\n")
+    logger.info(f"Messaage received at node {self.local_time(self.counter)} from node {hdr.messagefrom}")
 
 
   def on_internal(self, eventobj: Event):
     self.update_counter()
-    print(f"Internal event at node {self.local_time(self.counter)}\n")
+    logger.info(f"Internal event at node {self.local_time(self.counter)}")
 
     randomnumber = random.randint(0,1)
     if randomnumber == 0: 
@@ -175,7 +175,8 @@ class VectorClock(LogicalClock):
     self.counter = my_time_stamp
 
 
-  def update_counter(self): 
+  def update_counter(self):
+    logger.debug(f"{self.componentname} - {self.componentinstancenumber} COUNTERS= {self.counter}")
     self.counter[self.componentinstancenumber] +=1
 
   def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None):

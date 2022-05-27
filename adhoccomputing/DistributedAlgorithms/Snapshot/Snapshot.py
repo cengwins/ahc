@@ -29,8 +29,8 @@ class SnapshotComponentModel(GenericModel):
         raise Exception(f"Only channels are allowed for connection to"
                         " {self.__class__}")
 
-    def on_connected_to_channel(self, name, channel):
-        super().on_connected_to_channel(name, channel)
+    def on_connected_to_component(self, name, channel):
+        super().on_connected_to_component(name, channel)
         self.chnls.add(channel.componentinstancenumber)
 
     def channel_of(self, eventobj: Event):

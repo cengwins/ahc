@@ -6,7 +6,7 @@ sys.path.insert(0, os.getcwd())
 
 from adhoccomputing.GenericModel import GenericModel
 from adhoccomputing.Generics import Event, ConnectorTypes, SDRConfiguration
-from adhoccomputing.Experimentation.Topology import Topology, mp_construct_sdr_topology_without_channels
+from adhoccomputing.Experimentation.Topology import Topology
 from adhoccomputing.Networking.PhysicalLayer.BladeRFOfdmFlexFramePhy import  BladeRFOfdmFlexFramePhy
 from adhoccomputing.Networking.MacProtocol.CSMA import MacCsmaPPersistent, MacCsmaPPersistentConfigurationParameters
 from adhoccomputing.Networking.ApplicationLayer.PingPongApplicationLayer import *
@@ -18,7 +18,8 @@ class BladeRFNode(GenericModel):
     def on_init(self, eventobj: Event):
         i = 0
         while(True):
-            self.appl.send_self(Event(self.componentinstancenumber, PingPongApplicationLayerEventTypes.STARTBROADCAST, None))
+            print("Will start poking")
+            self.appl.send_self(Event(self, PingPongApplicationLayerEventTypes.STARTBROADCAST, None))
             time.sleep(0.1)    
         
     def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None, child_conn=None):
@@ -56,9 +57,9 @@ def main(argv):
     num_nodes = 3
 # Note that the topology has to specific: usrp winslab_b210_0 is run by instance 0 of the component
 # Therefore, the usrps have to have names winslab_b210_x where x \in (0 to nodecount-1)
-    #topo.construct_winslab_topology_without_channels(num_nodes, BladeRFNode)
-    mp_construct_sdr_topology_without_channels(num_nodes, BladeRFNode, topo)
-  # topo.construct_winslab_topology_with_channels(2, UsrpNode, FIFOBroadcastPerfectChannel)
+    topo.construct_winslab_topology_without_channels(num_nodes, BladeRFNode)
+   # mp_construct_sdr_topology_without_channels(num_nodes, BladeRFNode, topo)
+  #topo.construct_winslab_topology_with_channels(2, UsrpNode, FIFOBroadcastPerfectChannel)
   
   # time.sleep(1)
   # topo.nodes[0].send_self(Event(topo.nodes[0], UsrpNodeEventTypes.STARTBROADCAST, None))

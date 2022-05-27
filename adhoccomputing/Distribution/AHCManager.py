@@ -3,7 +3,6 @@ import queue
 from multiprocessing.managers import BaseManager
 from multiprocessing.context import BaseContext
 from multiprocessing import Queue
-
 import sys, os, signal
 import argparse
 import configparser
@@ -16,14 +15,13 @@ class AHCManagerType(Enum):
     AHC_CLIENT = "ahc_client"
 
 class AHCManager():
-
+    queues=[]
     def __init__(self, type:AHCManagerType, argv) -> None:
         self.argv = argv
         self.authkey = b"01032016"
         self.address = self.parse_args(self.argv)
         AHCBaseManager.register('create_and_return_queue', callable=self.create_and_return_queue)
         self.ahcbasemanager = AHCBaseManager(address=self.address, authkey=self.authkey)
-        self.queues=[]
         if type==AHCManagerType.AHC_SERVER:
             print(self.address)
             self.ahcbaseserver = self.ahcbasemanager.get_server()
@@ -37,7 +35,11 @@ class AHCManager():
         self.ahcbasemanager.connect()
 
     def get_queue(self, maxsize):
-        return self.ahcbasemanager.create_and_return_queue(maxsize)
+        try:
+            return self.ahcbasemanager.create_and_return_queue(maxsize)
+        except:
+            #print("The AHC server is not running...")
+            return None
       
     def create_and_return_queue(self, maxsize):
         q = Queue(maxsize = maxsize)
@@ -65,7 +67,7 @@ class AHCManager():
                             help="Specify config file", metavar="FILE")
             
             args, remaining_argv = conf_parser.parse_known_args()
-            DomainName = "localhost"
+            DomainName = ""
             Port = 9000
             if args.conf_file:
                 config.read(args.conf_file)

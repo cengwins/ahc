@@ -12,6 +12,7 @@ class GenericLinkLayer(GenericModel):
     super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology)
 
   def on_message_from_top(self, eventobj: Event):
+    logger.info(f"{self.componentname}-{self.componentinstancenumber} RECEIVED FROM TOP {str(eventobj)}")
     abovehdr = eventobj.eventcontent.header
     if abovehdr.messageto == MessageDestinationIdentifiers.NETWORKLAYERBROADCAST:
       hdr = GenericMessageHeader(LinkLayerMessageTypes.LINKMSG, self.componentinstancenumber,
@@ -27,11 +28,12 @@ class GenericLinkLayer(GenericModel):
     self.send_down(Event(self, EventTypes.MFRT, msg))
 
   def on_message_from_bottom(self, eventobj: Event):
+    logger.info(f"{self.componentname}-{self.componentinstancenumber} RECEIVED FROM BOTTOM {str(eventobj)}")
     msg = eventobj.eventcontent
     hdr = msg.header
     payload = msg.payload
     if hdr.messageto == self.componentinstancenumber or hdr.messageto == MessageDestinationIdentifiers.LINKLAYERBROADCAST:
       self.send_up(Event(self, EventTypes.MFRB, payload,
-                         eventobj.fromchannel))  # doing decapsulation by just sending the payload
+                         fromchannel= eventobj.fromchannel))  # doing decapsulation by just sending the payload
     else:
       pass

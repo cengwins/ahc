@@ -49,16 +49,6 @@ class AdHocNode(GenericModel):
     down.connect_me_to_component(ConnectorTypes.UP, newLayer)
     up.connect_me_to_component(ConnectorTypes.DOWN, newLayer)
 
-  def connect_me_to_channel(self, name, channel: GenericChannel):
-    try:
-        self.connectors[name] = channel
-    except AttributeError:
-        # self.connectors = ConnectorList()
-        self.connectors[name] = channel
-    connectornameforchannel = self.componentname + str(self.componentinstancenumber)
-
-    channel.connect_me_to_component(connectornameforchannel, self)
-
   def replace_component(self, new:GenericModel, indx, args):
     if(indx == 0) :
       self.physicallayer:GenericModel = new(args)
@@ -75,17 +65,17 @@ class AdHocNode(GenericModel):
         self.netlayer = new(args)
         self.netlayer.connect_me_to_component(ConnectorTypes.UP, self.transportlayer)
         self.netlayer.connect_me_to_component(ConnectorTypes.DOWN, self.linklayer)
-        self.linklayer.connect_me_to_channel(ConnectorTypes.UP, self.netlayer)
+        self.linklayer.connect_me_to_component(ConnectorTypes.UP, self.netlayer)
         self.transportlayer.connect_me_to_component(ConnectorTypes.DOWN, self.netlayer)
     elif(indx == 3): # Transport Layer
         self.transportlayer = new(args)
         self.transportlayer.connect_me_to_component(ConnectorTypes.UP, self.appllayer)
         self.transportlayer.connect_me_to_component(ConnectorTypes.DOWN, self.netlayer)
-        self.netlayer.connect_me_to_channel(ConnectorTypes.UP, self.transportlayer)
+        self.netlayer.connect_me_to_component(ConnectorTypes.UP, self.transportlayer)
         self.appllayer.connect_me_to_component(ConnectorTypes.DOWN, self.transportlayer)
     elif(indx == 4): # Application Layer
         self.appllayer = new(args)
-        self.transportlayer.connect_me_to_channel(ConnectorTypes.UP, self.appllayer)
+        self.transportlayer.connect_me_to_component(ConnectorTypes.UP, self.appllayer)
         self.appllayer.connect_me_to_component(ConnectorTypes.DOWN, self.transportlayer)
 
     else:

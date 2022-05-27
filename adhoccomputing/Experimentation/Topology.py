@@ -68,11 +68,17 @@ class Topology:
         dest = j
         if src != dest:
           if G.has_edge(src,dest): #symmetric links but there will be a channel process in between to two queues are required so two queues per symmetric channel
-            ch_queues[src][dest] = Queue(maxsize=100)
-            #ch_queues[src][dest] = manager.get_queue(maxsize=100)
+            #ch_queues[src][dest] = Queue(maxsize=100)
+            try:
+              ch_queues[src][dest] = manager.get_queue(maxsize=100)
+            except:
+              ch_queues[src][dest] = Queue(maxsize=100)
             #print("CQ", src, dest, "will be created", ch_queues[src][dest])
-            nd_queues[src][dest] = Queue(maxsize=100)
-            #nd_queues[src][dest] = manager.get_queue(maxsize=100)
+            #nd_queues[src][dest] = Queue(maxsize=100)
+            try:
+              nd_queues[src][dest] = manager.get_queue(maxsize=100)
+            except:
+              nd_queues[src][dest] = Queue(maxsize=100)
             #print("NQ", src, dest, " will be created", nd_queues[src][dest])
         #else:
         #  #print(i, j, "EQUAL NO OP")
@@ -103,7 +109,6 @@ class Topology:
   def construct_winslab_topology_with_channels(self, nodecount, nodetype, channeltype, context=None):
 
     self.construct_winslab_topology_without_channels(nodecount, nodetype, context)
-
     pairs = list(itertools.permutations(range(nodecount), 2))
     print("Pairs", pairs)
     self.G.add_edges_from(pairs)
@@ -111,8 +116,9 @@ class Topology:
     for k in edges:
       ch = channeltype(channeltype.__name__, str(k[0]) + "-" + str(k[1]))
       self.channels[k] = ch
-      self.nodes[k[0]].connect_me_to_channel(ConnectorTypes.DOWN, ch)
-      self.nodes[k[1]].connect_me_to_channel(ConnectorTypes.DOWN, ch)
+      self.nodes[k[0]].connect_me_to_component(ConnectorTypes.DOWN, ch)
+      ch.connect_me_to_component(ConnectorTypes.UP, self.nodes[k[1]])
+
 
 
   def construct_winslab_topology_without_channels(self, nodecount, nodetype, context=None):
@@ -135,28 +141,63 @@ class Topology:
     cc = nodetype(nodetype.__name__, id)
     self.nodes[0] = cc
 
-
+  # TODO: check if graph is directinal G.is_directed() == False then create one channel
+  # if G is directed create a channel in each direction
+  # Connect DOWN of source to channel
+  # Connect UP of channel to destination
   def construct_from_graph(self, G: nx.Graph, nodetype, channeltype, context=None):
     self.G = G
     nodes = list(G.nodes)
     edges = list(G.edges)
+    #print("edges", edges)
     self.compute_forwarding_table()
     for i in nodes:
       cc = nodetype(nodetype.__name__, i,topology=self)#, self.ForwardingTable)
       #print("I am topology:", self)
       self.nodes[i] = cc
-    for k in edges:
-      ch = channeltype(channeltype.__name__ + "-" + str(k[0]) + "-" + str(k[1]), str(k[0]) + "-" + str(k[1]))
-      self.channels[k] = ch
-      self.nodes[k[0]].connect_me_to_channel(ConnectorTypes.DOWN, ch)
-      self.nodes[k[1]].connect_me_to_channel(ConnectorTypes.DOWN, ch)
-      #print("Channel", ch.componentname)
+    
+    if G.is_directed() == True:
+      for k in edges:
+        ch = channeltype(channeltype.__name__ + "-" + str(k[0]) + "-" + str(k[1]), str(k[0]) + "-" + str(k[1]))
+        self.channels[k] = ch
+        #For a directed graph each direction of an edge is shown as a separate item in G.edges()
+        #Hence, we generate a directional channel for each direction of the edge and 
+        # connect the sender-DOWN to channel and Channel-UP to receiver
+        self.nodes[k[0]].connect_me_to_component(ConnectorTypes.DOWN, ch)
+        ch.connect_me_to_component(ConnectorTypes.UP, self.nodes[k[1]])
+    else:
+      for k in edges:
+        ch = channeltype(channeltype.__name__ + "-" + str(k[0]) + "-" + str(k[1]), str(k[0]) + "-" + str(k[1]))
+        self.channels[k] = ch
+        # For an undirected graph, we generate a single channel and connect both sides to channel
+        # G.edges have unordered pairs hence SENDER-DOWN and RECEIVER-DOWN to channel
+        # and CHANNEL-UP to both SENDER and RECEIVER
+        self.nodes[k[0]].connect_me_to_component(ConnectorTypes.DOWN, ch)
+        ch.connect_me_to_component(ConnectorTypes.UP, self.nodes[k[1]])
+        self.nodes[k[1]].connect_me_to_component(ConnectorTypes.DOWN, ch)
+        ch.connect_me_to_component(ConnectorTypes.UP, self.nodes[k[0]])
+
 
   def construct_single_node(self, nodetype, instancenumber):
     self.singlenode = nodetype(nodetype.__name__, instancenumber,topology=self)
     self.G = nx.Graph()
     self.G.add_nodes_from([0])
     self.nodes[0] = self.singlenode
+
+
+  def construct_sender_receiver_directional(self, sendertype, receivertype, channeltype):
+    self.sender = sendertype(sendertype.__name__, 0,topology=self)
+    self.receiver = receivertype(receivertype.__name__, 1,topology=self)
+    ch = channeltype(channeltype.__name__, "0-1")
+    self.G = nx.Graph()
+    self.G.add_nodes_from([0, 1])
+    self.G.add_edges_from([(0, 1)])
+    self.nodes[self.sender.componentinstancenumber] = self.sender
+    self.nodes[self.receiver.componentinstancenumber] = self.receiver
+    self.channels[ch.componentinstancenumber] = ch
+    self.sender.connect_me_to_component(ConnectorTypes.DOWN, ch)
+    ch.connect_me_to_component(ConnectorTypes.UP, self.receiver)
+    #self.receiver.connect_me_to_component(ConnectorTypes.UP, ch)
 
   def construct_sender_receiver(self, sendertype, receivertype, channeltype):
     self.sender = sendertype(sendertype.__name__, 0,topology=self)
@@ -168,8 +209,10 @@ class Topology:
     self.nodes[self.sender.componentinstancenumber] = self.sender
     self.nodes[self.receiver.componentinstancenumber] = self.receiver
     self.channels[ch.componentinstancenumber] = ch
-    self.sender.connect_me_to_channel(ConnectorTypes.DOWN, ch)
-    self.receiver.connect_me_to_channel(ConnectorTypes.DOWN, ch)
+    self.sender.connect_me_to_component(ConnectorTypes.DOWN, ch)
+    self.receiver.connect_me_to_component(ConnectorTypes.DOWN, ch)
+    ch.connect_me_to_component(ConnectorTypes.UP, self.receiver)
+    ch.connect_me_to_component(ConnectorTypes.UP, self.sender)
 
   def allpairs_shortest_path(self):
     return dict(nx.all_pairs_shortest_path(self.G))
@@ -181,28 +224,31 @@ class Topology:
       print(path[myid][i])
 
   def start(self):
+    initatecheck = False
     try:
       if self.nodeproc is not None:
         for i in range(len(self.nodeproc)):
           self.nodeproc[i].start()
+          initatecheck = True
       if self.chproc is not None:
         for i in range(len(self.chproc)):
           self.chproc[i].start()
     except Exception as ex:
-      print(ex)
-    try:
-      if self.G is not None and self.G.nodes is not None:
-        N = len(self.G.nodes)
-        self.compute_forwarding_table()
-        for i in self.G.nodes:
-          node = self.nodes[i]
-          if node.initeventgenerated == False:
-            node.initiate_process()
-        for i in self.channels:
-          ch = self.channels[i]
-          ch.initiate_process()
-    except Exception as ex:
-      print("Exception in topology.start: ", ex)
+      print("Topology start exeption: ", ex)
+    if initatecheck == False:
+      try:
+        if self.G is not None and self.G.nodes is not None:
+          N = len(self.G.nodes)
+          self.compute_forwarding_table()
+          for i in self.G.nodes:
+            node = self.nodes[i]
+            if node.initeventgenerated == False:
+              node.initiate_process()
+          for i in self.channels:
+            ch = self.channels[i]
+            ch.initiate_process()
+      except Exception as ex:
+        print("Exception in topology.start: ", ex)
     #check and initialize if nodes are created using multiprocessing
     try:
       if self.nodeproc is not None and self.nodeproc_parent_conn is not None:
@@ -219,9 +265,23 @@ class Topology:
     except Exception as ex:
       print("Exception in topology.start multiprocessing 2: ", ex)
 
-
+  def __str__(self) -> str:
+    retval = f"TOPOLOGY: {self.G.number_of_nodes()} nodes and {self.G.number_of_edges()} edges " 
+    for i in self.nodes:
+      retval += "ND:" + str(self.nodes[i].componentinstancenumber) + f" ({self.nodes[i].componentname}) "
+    #
+    for i in self.channels:
+      chname = self.channels[i].componentinstancenumber
+      src = chname.split("-")[0]
+      dest = chname.split("-")[1]
+      if self.G.is_directed() == True:
+        retval += "CH:" + str(src) + "-->"+ str(dest) + f" (directed, {self.channels[i].componentname}) "
+      else:
+        retval += "CH:" + str(src) + "<-->"+ str(dest) + f" (undirected, {self.channels[i].componentname}) "
+    return retval
 
   def exit(self):
+    logger.critical("Exiting")
     try:
       if self.G is not None and self.G.nodes is not None:
         for i in self.G.nodes:
@@ -236,6 +296,7 @@ class Topology:
             ch.terminatestarted = True
     except Exception as ex:
       print("Exception in topology.start: ", ex)
+
     try:
       if self.nodeproc is not None and self.nodeproc_parent_conn is not None:
         exit_event = Event(None, EventTypes.EXIT, None)
@@ -250,6 +311,8 @@ class Topology:
           self.chproc_parent_conn[i].send(exit_event)
     except Exception as ex:
       print("Exception in topology.exit multiprocessing: ", ex)
+
+    
   
   def compute_forwarding_table(self):
     self.ForwardingTable = dict(nx.all_pairs_shortest_path(self.G))
