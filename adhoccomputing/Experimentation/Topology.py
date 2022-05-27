@@ -26,7 +26,6 @@ class Topology:
   chproc_parent_conn = [] # Pipe ends that will be used by the main thread to communicate with the child SDRNode processes
 
   def __init__(self, name=None) -> None:
-#      print("Constructing topology", name)
     pass
   def __getstate__(self):
     return {
@@ -46,7 +45,6 @@ class Topology:
   # This generator should be used with sdr platforms. Each sdr will be run in a separate process space
   # Note that the classical channel concept will not be applicable, PIPEs will have to be established.
   def mp_construct_sdr_topology_without_channels(self, numnodes, nodetype,context=None):
-    print(numnodes)
     for i in range(numnodes):
       parent_conn, child_conn = Pipe()
       p = NodeProcess(nodetype, i, child_conn,None,None)
@@ -56,7 +54,6 @@ class Topology:
 
 
   def mp_construct_sdr_topology(self, G: nx.Graph, nodetype, channeltype, manager, context=None):
-    print(G)
     self.G = G
     n = self.G.number_of_nodes()
     nd_queues = [[None for i in range(n)] for j in range(n)]
@@ -73,17 +70,10 @@ class Topology:
               ch_queues[src][dest] = manager.get_queue(maxsize=100)
             except:
               ch_queues[src][dest] = Queue(maxsize=100)
-            #print("CQ", src, dest, "will be created", ch_queues[src][dest])
-            #nd_queues[src][dest] = Queue(maxsize=100)
             try:
               nd_queues[src][dest] = manager.get_queue(maxsize=100)
             except:
               nd_queues[src][dest] = Queue(maxsize=100)
-            #print("NQ", src, dest, " will be created", nd_queues[src][dest])
-        #else:
-        #  #print(i, j, "EQUAL NO OP")
-        #  ch_queues[src][dest] = None
-        #  nd_queues[src][dest] = None
     for i in range(n):
       parent_conn, child_conn = Pipe()
       p = NodeProcess(nodetype, i, child_conn, nd_queues, ch_queues)
@@ -110,7 +100,6 @@ class Topology:
 
     self.construct_winslab_topology_without_channels(nodecount, nodetype, context)
     pairs = list(itertools.permutations(range(nodecount), 2))
-    print("Pairs", pairs)
     self.G.add_edges_from(pairs)
     edges = list(self.G.edges)
     for k in edges:
@@ -149,11 +138,9 @@ class Topology:
     self.G = G
     nodes = list(G.nodes)
     edges = list(G.edges)
-    #print("edges", edges)
     self.compute_forwarding_table()
     for i in nodes:
       cc = nodetype(nodetype.__name__, i,topology=self)#, self.ForwardingTable)
-      #print("I am topology:", self)
       self.nodes[i] = cc
     
     if G.is_directed() == True:
@@ -220,8 +207,7 @@ class Topology:
   def shortest_path_to_all(self, myid):
     path = dict(nx.all_pairs_shortest_path(self.G))
     nodecnt = len(self.G.nodes)
-    for i in range(nodecnt):
-      print(path[myid][i])
+
 
   def start(self):
     initatecheck = False
@@ -234,7 +220,7 @@ class Topology:
         for i in range(len(self.chproc)):
           self.chproc[i].start()
     except Exception as ex:
-      print("Topology start exeption: ", ex)
+      logger.critical(f"Topology start exeption: {ex}")
     if initatecheck == False:
       try:
         if self.G is not None and self.G.nodes is not None:
@@ -248,7 +234,7 @@ class Topology:
             ch = self.channels[i]
             ch.initiate_process()
       except Exception as ex:
-        print("Exception in topology.start: ", ex)
+        logger.critical(f"Topology start exeption: {ex}")
     #check and initialize if nodes are created using multiprocessing
     try:
       if self.nodeproc is not None and self.nodeproc_parent_conn is not None:
@@ -256,14 +242,14 @@ class Topology:
         for i in range(len(self.nodeproc)):
           self.nodeproc_parent_conn[i].send(init_event)
     except Exception as ex:
-      print("Exception in topology.start multiprocessing 1: ", ex)
+      logger.critical(f"Topology start exeption: {ex}")
     try:
       if self.chproc is not None and self.chproc_parent_conn is not None:
         init_event = Event(None, EventTypes.INIT, None)
         for i in range(len(self.chproc)):
           self.chproc_parent_conn[i].send(init_event)
     except Exception as ex:
-      print("Exception in topology.start multiprocessing 2: ", ex)
+      logger.critical(f"Topology start exeption: {ex}")
 
   def __str__(self) -> str:
     retval = f"TOPOLOGY: {self.G.number_of_nodes()} nodes and {self.G.number_of_edges()} edges " 
@@ -295,7 +281,7 @@ class Topology:
             ch.exit_process()
             ch.terminatestarted = True
     except Exception as ex:
-      print("Exception in topology.start: ", ex)
+      logger.critical(f"Topology exit exception: {ex}")
 
     try:
       if self.nodeproc is not None and self.nodeproc_parent_conn is not None:
@@ -303,14 +289,14 @@ class Topology:
         for i in range(len(self.nodeproc)):
           self.nodeproc_parent_conn[i].send(exit_event)
     except Exception as ex:
-      print("Exception in topology.exit multiprocessing: ", ex)
+      logger.critical(f"Topology exit exception: {ex}")
     try:
       if self.chproc is not None and self.chproc_parent_conn is not None:
         exit_event = Event(None, EventTypes.EXIT, None)
         for i in range(len(self.chproc)):
           self.chproc_parent_conn[i].send(exit_event)
     except Exception as ex:
-      print("Exception in topology.exit multiprocessing: ", ex)
+      logger.critical(f"Topology exit exception: {ex}")
 
     
   
@@ -347,7 +333,7 @@ class Topology:
     # self.lock.acquire()
     # nx.draw(self.G, self.nodepos, node_color=self.nodecolors, with_labels=True, font_weight='bold')
     # plt.draw()
-    print(self.nodecolors)
+    logger.debug(f"{self.nodecolors}")
     # self.lock.release()
 
   def get_random_node(self):

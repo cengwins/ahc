@@ -6,6 +6,7 @@ from multiprocessing import Queue
 import sys, os, signal
 import argparse
 import configparser
+from ..Generics import *
 
 #Should there be need we can extend
 class AHCBaseManager(BaseManager): pass
@@ -23,13 +24,13 @@ class AHCManager():
         AHCBaseManager.register('create_and_return_queue', callable=self.create_and_return_queue)
         self.ahcbasemanager = AHCBaseManager(address=self.address, authkey=self.authkey)
         if type==AHCManagerType.AHC_SERVER:
-            print(self.address)
+            logger.debug(f"{self.address}")
             self.ahcbaseserver = self.ahcbasemanager.get_server()
         else:
             if type==AHCManagerType.AHC_CLIENT:
                 pass
             else:
-                print("Wrong AHC distribution type")
+                logger.critical("Wrong AHC distribution type")
 
     def connect(self):
         self.ahcbasemanager.connect()
@@ -38,7 +39,6 @@ class AHCManager():
         try:
             return self.ahcbasemanager.create_and_return_queue(maxsize)
         except:
-            #print("The AHC server is not running...")
             return None
       
     def create_and_return_queue(self, maxsize):
@@ -51,7 +51,7 @@ class AHCManager():
     def parse_args(self, argv):
         config = configparser.ConfigParser()
         if argv is None:
-            print(f"Usage: {__name__} -c (--config_file)")
+            logger.debug(f"Usage: {__name__} -c (--config_file)")
         else:
             argv = sys.argv
             conf_parser = argparse.ArgumentParser(
@@ -71,13 +71,12 @@ class AHCManager():
             Port = 9000
             if args.conf_file:
                 config.read(args.conf_file)
-                print(config.sections())
                 if (args.section in config):
                     conf = config[args.section]
                     DomainName = conf['DomainName']
                     Port = conf['Port']
 
-            print(f"{DomainName}:{Port}  will be the manager address")
+            logger.debug(f"{DomainName}:{Port}  will be the manager address")
             address = (DomainName, Port)
             return address
     

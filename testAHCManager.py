@@ -9,12 +9,12 @@ import sys, os, signal
 import argparse
 import configparser
 from adhoccomputing.Distribution.AHCManager import AHCManager, AHCManagerType
-
+from adhoccomputing.Generics import *
 
 def parse_args(argv):
     config = configparser.ConfigParser()
     if argv is None:
-        print(f"Usage: {__name__} -c (--config_file)")
+        logger.applog(f"Usage: {__name__} -c (--config_file)")
     else:
         argv = sys.argv
         conf_parser = argparse.ArgumentParser(
@@ -34,22 +34,23 @@ def parse_args(argv):
         Port = 9000
         if args.conf_file:
             config.read(args.conf_file)
-            print(config.sections())
+            logger.applog(f"{config.sections()}")
             if (args.section in config):
                 conf = config[args.section]
                 DomainName = conf['DomainName']
                 Port = conf['Port']
 
-        print(f"{DomainName}:{Port}  will be the manager address")
+        logger.applog(f"{DomainName}:{Port}  will be the manager address")
         address = (DomainName, Port)
         return address
 
 
 def main(argv):
+    setAHCLogLevel(21)
     ahcmanager = AHCManager(AHCManagerType.AHC_CLIENT, argv)
     ahcmanager.connect()
     queue = ahcmanager.get_queue(10)
-    print(queue.get())
+    logger.applog(f"{queue.get()}")
 
 if __name__ == "__main__":
    # freeze_support()

@@ -88,7 +88,7 @@ class FireWireNode(GenericModel):
     def on_init(self, eventobj: Event):
         sleep(1)
         self.neighbours = set(self.topology.get_neighbors(self.componentinstancenumber))
-        print(f"the neighbours of {self.componentinstancenumber} is {self.neighbours}")
+        logger.debug(f"the neighbours of {self.componentinstancenumber} is {self.neighbours}")
 
         self.send_parent_req()
 
@@ -105,7 +105,7 @@ class FireWireNode(GenericModel):
             par = result.pop()
             self.parent = par
 
-            print(
+            logger.debug(
                 f"🤖 {self.componentinstancenumber} picked {self.parent} as it's parent"
             )
 
@@ -129,17 +129,17 @@ class FireWireNode(GenericModel):
     def root_contention(self, eventobj: Event):
         if self.is_leader:
             return
-        print(f"🤖 {self.componentinstancenumber} is in ROOT CONTENTION")
+        logger.debug(f"🤖 {self.componentinstancenumber} is in ROOT CONTENTION")
         decision = random.choice([True, False])
 
         if decision:
-            print(f"🤖 {self.componentinstancenumber} decides to YIELD")
+            logger.debug(f"🤖 {self.componentinstancenumber} decides to YIELD")
             self.in_root_contention = True
             self.send_parent_req()
             self.is_waiting = False
             self.waiting_since = None
         else:
-            print(f"🤖 {self.componentinstancenumber} decides to HOLD")
+            logger.debug(f"🤖 {self.componentinstancenumber} decides to HOLD")
             self.is_waiting = True
             self.in_root_contention = False
             self.send_self(Event(self, FireWirePacketType.START_TIMER, "..."))
@@ -194,7 +194,7 @@ class FireWireNode(GenericModel):
             elif not self.is_waiting:
                 self.send_self(Event(self, FireWirePacketType.ROOT_CONTENTION, "..."))
             else:
-                print(f" 👑 {self.componentinstancenumber} is elected as the leader")
+                logger.debug(f" 👑 {self.componentinstancenumber} is elected as the leader")
                 self.is_leader = True
                 self.is_terminated = True
 
@@ -204,9 +204,8 @@ class FireWireNode(GenericModel):
         ):
             # This node's parent request got acknowledged, the process can
             # safely terminate
-            print(
-                f"🤖 {self.componentinstancenumber} received an ACK "
-                f" from {header.messagefrom}, terminating"
+            logger.debug(
+                f"🤖 {self.componentinstancenumber} received an ACK from {header.messagefrom}, terminating"
             )
             self.is_terminated = True
             self.in_root_contention = False

@@ -4,7 +4,7 @@ import time
 sys.path.insert(0, os.getcwd())
 import networkx as nx
 from adhoccomputing.GenericModel import GenericModel
-from adhoccomputing.Generics import Event, EventTypes, ConnectorTypes
+from adhoccomputing.Generics import *
 from adhoccomputing.Experimentation.Topology import Topology
 from adhoccomputing.Networking.LogicalChannels.GenericChannel import GenericChannel
 import queue
@@ -17,27 +17,26 @@ CEND = '\033[0m'
 class A(GenericModel):
   def on_init(self, eventobj: Event):
     if self.componentinstancenumber == 0:
-      print(f"I am {self.componentname}-{self.componentinstancenumber}, eventcontent={eventobj.eventcontent}")
+      logger.applog(f"I am {self.componentname}-{self.componentinstancenumber}, eventcontent={eventobj.eventcontent}")
       time.sleep(1)
       for i in range(5):
         evt = Event(self, EventTypes.MFRT, "TO CHANNEL" + str(i))
         self.send_down(evt)
   def on_message_from_bottom(self, eventobj: Event):
-      print(f"I am {self.componentname}-{self.componentinstancenumber}, eventcontent={eventobj.eventcontent}")
+      logger.applog(f"I am {self.componentname}-{self.componentinstancenumber}, eventcontent={eventobj.eventcontent}")
 
 class Node(GenericModel):
   def on_init(self, eventobj: Event):
-    #print(self.componentname, "-", self.componentinstancenumber, " received ", eventobj.event)
     pass
 
   def on_message_from_top(self, eventobj: Event):
     self.send_down(Event(self, EventTypes.MFRT, eventobj.eventcontent))
-    #print("send_down at on_message_from_top", self.componentname, self.componentinstancenumber )
+    logger.applog(f"{self.componentname}.{self.componentinstancenumber} RECEIVED {str(eventobj)}")
     
 
   def on_message_from_bottom(self, eventobj: Event):
-    print(self.componentname, "-", self.componentinstancenumber, " received ", eventobj.event)
     self.send_up(Event(self, EventTypes.MFRB, eventobj.eventcontent))
+    logger.applog(f"{self.componentname}.{self.componentinstancenumber} RECEIVED {str(eventobj)}")
 
   def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None, child_conn=None, node_queues=None, channel_queues=None):
     super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology, child_conn, node_queues, channel_queues)
@@ -51,6 +50,7 @@ class Node(GenericModel):
     self.connect_me_to_component(ConnectorTypes.UP, self.A)
 
 def main(argv):
+  setAHCLogLevel(21)
   set_start_method = "fork";
   topo = Topology()
 
@@ -60,7 +60,7 @@ def main(argv):
   # time.sleep(1)
   # topo.exit()
 
-  G = nx.random_geometric_graph(20, 0.5)
+  G = nx.random_geometric_graph(4, 1)
   # G =nx.Graph()
   # G.add_node(0)
   # G.add_node(1)
@@ -76,9 +76,9 @@ def main(argv):
   try:
     ahcmanager.connect()
   except Exception as ex:
-    print(CRED + "Could not connect to AHCManager that helps distributing processes over different machines." + CEND)
+    logger.critical("Could not connect to AHCManager that helps distributing processes over different machines.")
   topo.mp_construct_sdr_topology(G, Node, GenericChannel,ahcmanager)
-  print("Will start the emulation")
+  logger.applog("Will start the emulation")
   topo.start()
   while(True):
     time.sleep(1)

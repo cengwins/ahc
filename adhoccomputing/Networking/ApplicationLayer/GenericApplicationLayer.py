@@ -26,7 +26,7 @@ class GenericApplicationLayer(GenericModel):
         super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology)
         
     def on_init(self, eventobj: Event):
-        print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
+        logger.debug(f"Initializing {self.componentname}.{self.componentinstancenumber}")
 
         if self.componentinstancenumber == 0:
             # destination = random.randint(len(Topology.G.nodes))
@@ -46,14 +46,13 @@ class GenericApplicationLayer(GenericModel):
             applmessage = eventobj.eventcontent
             hdr = applmessage.header
             if hdr.messagetype == ApplicationLayerMessageTypes.ACCEPT:
-                print(
+                logger.debug(
                     f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
             elif hdr.messagetype == ApplicationLayerMessageTypes.PROPOSE:
-                print(
+                logger.debug(
                     f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
         except AttributeError:
-            print("buradan geldi")
-            print("Attribute Error")
+            logger.error("Attribute Error")
 
 
 

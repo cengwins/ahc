@@ -124,11 +124,11 @@ class ChandyLamportComponentModel(SnapshotComponentModel):
 
         report=f"State of component: {state.component_id}="
         report += ", ".join(str(e) for e in state.component_state)
-        print(report)
+        logger.debug(report)
         for chnl, events in state.chnl_states.items():
             chnl_rep = f"State of channel: {chnl}="
             chnl_rep += ", ".join(str(e) for e in events)
-            print(chnl_rep)
+            logger.debug(chnl_rep)
 
     def send_msg(self, event: Event):
         self.send_down(event)
@@ -250,7 +250,7 @@ class LaiYangComponentModel(SnapshotComponentModel):
 
         chnl_state = list(set_sent - set_recv)
         self.global_state[channel] = chnl_state
-        print(f"State of channel: {channel}=chnl_state")
+        logger.debug(f"State of channel: {channel}=chnl_state")
 
     def on_gsu_recv(self, state: LaiYangState):
         if not self.init_snapshot:
@@ -259,7 +259,7 @@ class LaiYangComponentModel(SnapshotComponentModel):
         self.global_state[state.component_id] = state.component_state
         report = f"State of component: {state.component_id}="
         report += ", ".join(str(e) for e in state.component_state)
-        print(report)
+        logger.debug(report)
 
         # Compute the messages in transit
         for chnl, recv in state.received:

@@ -39,15 +39,12 @@ class FrameHandlerBase(GenericModel):
     framers.add_framer(id(self), self)
     if SDRType=="b200":
       from .UhdUtils import AhcUhdUtils
-      #print("Generating USRP B210", self.componentinstancenumber)
       self.sdrdev = AhcUhdUtils(self.componentinstancenumber)
     else:
       if SDRType=="x115":
         from .BladeRFUtils import BladeRFUtils
-        #print("Generating Bladerf", self.componentinstancenumber)
         self.sdrdev = BladeRFUtils(self.componentinstancenumber)
       else:
-        print("Generating GenericSDR", self.componentinstancenumber)
         self.sdrdev = SDRUtils(self.componentinstancenumber)
     self.sdrdev.configureSdr(type=SDRType, sdrconfig=self.usrpconfig)
     self.configure()
@@ -59,14 +56,14 @@ class FrameHandlerBase(GenericModel):
     return super().on_exit(eventobj)
 
   def on_init(self, eventobj: Event):
-    print(f"====> I WILL START RECEIVING SAMPLES :  {self.componentname} - {self.componentinstancenumber}")
+    logger.debug(f"====> I WILL START RECEIVING SAMPLES :  {self.componentname} - {self.componentinstancenumber}")
     self.sdrdev.receiveenabled = True
     self.sdrdev.start_rx(self.rx_callback, self)
     return super().on_init(eventobj)
         
 
   def on_recv(self, eventobj: Event):
-    #print("Node", self.componentinstancenumber, " Received message type:", eventobj.eventcontent.header.messagetype, "  from ", eventobj.eventcontent.payload.phyheader.messagefrom)
+    logger.debug(f"{self.componentname}.{self.componentinstancenumber} RECEIVED {str(eventobj)}")
 
     #if eventobj.eventcontent.payload.phyheader.messagefrom != self.componentinstancenumber:
     msg = GenericMessage(eventobj.eventcontent.payload.phyheader, eventobj.eventcontent.payload.phypayload)
@@ -75,39 +72,17 @@ class FrameHandlerBase(GenericModel):
   def on_message_from_top(self, eventobj: Event):
 # channel receives the input message and will process the message by the process event in the next pipeline stage
 # Preserve the event id through the pipeline
-    #print("transmit", self.componentinstancenumber)
     try:
-      #str_header = "12345678"  #This is the PMD flexframe header. Ourt physical layer header will be concat with the payload below...
-      #hlen = len(str_header)
-      #byte_arr_header = bytearray(str_header, 'utf-8')
-      #header = (c_ubyte * hlen)(*(byte_arr_header))
       header  = np.zeros(8, dtype=np.ubyte)
       for i in range(8):
         header[i] = i
-
       hdr = PhyMessageHeader(PhyMessageTypes.PHYFRAMEDATA, self.componentinstancenumber,MessageDestinationIdentifiers.LINKLAYERBROADCAST)
       pld = PhyMessagePayload(eventobj.eventcontent.header, eventobj.eventcontent.payload )
       msg = GenericMessage(hdr, pld)
-      #msg = c_ubyte*10 #ERTAN DENEME
-      #print(msg)
-
       byte_arr_msg = bytearray(pickle.dumps(msg))
       payload_len = len(byte_arr_msg)
-      #plen = len(byte_arr_msg)
-      #payload = (c_ubyte * plen)(*(byte_arr_msg))
-      #payload_len = plen
-      #payload =np.zeros(payload_len, dtype=np.ubyte)
-      #payload_len = 10
-      #for i in range(payload_len):
-      #  payload[i] = byte_arr_msg[i]
       payload = np.frombuffer(byte_arr_msg, dtype=np.ubyte)
-      #print("bytearry:", byte_arr_msg, "Payload:",payload, " payload_len:", payload_len)
-      #print("Trasnmit in on_message_from_top")
       self.transmit(header, payload, payload_len, LIQUID_MODEM_QPSK, LIQUID_FEC_NONE, LIQUID_FEC_HAMMING74 )  # TODO: Check params
-      #print("sentpload=", string_at(payload, payload_len))
-      #pload = string_at(payload, payload_len)
-      #print("pload=", pload)
-      #phymsg = pickle.loads(pload)
-      #msg2 = GenericMessage(phymsg.header, phymsg.payload)
+      
     except RuntimeError as ex:
-      print("exection in pickle", ex)
+      logger.critical("exection in pickle {ex}")

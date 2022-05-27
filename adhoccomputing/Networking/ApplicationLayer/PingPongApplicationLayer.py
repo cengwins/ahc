@@ -26,17 +26,16 @@ class PingPongApplicationLayer(GenericModel):
         self.eventhandlers[PingPongApplicationLayerEventTypes.STARTBROADCAST] = self.on_startbroadcast
 
     def on_message_from_top(self, eventobj: Event):
-    # print(f"I am {self.componentname}.{self.componentinstancenumber},sending down eventcontent={eventobj.eventcontent}\n")
+        logger.debug(f"{self.componentname}.{self.componentinstancenumber} RECEIVED {str(eventobj)}")
         self.send_down(Event(self, EventTypes.MFRT, eventobj.eventcontent))
     
     def on_message_from_bottom(self, eventobj: Event):
         evt = Event(self, EventTypes.MFRT, eventobj.eventcontent)
-        print(f"I am Node.{self.componentinstancenumber}, received from Node.{eventobj.eventcontent.header.messagefrom} a message: {eventobj.eventcontent.payload}")
+        logger.debug(f"{self.componentname}.{self.componentinstancenumber} RECEIVED {str(eventobj)}")
         evt.eventcontent.header.messageto = MessageDestinationIdentifiers.LINKLAYERBROADCAST
         evt.eventcontent.header.messagefrom = self.componentinstancenumber
         evt.eventcontent.payload = eventobj.eventcontent.payload + "-" + str(self.componentinstancenumber)
-        #print(f"I am {self.componentname}.{self.componentinstancenumber}, sending down eventcontent={eventobj.eventcontent.payload}\n")
-        time.sleep(0.1)
+        time.sleep(0.1) # TODO WHAT Should this be?
         self.send_down(evt)  # PINGPONG
     
     def on_startbroadcast(self, eventobj: Event):
@@ -46,7 +45,5 @@ class PingPongApplicationLayer(GenericModel):
         payload = "BMSG-" + str(self.counter) + ": " + str(self.componentinstancenumber) 
         broadcastmessage = GenericMessage(hdr, payload)
         evt = Event(self, EventTypes.MFRT, broadcastmessage)
-        #time.sleep(0.1)
         self.send_down(evt)
-        #print("Starting broadcast", self.componentinstancenumber)
     

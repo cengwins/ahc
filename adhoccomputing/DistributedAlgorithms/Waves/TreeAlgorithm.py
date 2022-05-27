@@ -15,11 +15,11 @@ class TreeNode(GenericModel):
       super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology)
 
   def on_init(self, eventobj: Event):
-    print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
+    logger.debug(f"Initializing {self.componentname}.{self.componentinstancenumber}")
 
   def on_message_from_bottom(self, eventobj: Event):
     for ch in self.unvisitedNeighbours:
-      # print(f"EventSource: {eventobj.eventsource} Channel Conns: {chain(*ch.connectors.values())}")
+      # logger.debug(f"EventSource: {eventobj.eventsource} Channel Conns: {chain(*ch.connectors.values())}")
       if eventobj.eventsource in chain(*ch.connectors.values()):
         channel = ch
         break
@@ -30,7 +30,7 @@ class TreeNode(GenericModel):
       self.decide()
     elif len(self.unvisitedNeighbours) == 1:
       self.parent = self.unvisitedNeighbours[0]
-      print(f"{self.componentname}.{self.componentinstancenumber} sends message to {self.parent.componentname}.{self.parent.componentinstancenumber}")
+      logger.debug(f"{self.componentname}.{self.componentinstancenumber} sends message to {self.parent.componentname}.{self.parent.componentinstancenumber}")
       self.parent.trigger_event(Event(self, EventTypes.MFRT, eventobj.eventcontent))
     else:
       #do nothing
@@ -38,15 +38,15 @@ class TreeNode(GenericModel):
 
   def startTreeAlgorithm(self):
     self.unvisitedNeighbours = self.connectors[ConnectorTypes.DOWN]
-    # print(f"{self.componentname}.{self.componentinstancenumber} Neighbours: {self.unvisitedNeighbours}")
+    # logger.debug(f"{self.componentname}.{self.componentinstancenumber} Neighbours: {self.unvisitedNeighbours}")
 
     if len(self.connectors[ConnectorTypes.DOWN]) == 1:
       self.parent = self.unvisitedNeighbours[0]
-      print(f"{self.componentname}.{self.componentinstancenumber} sends message to {self.parent.componentname}.{self.parent.componentinstancenumber}")
+      logger.debug(f"{self.componentname}.{self.componentinstancenumber} sends message to {self.parent.componentname}.{self.parent.componentinstancenumber}")
       self.send_down(Event(self, EventTypes.MFRT, None))
       self.unvisitedNeighbours = []
 
   def decide(self):
-    print(f"{self.componentname}.{self.componentinstancenumber} decides.")
-    print(f"End Time: {time.time()}")
+    logger.debug(f"{self.componentname}.{self.componentinstancenumber} decides.")
+    logger.debug(f"End Time: {time.time()}")
 

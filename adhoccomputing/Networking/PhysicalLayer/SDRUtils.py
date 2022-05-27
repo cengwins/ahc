@@ -1,5 +1,5 @@
 import ctypes
-from ...Generics import SDRConfiguration
+from ...Generics import *
 import math
 import numpy as np
 
@@ -19,38 +19,38 @@ class SDRUtils():
         pass
 
     def configureSdr(self, type="b200", sdrconfig=None):
-        print("Not implemented configureSdr, ", type)
+        logger.error(f"Not implemented configureSdr: {type}")
 
 
     def get_sdr_power(self,num_samps=1000000, chan=0):
-        print("Not implemented get_sdr_power")
+        logger.error("Not implemented get_sdr_power")
         pass
 
     def start_rx(self, rx_callback, framer):
-        print("Not implemented start_rx")
+        logger.error("Not implemented start_rx")
         pass
 
     def start_sdr_rx(self):
-        print("Not implemented start_sdr_rx")
+        logger.error("Not implemented start_sdr_rx")
         pass
       
     def stop_sdr_rx(self):
-        print("Not implemented stop_sdr_rx")
+        logger.error("Not implemented stop_sdr_rx")
         pass
 
     def rx_thread(self):
-        print("Not implemented rx_thread")
+        logger.error("Not implemented rx_thread")
         pass
 
     def transmit_samples(self, transmit_buffer):
-        print("Not implemented transmit_samples")
+        logger.error("Not implemented transmit_samples")
         pass
 
     def finalize_transmit_samples(self):
         pass
 
     def shutdown(self, error = 0):
-        print("Not implemented shutdown")
+        logger.error("Not implemented shutdown")
     
 
     def ischannelclear(self, threshold=-70, pout=100):
@@ -76,4 +76,3 @@ class SDRUtils():
                     g=1.0
             g = g / num_samples / 1.0
             self.rssi = 10 * math.log10(math.sqrt(g/(20*2048.0))) - self.sdrconfig.hw_rx_gain
-        #print("CHANNEL RSSI = ", g, self.rssi)

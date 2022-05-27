@@ -37,7 +37,7 @@ class ApplicationLayerMessagePayload(GenericMessagePayload):
 
 class WaveAwerbuchComponent(GenericModel):
   def on_init(self, eventobj: Event):
-    print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
+    logger.debug(f"Initializing {self.componentname}.{self.componentinstancenumber}")
     neighbour_list = self.topology.get_neighbors(self.componentinstancenumber)
     self.NeighbourList = neighbour_list
     self.Unvisited = neighbour_list.copy()
@@ -63,19 +63,19 @@ class WaveAwerbuchComponent(GenericModel):
       applmessage = eventobj.eventcontent
       hdr = applmessage.header
       if hdr.messagetype == ApplicationLayerMessageTypes.DISCOVER:
-        print(f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
+        logger.debug(f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
         self.send_self(Event(self, "discover", applmessage))
       elif hdr.messagetype == ApplicationLayerMessageTypes.VISITED:
-        print(f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
+        logger.debug(f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
         self.send_self(Event(self, "visited", applmessage))
       elif hdr.messagetype == ApplicationLayerMessageTypes.RETURN:
-        print(f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
+        logger.debug(f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
         self.send_self(Event(self, "return", applmessage))
       elif hdr.messagetype == ApplicationLayerMessageTypes.ACK:
-        print(f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
+        logger.debug(f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
         self.send_self(Event(self, "ack", applmessage))
     except AttributeError:
-      print("Attribute Error")
+      logger.error("Attribute Error")
 
   def on_discover(self, eventobj: Event):
     applmessage = eventobj.eventcontent
@@ -112,10 +112,10 @@ class WaveAwerbuchComponent(GenericModel):
         proposalmessage = GenericMessage(hdr_new, payload)
         self.send_down(Event(self, EventTypes.MFRT, proposalmessage))
         self.numMesg += 1
-        print(f"I am Node-{self.componentinstancenumber} local number messages sent is {self.numMesg}")
+        logger.debug(f"I am Node-{self.componentinstancenumber} local number messages sent is {self.numMesg}")
       else:
-        print(f"I am Node-{self.componentinstancenumber} local number messages sent is {self.numMesg}")
-        print(f"I am Node-{self.componentinstancenumber}, algorithm is finished ")
+        logger.debug(f"I am Node-{self.componentinstancenumber} local number messages sent is {self.numMesg}")
+        logger.debug(f"I am Node-{self.componentinstancenumber}, algorithm is finished ")
 
     else:
       destination = random.choice(self.Unvisited)
@@ -126,7 +126,7 @@ class WaveAwerbuchComponent(GenericModel):
       self.send_down(Event(self, EventTypes.MFRT, proposalmessage))
       self.numMesg += 1
       self.Unvisited.remove(destination)
-      print(f"I am Node-{self.componentinstancenumber} sending DISCOVER to {destination}")
+      logger.debug(f"I am Node-{self.componentinstancenumber} sending DISCOVER to {destination}")
 
   def on_visited(self, eventobj: Event):
     applmessage = eventobj.eventcontent

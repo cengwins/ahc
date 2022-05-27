@@ -84,14 +84,12 @@ def main(argv):
     
 
 def ctrlc_signal_handler(sig, frame):
-    print('You pressed Ctrl+C!')
     topo.exit()
     time.sleep(5)
     sys.exit(0)
 
 
 def segfault_signal_handler(sig, frame):
-    print('Segmentation Fault')
     topo.exit()
     time.sleep(5)
     sys.exit(0)

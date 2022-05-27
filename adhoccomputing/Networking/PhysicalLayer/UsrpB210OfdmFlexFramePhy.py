@@ -15,16 +15,16 @@ def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_int, payload:POINTER(c
     #mutex.acquire(1)
     try:
         framer = framers.get_framer_by_id(userdata)
-        #print("Node",framer.componentinstancenumber,"RSSI", stats.rssi, framer.sdrdev.rssi)
+        logger.debug(f"Node {framer.componentinstancenumber} RSSI {stats.rssi} {framer.sdrdev.rssi}")
         if payload_valid != 0:
             #ofdmflexframesync_print(framer.fs) 
             pload = string_at(payload, payload_len)
             phymsg = pickle.loads(pload)
             msg = GenericMessage(phymsg.header, phymsg.payload)
             framer.send_self(Event(framer, PhyEventTypes.RECV, msg))
-            #print("Header=", msg.header.messagetype, " Payload=", msg.payload, " RSSI=", stats.rssi)
-    except Exception as e:
-        print("Exception_ofdm_callback:", e)
+            #logger.debug(f"Header= {msg.header.messagetype} Payload= {msg.payload} RSSI= {stats.rssi}")   
+    except Exception as ex:
+        logger.critical(f"Exception_ofdm_callback: {ex}")
     #mutex.release()
     #ofdmflexframesync_reset(framer.fs)
     return 0
@@ -36,10 +36,9 @@ class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
     
     def rx_callback(self, num_rx_samps, recv_buffer):
         try:
-            #print("rx callback")
             ofdmflexframesync_execute(self.fs, recv_buffer , num_rx_samps)
         except Exception as ex:
-            print("Exception in rx_callback: ", ex)
+            logger.critical(f"Exception rx_callback: {ex}")
 
     
     def transmit(self, _header, _payload, _payload_len, _mod, _fec0, _fec1):
@@ -67,7 +66,7 @@ class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
         self.fgbuffer_len = 1024 #self.M + self.cp_len 
         self.fgbuffer = np.zeros(self.fgbuffer_len, dtype=np.complex64)
 
-        res = ofdmflexframegen_print(self.fg)
+        #res = ofdmflexframegen_print(self.fg)
         
         self.ofdm_callback_function = framesync_callback(ofdm_callback)
         
@@ -75,7 +74,7 @@ class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
             # WILL PASS ID of THIS OBJECT in userdata then will find the object in FramerObjects
             self.fs :ofdmflexframesync = ofdmflexframesync_create(self.M, self.cp_len, self.taper_len, None, self.ofdm_callback_function, id(self))      
         except Exception as ex:
-            print("Exception2", ex) 
+            logger.critical(f"Exception configure: {ex}")
         
         ofdmflexframegen_reset(self.fg)
         ofdmflexframesync_reset(self.fs)

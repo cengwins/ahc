@@ -14,22 +14,15 @@ def flexframe_callback(header:POINTER(c_ubyte), header_valid:c_uint32, payload:P
     mutex.acquire(1)
     try:
         framer = framers.get_framer_by_id(userdata)
-        #print("Type", type(payload), "Payload Valid?: ", payload_valid, "Length=", payload_len, "payload=", bytes(payload))
         
         if payload_valid != 0:
             pload = string_at(payload, payload_len)
-            #print("pload=", pload)
             phymsg = pickle.loads(pload)
             msg = GenericMessage(phymsg.header, phymsg.payload)
             framer.send_self(Event(framer, PhyEventTypes.RECV, msg))
-            #print("Header=", msg.header.messagetype, " Payload=", msg.payload, " RSSI=", stats.rssi)
-        #else:
-            #pass
-        #print("INVALID Type Node", framer.componentinstancenumber, "Payload Valid:[", payload_valid, "]Length=", payload_len, "payload=", bytes(payload))
-    
-    except Exception as e:
-        print("Exception flexframe_callback:", e)
-        print("INVALID Type Node", framer.componentinstancenumber, "Payload Valid:[", payload_valid, "]Length=", payload_len, "payload=", bytes(payload))
+
+    except Exception as ex:
+        logger.critical(f"Exception configure: {ex}")
     mutex.release()
     return 0
 
@@ -41,7 +34,7 @@ class UsrpB210FlexFramePhy(FrameHandlerBase):
         try:
             flexframesync_execute(self.fs, recv_buffer, num_rx_samps)
         except Exception as ex:
-            print("Exception in rx_callback", ex)
+            logger.critical(f"Exception rx_callback: {ex}")
 
     
     def transmit(self, _header, _payload, _payload_len, _mod, _fec0, _fec1):
@@ -54,8 +47,8 @@ class UsrpB210FlexFramePhy(FrameHandlerBase):
             try:
                 self.sdrdev.transmit_samples(fgbuffer)
                 # self.rx_callback(self.fgbuffer_len, npfgbuffer) #loopback for trial
-            except Exception as e:
-                print("Exception in transmit", e)
+            except Exception as ex:
+                logger.critical(f"Exception transmit: {ex}")
         self.sdrdev.finalize_transmit_samples()
             
    
@@ -78,10 +71,9 @@ class UsrpB210FlexFramePhy(FrameHandlerBase):
         try: 
             # WILL PASS ID of THIS OBJECT in userdata then will find the object in FramerObjects
             self.fs = flexframesync_create(self.flexframe_callback, id(self))
-            #self.fs = flexframesync_create(self.flexframe_callback, bandwidth)
-            print("fs", self.fs, id(self))        
+             
         except Exception as ex:
-            print("Exception2", ex) 
+            logger.critical(f"Exception configure: {ex}")
         
         self.sdrdev.start_rx(self.rx_callback, self)
         flexframegen_reset(self.fg)

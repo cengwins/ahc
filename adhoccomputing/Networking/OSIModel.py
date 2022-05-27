@@ -12,7 +12,7 @@ class AHCChannelError(Exception):
 class AdHocNode(GenericModel):
 
   def on_init(self, eventobj: Event):
-    print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
+    logger.debug(f"{self.componentname}.{self.componentinstancenumber} RECEIVED {str(eventobj)}")
 
   def on_message_from_top(self, eventobj: Event):
     self.send_down(Event(self, EventTypes.MFRT, eventobj.eventcontent))

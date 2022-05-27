@@ -5,7 +5,7 @@ import signal
 sys.path.insert(0, os.getcwd())
 
 from adhoccomputing.GenericModel import GenericModel
-from adhoccomputing.Generics import Event, ConnectorTypes, SDRConfiguration
+from adhoccomputing.Generics import *
 from adhoccomputing.Experimentation.Topology import Topology
 from adhoccomputing.Networking.PhysicalLayer.BladeRFOfdmFlexFramePhy import  BladeRFOfdmFlexFramePhy
 from adhoccomputing.Networking.MacProtocol.CSMA import MacCsmaPPersistent, MacCsmaPPersistentConfigurationParameters
@@ -18,7 +18,7 @@ class BladeRFNode(GenericModel):
     def on_init(self, eventobj: Event):
         i = 0
         while(True):
-            print("Will start poking")
+            logger.applog("Will start poking")
             self.appl.send_self(Event(self, PingPongApplicationLayerEventTypes.STARTBROADCAST, None))
             time.sleep(0.1)    
         
@@ -54,6 +54,8 @@ class BladeRFNode(GenericModel):
         
 topo = Topology()
 def main(argv):
+
+    setAHCLogLevel(21)
     num_nodes = 3
 # Note that the topology has to specific: usrp winslab_b210_0 is run by instance 0 of the component
 # Therefore, the usrps have to have names winslab_b210_x where x \in (0 to nodecount-1)
@@ -82,19 +84,18 @@ def main(argv):
     
 
 def ctrlc_signal_handler(sig, frame):
-    print('You pressed Ctrl+C!')
     topo.exit()
     time.sleep(1)
     #sys.exit(0)
 
 
 def segfault_signal_handler(sig, frame):
-    print('Segmentation Fault')
     topo.exit()
     time.sleep(5)
     sys.exit(0)
 
 if __name__ == "__main__":
+    
     signal.signal(signal.SIGINT, ctrlc_signal_handler)
     signal.signal(signal.SIGSEGV, segfault_signal_handler)
     main(sys.argv[1:])

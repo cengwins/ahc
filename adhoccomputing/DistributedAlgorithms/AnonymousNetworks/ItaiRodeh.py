@@ -135,9 +135,8 @@ class ItaiRodehNode(GenericModel):
     def on_init(self, eventobj: Event):
         # Select an id for round 1
         self.id_p = randint(1, self.ring_size)
-        print(
-            f"🤖 {self.componentinstancenumber} selected {self.id_p} as their"
-            f" ID for round {self.election_round}"
+        logger.debug(
+            f"🤖 {self.componentinstancenumber} selected {self.id_p} as their  ID for round {self.election_round}"
         )
 
         # Calculate the neighbour, we're on a directed ring
@@ -182,11 +181,8 @@ class ItaiRodehNode(GenericModel):
                 # current round or this node has received a message from a
                 # future round, going passive
 
-                print(
-                    f"🤖 {self.componentinstancenumber} is PASSIVE: "
-                    f"{message_assumed_id} for round {message_election_round} "
-                    f"encountered, this node is at {self.election_round} with "
-                    f"{self.id_p}"
+                logger.debug(
+                    f"🤖 {self.componentinstancenumber} is PASSIVE:  {message_assumed_id} for round {message_election_round}  encountered, this node is at {self.election_round} with  {self.id_p}"
                 )
 
                 self.state = State.passive
@@ -209,10 +205,8 @@ class ItaiRodehNode(GenericModel):
                 # This node has received a message from a previous round or
                 # from the current round but with a lower assumed id, so this
                 # node can dismiss the election attempt of the sender node
-                print(
-                    f"🤖 {self.componentinstancenumber} is dismissing "
-                    f"{message_assumed_id} for round {message_election_round} "
-                    f"this node is at {self.election_round} with {self.id_p}"
+                logger.debug(
+                    f"🤖 {self.componentinstancenumber} is dismissing  {message_assumed_id} for round {message_election_round}  logger.debugthis node is at {self.election_round} with {self.id_p}"
                 )
 
             elif (
@@ -230,9 +224,8 @@ class ItaiRodehNode(GenericModel):
                     header.next_hop = self.next_hop
                     header.interfaceid = self.next_hop_interface_id
 
-                    print(
-                        f"🤖 {self.componentinstancenumber} dirtied the bit "
-                        f"for {message_assumed_id}, passing it along"
+                    logger.debug(
+                        f"🤖 {self.componentinstancenumber} dirtied the bit  for {message_assumed_id}, passing it along"
                     )
                     message = GenericMessage(header, payload)
                     self.send_down(Event(self, EventTypes.MFRT, message))
@@ -240,29 +233,25 @@ class ItaiRodehNode(GenericModel):
                 elif payload.hop_count == self.ring_size:
                     # the message that this node has sent traversed all the way
                     # around the ring
-                    print(
-                        f"🤖 {self.componentinstancenumber}'s message "
-                        f"traversed all the way around"
+                    logger.debug(
+                        f"🤖 {self.componentinstancenumber}'s message  traversed all the way around"
                     )
                     if payload.dirty_bit:
                         # Bit has been dirtied, next round
                         self.id_p = randint(1, self.ring_size)
                         self.election_round += 1
                         ItaiRodehNode.global_round = self.election_round
-                        print(
-                            f"🤖 {self.componentinstancenumber} is moving "
-                            f"onto round {self.election_round}"
+                        logger.debug(
+                            f"🤖 {self.componentinstancenumber} is moving  onto round {self.election_round}"
                         )
-                        print(
-                            f"🤖 {self.componentinstancenumber} selected "
-                            f"{self.id_p} as their ID for round "
-                            f"{self.election_round}"
+                        logger.debug(
+                            f"🤖 {self.componentinstancenumber} selected  {self.id_p} as their ID for round  {self.election_round}"
                         )
                         self.send_election_packet()
                     else:
                         # The bit is still false, this node is the leader
                         self.state = State.leader
-                        print(
+                        logger.debug(
                             f"🤖 {self.componentinstancenumber}: I'M THE ELECTED LEADER"
                         )
         self.callback.set()

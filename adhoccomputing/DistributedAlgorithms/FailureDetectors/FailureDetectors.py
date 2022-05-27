@@ -3,7 +3,7 @@ import time
 from enum import Enum
 
 from ...GenericModel import GenericModel, GenericMessageHeader, GenericMessagePayload, GenericMessage
-from ...Generics import  Event, EventTypes, MessageDestinationIdentifiers
+from ...Generics import  *
 
 #################FAILURE ASSUMPTIONS
 # TODO: Correctness properties: Safety and liveness
@@ -29,7 +29,7 @@ class FailureDetector(GenericModel):
   def on_tx_alive_message(self, eventobj: Event):
     time.sleep(self.alivemessageperiod)  # Period of alive messages
     # Send down the I'm Alive mesage
-    # print("I am alive....")
+    # logger.debug("I am alive....")
     hdr = FailureDetectorMessageHeader(FailureDetectorMessageTypes.IAMALIVE, self.componentinstancenumber,
                                        MessageDestinationIdentifiers.LINKLAYERBROADCAST)
     payload = FailureDetectorMessagePayload(f"I am Node.{self.componentinstancenumber} and I am live ")
@@ -43,12 +43,12 @@ class FailureDetector(GenericModel):
       failuredetectormessage = eventobj.eventcontent
       hdr = failuredetectormessage.header
       if hdr.messagetype == FailureDetectorMessageTypes.IAMALIVE:
-        print(f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
+        logger.debug(f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
       else:
-        print(f"Node-{self.componentinstancenumber} says received {hdr.messagetype}")
+        logger.debug(f"Node-{self.componentinstancenumber} says received {hdr.messagetype}")
 
     except AttributeError:
-      print("Attribute Error")
+      logger.error("Attribute Error")
 
   def on_init(self, eventobj: Event):
     self.alivemessageperiod = 1

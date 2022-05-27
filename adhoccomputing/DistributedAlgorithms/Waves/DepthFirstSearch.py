@@ -37,7 +37,7 @@ class DfsTraverse(GenericModel):
     msg = eventobj.eventcontent
     hdr = msg.header
     message_source = hdr.messagefrom
-    #print("OnMessageFromBottom", hdr)
+    #logger.debug("OnMessageFromBottom", hdr)
     payload:List[Any] = msg.payload.messagepayload
 
     if hdr.messagetype == DfsMessageTypes.FORWARD or hdr.messagetype == DfsMessageTypes.START:
@@ -71,11 +71,10 @@ class DfsTraverse(GenericModel):
         next_target = neigh.id
       else: # Else, send the token back to the parent
         if parent_for_token == -1: # If I am the initiator, traversing is completed
-          print(payload)
-          print("->".join(payload))
-          print("TRAVERSING IS COMPLETED IN " + str(len(payload)) + " hops")
-          print(f"Graph had {self.topology.G.number_of_edges()} edges")
-          print(len(set(payload)))
+          logger.debug(payload)
+          logger.debug("->".join(payload))
+          logger.debug("TRAVERSING IS COMPLETED IN { str(len(payload)) }  hops")
+          logger.debug(f"Graph had {self.topology.G.number_of_edges()} edges")
           return
         else:
           next_target = parent_for_token
@@ -87,7 +86,7 @@ class DfsTraverse(GenericModel):
   def start_traverse(self):
     token = self.create_token()
     self.send_self(Event(self, EventTypes.MFRB, self.prepare_message(DfsMessageTypes.START, self.componentinstancenumber, token, [])))
-    print("start_traverse")
+    logger.debug("start_traverse")
 
   def create_token(self):
     return str(uuid.uuid4())

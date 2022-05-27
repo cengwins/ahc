@@ -45,8 +45,6 @@ class ApplicationLayerComponent(GenericModel):
         self.send_self(Event(self, "propose", proposalmessage))
 
     def on_init(self, eventobj: Event):
-        #print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
-
         if self.componentinstancenumber == 0:
             self.t = AHCTimer(0.1, self.send_message)
             self.t.start()
@@ -58,15 +56,15 @@ class ApplicationLayerComponent(GenericModel):
             applmessage = eventobj.eventcontent
             hdr = applmessage.header
             if hdr.messagetype == ApplicationLayerMessageTypes.ACCEPT:
-                print(
+                logger.applog(
                     f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
             elif hdr.messagetype == ApplicationLayerMessageTypes.PROPOSE:
-                print(
+                logger.applog(
                     f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
         except AttributeError:
-            print("Attribute Error")
+            logger.error("Attribute Error")
 
-    # print(f"{self.componentname}.{self.componentinstancenumber}: Gotton message {eventobj.content} ")
+    # logger.applog(f"{self.componentname}.{self.componentinstancenumber}: Gotton message {eventobj.content} ")
     # value = eventobj.content.value
     # value += 1
     # newmsg = MessageContent( value )
@@ -82,7 +80,7 @@ class ApplicationLayerComponent(GenericModel):
         self.send_down(Event(self, EventTypes.MFRT, proposalmessage))
 
     def on_agree(self, eventobj: Event):
-        print(f"Agreed on {eventobj.eventcontent}")
+        logger.applog(f"Agreed on {eventobj.eventcontent}")
 
     def on_timer_expired(self, eventobj: Event):
         pass
@@ -97,7 +95,7 @@ class ApplicationLayerComponent(GenericModel):
 class AdHocNode(GenericModel):
 
     def on_init(self, eventobj: Event):
-        #print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
+        #logger.applog(f"Initializing {self.componentname}.{self.componentinstancenumber}")
         pass
 
     def on_message_from_top(self, eventobj: Event):

@@ -48,7 +48,7 @@ class ApplicationLayerComponent_Cidon(GenericModel):
   #NeighbourList = {}
 
   def on_init(self, eventobj: Event):
-    print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
+    logger.debug(f"Initializing {self.componentname}.{self.componentinstancenumber}")
     self.NeighbourList = self.topology.get_neighbors(self.componentinstancenumber)
     self.state = NodeState.IDLE
     self.mark = {}
@@ -71,16 +71,16 @@ class ApplicationLayerComponent_Cidon(GenericModel):
       applmessage = eventobj.eventcontent
       hdr = applmessage.header
       if hdr.messagetype == ApplicationLayerMessageTypes.START:
-        #print(f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
+        #logger.debug(f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
         self.send_self(Event(self, "start", applmessage))
       elif hdr.messagetype == ApplicationLayerMessageTypes.TOKEN:
-        #print(f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
+        #logger.debug(f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
         self.send_self(Event(self, "token", applmessage))
       elif hdr.messagetype == ApplicationLayerMessageTypes.VISITED:
-        #print(f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
+        #logger.debug(f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
         self.send_self(Event(self, "visited", applmessage))
     except AttributeError:
-      print("Attribute Error")
+      logger.critical("Attribute Error")
 
   def on_start(self, eventobj: Event):
     if self.state == NodeState.IDLE:
@@ -143,8 +143,8 @@ class ApplicationLayerComponent_Cidon(GenericModel):
       else:
         pass
     if self.componentinstancenumber == source:
-      print(f"I am Node-{self.componentinstancenumber} local number messages sent is {self.numMesg}")
-      print(f"Node-{self.componentinstancenumber} says all nodes were discovered, algorithm is finished")
+      logger.debug(f"I am Node-{self.componentinstancenumber} local number messages sent is {self.numMesg}")
+      logger.debug(f"Node-{self.componentinstancenumber} says all nodes were discovered, algorithm is finished")
       pass #  terminate application
     else:
       for i in self.NeighbourList:
@@ -155,7 +155,7 @@ class ApplicationLayerComponent_Cidon(GenericModel):
           proposalmessage = GenericMessage(hdr_new, payload)
           self.send_down(Event(self, EventTypes.MFRT, proposalmessage))
           self.numMesg += 1
-          print(f"I am Node-{self.componentinstancenumber} local number messages sent is {self.numMesg}")
+          logger.debug(f"I am Node-{self.componentinstancenumber} local number messages sent is {self.numMesg}")
           return
 
   def __init__(self, componentname, componentinstancenumber, topology=None):
