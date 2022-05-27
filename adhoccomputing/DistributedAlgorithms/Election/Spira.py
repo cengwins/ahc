@@ -46,14 +46,23 @@ class InitiateMessagePayload:
     self.level = level
     self.status = status
 
+  def __str__(self) -> str:
+    return f"InitiateMessagePayload WEIGHT {self.weight} LEVEL {self.level} STATUS {self.status}"
+
 class TestMessagePayload:
   def __init__(self, fn, level):
     self.fn = fn
     self.level = level
+  def __str__(self) -> str:
+    return f"TestMessagePayload DN {self.dn} LEVEL {self.level}"
+
 
 class ReportMessagePayload: 
   def _init_(self, weight): 
     self.weight = weight 
+  
+  def __str__(self) -> str:
+    return f"ReportMessagePayload WEIGHT {self.weight}"
 
 class ConnectMessagePayload:
   def __init__(self, level):
@@ -62,9 +71,12 @@ class ConnectMessagePayload:
 #   def _init_(self, fn): 
 #     self.fn = fn
 
+  def __str__(self) -> str:
+    return f"ConnectMessagePayload LEVEL {self.level}"
+
 class ElectionSpiraComponent(GenericModel):
   def on_init(self, eventobj: Event):
-    # print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
+    # logger.debug(f"Initializing {self.componentname}.{self.componentinstancenumber}")
     pass
 
   def on_propose(self, eventobj: Event):
@@ -86,28 +98,28 @@ class ElectionSpiraComponent(GenericModel):
     hdr = applmessage.header
     message_count += 1
     if hdr.messagetype == ApplicationLayerMessageTypes.ACCEPT:
-      print(f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
+      logger.debug(f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
     elif hdr.messagetype == ApplicationLayerMessageTypes.ACCEPT2:
-      print(f"Node-{self.componentinstancenumber} is ACCEPTed Node-{hdr.messagefrom}")
+      logger.debug(f"Node-{self.componentinstancenumber} is ACCEPTed Node-{hdr.messagefrom}")
       self.accept_message_handler(applmessage.payload, hdr)
     elif hdr.messagetype == ApplicationLayerMessageTypes.CONNECT:
-      print(f'Node-{self.componentinstancenumber} wants to be connected with {hdr.messagefrom}')
+      logger.debug(f'Node-{self.componentinstancenumber} wants to be connected with {hdr.messagefrom}')
       self.connect_message_handler(applmessage.payload, hdr)
     elif hdr.messagetype == ApplicationLayerMessageTypes.INITIATE:
-      print(f'Node-{self.componentinstancenumber} take a initiate message from {hdr.messagefrom} with values (INITIATE, {applmessage.payload.weight},{applmessage.payload.level},{applmessage.payload.status}') 
+      logger.debug(f'Node-{self.componentinstancenumber} take a initiate message from {hdr.messagefrom} with values (INITIATE, {applmessage.payload.weight},{applmessage.payload.level},{applmessage.payload.status}') 
       self.initiate_message_handler(applmessage.payload, hdr)
     elif hdr.messagetype == ApplicationLayerMessageTypes.TEST:
-      print(f"Node-{self.componentinstancenumber} is TESTed by Node-{hdr.messagefrom}")
+      logger.debug(f"Node-{self.componentinstancenumber} is TESTed by Node-{hdr.messagefrom}")
       self.test_message_handler(applmessage.payload, hdr)
     elif hdr.messagetype == ApplicationLayerMessageTypes.REJECT:
-      print(f"Node-{self.componentinstancenumber} is REJECTed by Node-{hdr.messagefrom}")
+      logger.debug(f"Node-{self.componentinstancenumber} is REJECTed by Node-{hdr.messagefrom}")
       self.reject_message_handler(applmessage.payload, hdr)
     elif hdr.messagetype == ApplicationLayerMessageTypes.REPORT:
-      print(f"Node-{self.componentinstancenumber} is REPORTed by Node-{hdr.messagefrom} with weight ===> {applmessage.payload.weight}")
+      logger.debug(f"Node-{self.componentinstancenumber} is REPORTed by Node-{hdr.messagefrom} with weight ===> {applmessage.payload.weight}")
       self.report_message_handler(applmessage.payload, hdr)
 
     # except AttributeError:
-    #   print("Attribute Error")
+    #   logger.error("Attribute Error")
 
   def get_edge_weight_with_node(self, node): 
     for i in self.basic_edges + self.branch_edges:
@@ -227,7 +239,7 @@ class ElectionSpiraComponent(GenericModel):
     pass 
 
   def initialize_connect(self): 
-    print(f"Node-{self.componentinstancenumber} starts initializing")
+    logger.debug(f"Node-{self.componentinstancenumber} starts initializing")
     destination = -1
     edge = self.branch_edges[0] 
     if edge[1] == self.componentinstancenumber: 
@@ -240,7 +252,7 @@ class ElectionSpiraComponent(GenericModel):
     self.send_down(Event(self, EventTypes.MFRT, msg))
 
   def on_agree(self, eventobj: Event):
-    print(f"Agreed on {eventobj.eventcontent}")
+    logger.applog(f"Agreed on {eventobj.eventcontent}")
 
   def on_timer_expired(self, eventobj: Event):
     pass

@@ -26,11 +26,13 @@ class ApplicationLayerMessagePayload(GenericMessagePayload):
 class WaveMessagePayload:
   def __init__(self, tag):
     self.tag = tag
+  def __str__(self) -> str:
+    return f"APPLPAYLOAD: TAG {self.tag}"
 
 
 class ElectionEchoExtinctionComponent(GenericModel):
   def on_init(self, eventobj: Event):
-    # print(f"Initializing {self.componentname}.{self.componentinstancenumber}")
+    # logger.debug(f"Initializing {self.componentname}.{self.componentinstancenumber}")
     self.neighbors = self.topology.G.neighbors(self.componentinstancenumber)
     
     # destination = random.randint(len(Topology.G.nodes))
@@ -49,21 +51,21 @@ class ElectionEchoExtinctionComponent(GenericModel):
       global message_count 
       message_count += 1
       if hdr.messagetype == ApplicationLayerMessageTypes.ACCEPT:
-        print(f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
+        logger.debug(f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
       elif hdr.messagetype == ApplicationLayerMessageTypes.PROPOSE:
-        print(f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
+        logger.debug(f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} has sent {hdr.messagetype} message")
       elif hdr.messagetype == ApplicationLayerMessageTypes.WAVE:
-        print(f"Node-{self.componentinstancenumber} get message from Node-{hdr.messagefrom} with tag {applmessage.payload.tag}")
+        logger.debug(f"Node-{self.componentinstancenumber} get message from Node-{hdr.messagefrom} with tag {applmessage.payload.tag}")
         self.wave_message(applmessage.payload, hdr)
       elif hdr.messagetype == ApplicationLayerMessageTypes.ACCEPT_WAVE:
-        print(f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} is ACCEPT_WAVE")
+        logger.debug(f"Node-{self.componentinstancenumber} says Node-{hdr.messagefrom} is ACCEPT_WAVE")
         self.accept_wave_message(applmessage.payload, hdr)
 
 
     except AttributeError:
-      print("Attribute Error")
+      logger.error("Attribute Error")
 
-  # print(f"{self.componentname}.{self.componentinstancenumber}: Gotton message {eventobj.content} ")
+  # logger.debug(f"{self.componentname}.{self.componentinstancenumber}: Gotton message {eventobj.content} ")
   # value = eventobj.content.value
   # value += 1
   # newmsg = MessageContent( value )
@@ -78,7 +80,7 @@ class ElectionEchoExtinctionComponent(GenericModel):
     self.send_down(Event(self, EventTypes.MFRT, proposalmessage))
 
   def on_agree(self, eventobj: Event):
-    print(f"Agreed on {eventobj.eventcontent}")
+    logger.debug(f"Agreed on {eventobj.eventcontent}")
 
   def on_timer_expired(self, eventobj: Event):
     pass
@@ -86,7 +88,7 @@ class ElectionEchoExtinctionComponent(GenericModel):
 #TODO: If you call this before all on_inits, then things will go wrong...
   def initiate_process(self):
     self.neighbors = self.topology.G.neighbors(self.componentinstancenumber)
-    print(f"Process initiated {self.componentinstancenumber}")
+    logger.debug(f"Process initiated {self.componentinstancenumber}")
     self.initiated = True
     for i in self.neighbors:
       destination = i
@@ -121,7 +123,7 @@ class ElectionEchoExtinctionComponent(GenericModel):
           self.waitingAccepts.append(i)
         
       elif self.parent > payload.tag: 
-        print(f"Node-{self.componentinstancenumber} says tag=={payload.tag} from Node-{hdr.messagefrom} is not accepted")
+        logger.debug(f"Node-{self.componentinstancenumber} says tag=={payload.tag} from Node-{hdr.messagefrom} is not accepted")
         pass
       else: 
         destination = hdr.messagefrom
@@ -131,7 +133,7 @@ class ElectionEchoExtinctionComponent(GenericModel):
     else: 
       if self.parent != payload.tag:
         self.parent = hdr.messagefrom
-        print(f"Node-{self.componentinstancenumber} has new parent Node-{self.parent}")
+        logger.debug(f"Node-{self.componentinstancenumber} has new parent Node-{self.parent}")
         for i in self.neighbors:
           if i == hdr.messagefrom: 
             continue
