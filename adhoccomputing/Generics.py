@@ -1,5 +1,6 @@
 import datetime
 import logging
+import logging.handlers
 from enum import Enum
 from threading import Timer, Thread, Event
 
@@ -177,12 +178,16 @@ class CustomFormatter(logging.Formatter):
 
 logger = logging.getLogger("AHC")
 ch = logging.StreamHandler()
-
+chweb = logging.handlers.HTTPHandler(host="localhost:8000", url='/logs', method='POST', secure=False)
 def setAHCLogLevel(level):
   logger.setLevel(level)
   ch.setLevel(level)
   ch.setFormatter(CustomFormatter())
+  chweb.setLevel(level)
+  chweb.setFormatter(CustomFormatter())
   logger.addHandler(ch)
+  logger.addHandler(chweb)
+  
 
 
 class AHCTimer():
