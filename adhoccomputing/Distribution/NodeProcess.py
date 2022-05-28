@@ -51,5 +51,5 @@ class NodeProcess(Process):
                     except queue.Empty:
                         pass
                     except Exception as ex:
-                        logger.critical("Exception in polling queues: ", ex)
+                        logger.critical(f"Exception in LogicalChannelProcess {ex}")
                         pass

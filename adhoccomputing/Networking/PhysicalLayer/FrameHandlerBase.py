@@ -85,4 +85,4 @@ class FrameHandlerBase(GenericModel):
       self.transmit(header, payload, payload_len, LIQUID_MODEM_QPSK, LIQUID_FEC_NONE, LIQUID_FEC_HAMMING74 )  # TODO: Check params
       
     except RuntimeError as ex:
-      logger.critical("exection in pickle {ex}")
+      logger.critical(f"exection in pickle {ex}")

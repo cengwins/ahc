@@ -47,5 +47,5 @@ class LogicalChannelProcess(Process):
 				except queue.Empty:
 					pass
 				except Exception as ex:
-					logger.critical("Exception in LogicalChannelProcess ", ex)
+					logger.critical(f"Exception in LogicalChannelProcess {ex}")
 					pass      

@@ -72,8 +72,7 @@ class DfsTraverse(GenericModel):
       else: # Else, send the token back to the parent
         if parent_for_token == -1: # If I am the initiator, traversing is completed
           logger.debug(payload)
-          logger.debug("->".join(payload))
-          logger.debug("TRAVERSING IS COMPLETED IN { str(len(payload)) }  hops")
+          logger.debug(f"TRAVERSING IS COMPLETED IN { str(len(payload)) }  hops")
           logger.debug(f"Graph had {self.topology.G.number_of_edges()} edges")
           return
         else:

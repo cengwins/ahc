@@ -32,7 +32,7 @@ class SenderReceiver(GenericModel):
     self.send_self(Event(self, "generatemessage", "..."))
 
   def on_message_from_bottom(self, eventobj: Event):
-    logger.debug(self.componentname, self.componentinstancenumber, " RECEIVED ", str(eventobj))
+    logger.debug(f"{self.componentname} {self.componentinstancenumber}  RECEIVED {str(eventobj)}")
     self.recvcnt = self.recvcnt + 1
     sentcounter = int(eventobj.eventcontent.payload)
     logger.applog(f"{self.componentinstancenumber}: ratio={self.recvcnt / sentcounter} [{self.recvcnt}, {sentcounter}]")
