@@ -56,11 +56,11 @@ def main(argv):
     try:
         opts, args = getopt.getopt(argv,"hi:",["id="])
     except getopt.GetoptError:
-        print ("testUsrpIndividually.py -i <nodeinstancenumber>")
+        logger.error ("testUsrpIndividually.py -i <nodeinstancenumber>")
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print ("testUsrpIndividually.py -i <nodeinstancenumber>")
+            logger.error ("testUsrpIndividually.py -i <nodeinstancenumber>")
             sys.exit()
         elif opt in ("-i", "--ifile"):
             id = arg

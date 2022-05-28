@@ -31,7 +31,7 @@ class PingPongApplicationLayer(GenericModel):
     
     def on_message_from_bottom(self, eventobj: Event):
         evt = Event(self, EventTypes.MFRT, eventobj.eventcontent)
-        logger.debug(f"{self.componentname}.{self.componentinstancenumber} RECEIVED {str(eventobj)}")
+        logger.info(f"{self.componentname}.{self.componentinstancenumber} RECEIVED {str(eventobj)}")
         evt.eventcontent.header.messageto = MessageDestinationIdentifiers.LINKLAYERBROADCAST
         evt.eventcontent.header.messagefrom = self.componentinstancenumber
         evt.eventcontent.payload = eventobj.eventcontent.payload + "-" + str(self.componentinstancenumber)
