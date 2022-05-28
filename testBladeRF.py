@@ -18,7 +18,7 @@ class BladeRFNode(GenericModel):
     def on_init(self, eventobj: Event):
         i = 0
         while(True):
-            logger.applog("Will start poking")
+            #logger.applog("Will start poking")
             self.appl.send_self(Event(self, PingPongApplicationLayerEventTypes.STARTBROADCAST, None))
             time.sleep(0.1)    
         
@@ -55,7 +55,7 @@ class BladeRFNode(GenericModel):
 topo = Topology()
 def main(argv):
 
-    setAHCLogLevel(21)
+    setAHCLogLevel(logging.INFO)
     num_nodes = 3
 # Note that the topology has to specific: usrp winslab_b210_0 is run by instance 0 of the component
 # Therefore, the usrps have to have names winslab_b210_x where x \in (0 to nodecount-1)

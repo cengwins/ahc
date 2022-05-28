@@ -3,7 +3,7 @@ import os
 import threading
 import time
 from bladerf              import _bladerf, _tool
-from ...Generics import SDRConfiguration
+from ...Generics import *
 from threading import Thread, Lock
 from .SDRUtils import SDRUtils
 import numpy as np
@@ -44,7 +44,7 @@ class BladeRFUtils(SDRUtils):
     # Close the device and exit
     # =============================================================================
     def shutdown(self, error = 0, board = None ):
-        print( "Shutting down with error code: " + str(error) )
+        logger.debug(f"Shutting down with error code: {str(error)}" )
         self.stop_sdr_rx()
         if( board != None ):
             board.close()
@@ -54,18 +54,19 @@ class BladeRFUtils(SDRUtils):
     # Version information
     # =============================================================================
     def print_versions(self, device = None ):
-        print( "libbladeRF version: " + str(_bladerf.version()) )
+        logger.debug(f"libbladeRF version: {str(_bladerf.version())}" )
         if( device != None ):
             try:
-                print( "Firmware version: " + str(device.get_fw_version()) )
+                logger.debug(f"Firmware version: {str(device.get_fw_version())}" )
+                pass
             except:
-                print( "Firmware version: " + "ERROR" )
+                logger.critical( "Firmware version: ERROR" )
                 raise
 
             try:
-                print( "FPGA version: "     + str(device.get_fpga_version()) )
+                logger.debug(f"FPGA version: {str(device.get_fpga_version())}" )
             except:
-                print( "FPGA version: "     + "ERROR" )
+                logger.critical( "FPGA version: ERROR" )
                 raise
 
         return 0
@@ -75,18 +76,16 @@ class BladeRFUtils(SDRUtils):
     # =============================================================================
     def probe_specific_bladerf(self, serial):
         device = None
-        print( "Searching for bladeRF devices..." )
+        logger.debug( "Searching for bladeRF devices..." )
         try:
             devinfos = _bladerf.get_device_list()
-            #print(devinfos)
             for devinfo in devinfos:
                 if devinfo.serial == serial:
                     device = "{backend}:device={usb_bus}:{usb_addr}".format(**devinfo._asdict())
-                    #print(devinfo.serial)
                     return device
 
         except _bladerf.BladeRFError:
-            print( "No bladeRF devices found." )
+            logger.critical( "No bladeRF devices found." )
             pass
 
         return device
@@ -97,22 +96,20 @@ class BladeRFUtils(SDRUtils):
     # =============================================================================
     def probe_bladerfs(self):
         device = None
-        print( "Searching for bladeRF devices..." )
+        logger.debug( "Searching for bladeRF devices..." )
         try:
             devinfos = _bladerf.get_device_list()
-            #print(devinfos)
             cnt = 0;
             for devinfo in devinfos:
                 self.bladerfs[cnt] = devinfo.serial
-                print("Bladerf ", cnt, " has serial ", self.bladerfs[cnt])
+                logger.debug(f"Bladerf {cnt} has serial {self.bladerfs[cnt]}" )
                 cnt = cnt + 1
                 #if devinfo.serial == serial:
                 #    device = "{backend}:device={usb_bus}:{usb_addr}".format(**devinfo._asdict())
-                #    print(devinfo.serial)
                 #    return device
 
         except _bladerf.BladeRFError:
-            print( "No bladeRF devices found." )
+            logger.critical( "No bladeRF devices found." )
             pass
 
         return device
@@ -125,21 +122,20 @@ class BladeRFUtils(SDRUtils):
         image = os.path.abspath( image )
 
         if( not os.path.exists(image) ):
-            print( "FPGA image does not exist: " + str(image) )
+            logger.critical(f"FPGA image does not exist: {str(image)}" )
             return -1
 
         try:
-            print( "Loading FPGA image: " + str(image ) )
+            logger.debug(f"Loading FPGA image:  {str(image )}" )
             device.load_fpga( image )
             fpga_loaded  = device.is_fpga_configured()
             fpga_version = device.get_fpga_version()
 
             if( fpga_loaded ):
-                print( "FPGA successfully loaded. Version: " + str(fpga_version) )
+                logger.debug(f"FPGA successfully loaded. Version: {str(fpga_version)}" )
 
         except _bladerf.BladeRFError:
-            print( "Error loading FPGA." )
-            raise
+            logger.criticial(f"Error loading FPGA image:  {str(image )}" )
 
         return 0
 
@@ -149,11 +145,11 @@ class BladeRFUtils(SDRUtils):
     def configure_tx_channel(self):
 
         if( self.bladerfdevice == None ):
-            print( "TX: Invalid device handle." )
+            logger.debug( "TX: Invalid device handle." )
             return -1
 
         if( self.tx_ch == None ):
-            print( "TX: Invalid channel." )
+            logger.debug( "TX: Invalid channel." )
             return -1
 
         # Configure bladeRF
@@ -178,7 +174,7 @@ class BladeRFUtils(SDRUtils):
                         stream_timeout=500)
 
         # Enable module
-        print( "TX: Start" )
+        logger.debug( "TX: Start" )
         self.bladerfdevice_tx_ch.enable = True
         return 0
 
@@ -189,11 +185,11 @@ class BladeRFUtils(SDRUtils):
     def configure_rx_channel(self):
 
         if( self.bladerfdevice == None ):
-            print( "RX: Invalid device handle." )
+            logger.debug( "RX: Invalid device handle." )
             return -1
 
         if( self.rx_ch == None ):
-            print( "RX: Invalid channel." )
+            logger.debug( "RX: Invalid channel." )
             return -1
 
         # Configure BladeRF
@@ -226,12 +222,11 @@ class BladeRFUtils(SDRUtils):
 
     def configureSdr(self, type="x115", sdrconfig=None):
         try:
-            print("SDR my componentinstancenumber is ", self.componentinstancenumber)
             self.devicename = self.bladerfs[self.componentinstancenumber] #get the list of devices online (should be done once!) and match serial to componentinstancenumber
         except Exception as ex:
             self.devicename = "none"
-            print("While probing bladerfs ", ex)
-        print("WILL CONFIGURE BLADERF with serial ", self.devicename, " for sdr devices ", self.componentinstancenumber)
+            logger.critical(f"Error while probing bladerfs {ex}")
+        logger.info(f"WILL CONFIGURE BLADERF with serial {self.devicename} for sdr devices {self.componentinstancenumber}")
         if sdrconfig == None:
             self.sdrconfig = self.defaultsdrconfig
         else:
@@ -239,9 +234,9 @@ class BladeRFUtils(SDRUtils):
 
 #        self.bladerfdevice_identifier = self.probe_specific_bladerf(bytes(self.devicename,'utf-8')) #devicename is the serial of bladerf
         self.bladerfdevice_identifier = self.probe_specific_bladerf(self.devicename) #devicename is the serial of bladerf
-        print(self.bladerfdevice_identifier)
+        logger.debug(str(self.bladerfdevice_identifier))
         if( self.bladerfdevice_identifier == None ):
-            print( "No bladeRFs detected. Exiting." )
+            logger.error( "No bladeRFs detected. Exiting." )
             self.shutdown( error = -1, board = None )
 
 
@@ -250,15 +245,15 @@ class BladeRFUtils(SDRUtils):
         self.fpga_size  = self.bladerfdevice.fpga_size
 
 
-        print( "Loading FPGA on ",self.devicename, "at ", self.fpgalocation )
+        logger.debug(f"Loading FPGA on {self.devicename} at {self.fpgalocation}" )
         try:
             status = self.load_fpga( self.bladerfdevice, self.fpgalocation )
         except:
-            print( "ERROR loading FPGA for Serial ", self.devicename, " fpga at ", self.fpgalocation  )
+            logger.critical( "ERROR loading FPGA for Serial {self.devicename} fpga at {self.fpgalocation}")
             raise
 
         if( status < 0 ):
-            print( "ERROR loading FPGA." )
+            logger.critical( "ERROR loading FPGA." )
             self.shutdown( error = status, board = self.bladerfdevice )
 
 
@@ -268,7 +263,6 @@ class BladeRFUtils(SDRUtils):
         rx_chan = int(self.sdrconfig.chan)
         self.tx_ch = _bladerf.CHANNEL_TX(tx_chan)
         self.rx_ch = _bladerf.CHANNEL_RX(rx_chan)
-        print(self.tx_ch, self.rx_ch)
         self.rx_freq = int(self.sdrconfig.freq)
         self.tx_freq = int(self.sdrconfig.freq)
         self.rx_rate = int(self.sdrconfig.bandwidth)
@@ -289,44 +283,41 @@ class BladeRFUtils(SDRUtils):
         #self.bladerfdevice.loopback = _bladerf.Loopback.BB_TXVGA1_RXLPF
         #status  = self.bladerfdevice.set_loopback(lb)
         #if status < 0:
-        #    print("Cannot do loopback")
+        #    logger.debug("Cannot do loopback")
         #else:
-        #    print("Set loopback to ", lb)
+        #    logger.debug(f"Set loopback to {lb}"")
         
         self.configure_rx_channel()
         self.configure_tx_channel()
 
-        #print("----> ", self.bladerfdevice.devinfo)
-        #_tool._print_channel_details(self.bladerfdevice_rx_ch,0)
-        #_tool._print_channel_details(self.bladerfdevice_tx_ch,0)
-        print(  "\n----> BLADERF(", self.bladerfdevice.get_serial(), ") CONFIG" 
-                "\n----> TX_CHAN", self.tx_ch,
-                "\n----> RX_CHAN", self.rx_ch,
-                "\n----> TX_FREQ", self.bladerfdevice.get_frequency(self.tx_ch),
-                "\n----> RX_FREQ", self.bladerfdevice.get_frequency(self.rx_ch),
-                "\n----> TX_BANDWIDTH", self.bladerfdevice.get_bandwidth(self.tx_ch),
-                "\n----> RX_BANDWIDTH", self.bladerfdevice.get_bandwidth(self.rx_ch),
-                "\n----> TX_SAMPLING_RATE", self.bladerfdevice.get_sample_rate(self.tx_ch),
-                "\n----> RX_SAMPLING_RATE", self.bladerfdevice.get_sample_rate(self.rx_ch),
-                "\n----> TX_GAIN", self.bladerfdevice.get_gain(self.tx_ch),
-                "\n----> RX_GAIN", self.bladerfdevice.get_gain(self.rx_ch))
+        logger.info(f"\n===> BLADERF {self.bladerfdevice.get_serial()} CONFIG" + 
+                f"\n===> TX_CHAN {self.tx_ch}" +
+                f"\n===> RX_CHAN {self.rx_ch}" +
+                f"\n===> TX_FREQ {self.bladerfdevice.get_frequency(self.tx_ch)}" +
+                f"\n===> RX_FREQ {self.bladerfdevice.get_frequency(self.rx_ch)}" +
+                f"\n===> TX_BANDWIDTH {self.bladerfdevice.get_bandwidth(self.tx_ch)}" +
+                f"\n===> RX_BANDWIDTH {self.bladerfdevice.get_bandwidth(self.rx_ch)}"+
+                f"\n===> TX_SAMPLING_RATE {self.bladerfdevice.get_sample_rate(self.tx_ch)}"+
+                f"\n===> RX_SAMPLING_RATE {self.bladerfdevice.get_sample_rate(self.rx_ch)}"+
+                f"\n===> TX_GAIN {self.bladerfdevice.get_gain(self.tx_ch)}" +
+                f"\n===> RX_GAIN {self.bladerfdevice.get_gain(self.rx_ch)}")
 #        self.configure_rx_channel()
 
 
     def start_sdr_rx(self):
-        #print(f"start_usrp_rx on usrp winslab_b210_{self.componentinstancenumber}")
+        logger.debug(f"start_usrp_rx on usrp winslab_b210_{self.componentinstancenumber}")
         self.bladerfdevice_rx_ch.enable = True
         self.receiveenabled = True
-        #print( "RX: Start" )
+        logger.debug( "RX: Start" )
         
     def stop_sdr_rx(self):
         self.bladerfdevice_rx_ch.enable = False
         self.receiveenabled = False
-        #print( "RX: Stop" )
+        logger.debug( "RX: Stop" )
 
       
     def start_rx(self, rx_callback, framer):
-        print(f"start_rx on bladerf {self.devicename}")
+        logger.debug(f"start_rx on bladerf {self.devicename}")
         self.framer = framer
         self.rx_callback = rx_callback
         t = Thread(target=self.rx_thread, args=[])
@@ -337,47 +328,35 @@ class BladeRFUtils(SDRUtils):
         
 
     def rx_thread(self):
-        #print(f"rx_thread on bladerf{self.devicename}-->{self.componentinstancenumber}")
-        #print(f"max_samps_per_packet={max_samps_per_packet}")
         
         num_samples = 1024
         buf = bytearray(num_samples*self.bytes_per_sample)
-        #print(f"recv_buffer={recv_buffer")
-        #buf2 = np.zeros(num_samples*2, dtype=np.int16) # sc16q1 samples
         num_samples_read = 0
         while(self.receiveenabled == True):
             #self.mutex.acquire(1)
-            #print(f"rx_thread on usrp bladerf_{self.componentinstancenumber} ---> {self.devicename}", self.rssi)
             try:
                 self.bladerfdevice.sync_rx(buf, num_samples)
-                
-                #mybuf = np.frombuffer(buf, dtype=np.int16)
-                #mybuf2 = np.frombuffer(buf, dtype=np.complex64)
                 mybuf2 = np.frombuffer(buf, dtype=np.int16).flatten (order="C") #// int(self.sdrconfig.sw_tx_gain)
                 self.rx_callback( num_samples, mybuf2)
                 if num_samples*2 > self.samps_per_est:
                     self.computeRSSI( self.samps_per_est*2, mybuf2[:self.samps_per_est*2],type="sc16")
-                #print("myuf=", mybuf[:5]/2048.0)
-                #print(self.componentinstancenumber, ": length of received samples mybuf", len(mybuf2), " num samples ", num_samples)
             except RuntimeError as ex:
-                print("Runtime error in rx_thread: ", ex)
+                logger.error("Runtime error in rx_thread: {ex}")
             finally:   
                 #self.mutex.release()
                 pass
-                #print("Released mutex")
-        print("Will not read samples from the channel any more...")     
+        logger.debug("Will not read samples from the channel any more...")     
     def transmit_samples(self, transmit_buffer):
         try:
             #self.mutex.acquire(1)
             #self.stop_sdr_rx()
             num = (len(transmit_buffer)//self.bytes_per_sample)*2
             #num = len(transmit_buffer)#//self.bytes_per_sample
-            #print("Number of samples to transmit", num)
+           
             self.bladerfdevice.sync_tx(transmit_buffer.flatten(order="C"), num)
             #self.bladerfdevice.sync_tx(transmit_buffer, num)
-            #print("transmitted", num)
         except RuntimeError as ex:
-            print("Runtime error in receive: %s", ex)
+            logger.error(f"Runtime error in receive: {ex}")
         finally:
             #self.mutex.release()
             #self.start_sdr_rx()
