@@ -5,6 +5,8 @@ from timeit import default_timer as timer
 from .Experimentation.Topology import *
 from .Generics import *
 
+
+
 class GenericModel:
     
 
@@ -146,6 +148,8 @@ class GenericModel:
         except Exception as e:
             logger.error(f"Cannot send message to PEER Connector {self.componentname}-{self.componentinstancenumber} {str(event)} {e}")
 
+    
+    
     def connect_me_to_component(self, name, component):
         logger.debug(f"Connecting {name} to {component.componentname}")
         #self.connectors[name] = component
