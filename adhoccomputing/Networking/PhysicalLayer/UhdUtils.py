@@ -17,7 +17,7 @@ import os
 import re
 import sys
 from .SDRUtils import SDRUtils
-from ...Generics import SDRConfiguration
+from ...Generics import *
 
 
 class AhcUhdUtils(SDRUtils):
@@ -43,7 +43,7 @@ class AhcUhdUtils(SDRUtils):
         cnt = 0
         for u in localusrps:
             self.usrps[cnt] = u.to_string()
-            print("USRP ", cnt, " is ", self.usrps[cnt])
+            logger.info(f"USRP {cnt} is {self.usrps[cnt]}")
             cnt = cnt + 1
     
 
@@ -56,12 +56,11 @@ class AhcUhdUtils(SDRUtils):
             self.sdrconfig = sdrconfig
         #self.devicename = "winslab_b210_" + str(self.componentinstancenumber) #device names are configured properly on devices
         try:
-            #print(self.usrps)
-            print("SDR my componentinstancenumber is ", int(self.componentinstancenumber))
+            logger.debug(f"SDR my componentinstancenumber is {self.componentinstancenumber}")
             self.devicename = self.usrps[int(self.componentinstancenumber)] #get the list of devices online (should be done once!) and match serial to componentinstancenumber
         except Exception as ex:
             self.devicename = "THERE ARE NO USRPS CONNECTED"
-            print("Exception while probing usrps ", ex)
+            logger.error(f"Runtime error while probing usrp: {ex}")
 
         
         self.freq = self.sdrconfig.freq
@@ -71,7 +70,7 @@ class AhcUhdUtils(SDRUtils):
         self.hw_rx_gain = self.sdrconfig.hw_rx_gain
         self.tx_rate= self.bandwidth
         self.rx_rate= self.bandwidth
-        print(f"Configuring {self.devicename}, freq={self.freq}, bandwidth={self.bandwidth}, channel={self.chan}, hw_tx_gain={self.hw_tx_gain}, hw_rx_gain={self.hw_rx_gain}")
+        logger.info(f"Configuring {self.devicename}, freq={self.freq}, bandwidth={self.bandwidth}, channel={self.chan}, hw_tx_gain={self.hw_tx_gain}, hw_rx_gain={self.hw_rx_gain}")
         #self.usrp = uhd.usrp.MultiUSRP(f"name={self.devicename}")
         self.usrp = uhd.usrp.MultiUSRP(f"{self.devicename}")
         
@@ -91,20 +90,19 @@ class AhcUhdUtils(SDRUtils):
         self.usrp.set_tx_gain(self.hw_tx_gain, self.chan)
 
         #self.usrp.set_rx_agc(True, self.chan)
-        print("------- USRP(", self.devicename, ") CONFIG --------------------")
-        print("------> CHANNEL= ", self.chan)
-        print("------> RX-BANDWIDTH= ", self.usrp.get_rx_bandwidth(self.chan))
-        print("------> TX-BANDWIDTH= ", self.usrp.get_tx_bandwidth(self.chan))
-        print("------> RX-FREQ= ", self.usrp.get_rx_freq(self.chan))
-        print("------> TX-FREQ= ", self.usrp.get_tx_freq(self.chan))
-        print("------> RX-RATE= ", self.usrp.get_rx_rate(self.chan))
-        print("------> TX-RATE= ", self.usrp.get_tx_rate(self.chan))
-        print("------> RX-GAIN-NAMES= ", self.usrp.get_rx_gain_names(self.chan))
-        print("------> TX-GAIN-NAMES= ", self.usrp.get_tx_gain_names(self.chan))
-        print("------> RX-GAIN= ", self.usrp.get_rx_gain(self.chan))
-        print("------> TX-GAIN= ", self.usrp.get_tx_gain(self.chan))
-        print("------> USRP-INFO= ", self.usrp.get_pp_string())
-        #print("------> POWER-RANGE= ", self.usrp.get_rx_power_range())
+        logger.info(f"------- USRP( {self.devicename } ) CONFIG --------------------" +
+        f"===> CHANNEL= {self.chan}" +
+        f"===> RX-BANDWIDTH= {self.usrp.get_rx_bandwidth(self.chan)}" +
+        f"===> TX-BANDWIDTH=  {self.usrp.get_tx_bandwidth(self.chan)}" +
+        f"===> RX-FREQ=  {self.usrp.get_rx_freq(self.chan)}" +
+        f"===> TX-FREQ=  {self.usrp.get_tx_freq(self.chan)}" +
+        f"===> RX-RATE=  {self.usrp.get_rx_rate(self.chan)}" +
+        f"===> TX-RATE=  {self.usrp.get_tx_rate(self.chan)}" +
+        f"===> RX-GAIN-NAMES=  {self.usrp.get_rx_gain_names(self.chan)}" +
+        f"===> TX-GAIN-NAMES=  {self.usrp.get_tx_gain_names(self.chan)}" +
+        f"===> RX-GAIN=  {self.usrp.get_rx_gain(self.chan)}" +
+        f"===> TX-GAIN=  {self.usrp.get_tx_gain(self.chan)}" +
+        f"===> USRP-INFO=  {self.usrp.get_pp_string()}" )
         
 
     
@@ -128,21 +126,19 @@ class AhcUhdUtils(SDRUtils):
         self.mutex.acquire(1)
         try:
             power_dbfs = uhd.dsp.signals.get_usrp_power(self.rx_streamer, num_samps=int(samps_per_est), chan=self.chan)
-        except Exception as e:
-            print("Exception in CCA: ", e)
+        except Exception as ex:
+            logger.error(f"Runtime error in cca: {ex}")
         finally:
             self.mutex.release()
             self.start_sdr_rx()
-        #print("Power-dbfs=", power_dbfs)
         self.cca = False
         if (power_dbfs > cca_threshold ):
-            #print(power_dbfs)
             return False, power_dbfs
         else:
             return True, power_dbfs
     
     def start_rx(self, rx_callback, framer):
-        print(f"start_rx on usrp winslab_b210_{self.componentinstancenumber}")
+        logger.debug(f"start_rx on usrp winslab_b210_{self.componentinstancenumber}")
         self.framer = framer
         self.rx_callback = rx_callback
         self.rx_rate = self.usrp.get_rx_rate()
@@ -162,7 +158,7 @@ class AhcUhdUtils(SDRUtils):
 
 
     def rx_thread(self):
-        print(f"rx_thread on usrp {self.devicename} on node {self.componentinstancenumber}")
+        logger.debug(f"rx_thread on usrp {self.devicename} on node {self.componentinstancenumber}")
         while(self.receiveenabled == True):
             #self.mutex.acquire(1)
             try:
@@ -175,24 +171,11 @@ class AhcUhdUtils(SDRUtils):
                 if num_rx_samps > self.samps_per_est:
                     self.computeRSSI( self.samps_per_est, recv_buffer[:self.samps_per_est],type="fc32")
             except RuntimeError as ex:
-                print("Runtime error in receive: %s", ex)
+                logger.error(f"Runtime error in receive: {ex}")
             finally:
                 #self.mutex.release()
                 pass
-            # if rx_metadata.error_code == uhd.types.RXMetadataErrorCode.none:
-            #     pass
-            # elif rx_metadata.error_code == uhd.types.RXMetadataErrorCode.overflow:
-            #     #print("Receiver error: overflow  %s, continuing...", rx_metadata.strerror())
-            #     pass
-            # elif rx_metadata.error_code == uhd.types.RXMetadataErrorCode.late:
-            #     #print("Receiver error: late %s, continuing...", rx_metadata.strerror())
-            #     pass
-            # elif rx_metadata.error_code == uhd.types.RXMetadataErrorCode.timeout:
-            #     print("Receiver error:timeout  %s, continuing...", rx_metadata.strerror())
-            #     pass
-            # else:
-            #     print("Receiver error: %s", rx_metadata.strerror())
-        print("Will not read samples from the channel any more...")           
+        logger.debug("Will not read samples from the channel any more...")           
         
     def finalize_transmit_samples(self):   
         tx_metadata = uhd.types.TXMetadata() 
@@ -203,7 +186,6 @@ class AhcUhdUtils(SDRUtils):
         return num_tx_samps
         
     def transmit_samples(self, transmit_buffer):
-        #print("Transmit")
         tx_metadata = uhd.types.TXMetadata()
         tx_metadata.has_time_spec = False
         tx_metadata.start_of_burst = False

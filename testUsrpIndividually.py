@@ -5,7 +5,7 @@ import signal
 sys.path.insert(0, os.getcwd())
 
 from adhoccomputing.GenericModel import GenericModel
-from adhoccomputing.Generics import Event, ConnectorTypes, SDRConfiguration
+from adhoccomputing.Generics import *
 from adhoccomputing.Experimentation.Topology import Topology
 from adhoccomputing.Networking.PhysicalLayer.UsrpB210OfdmFlexFramePhy import  UsrpB210OfdmFlexFramePhy
 from adhoccomputing.Networking.MacProtocol.CSMA import MacCsmaPPersistent, MacCsmaPPersistentConfigurationParameters
@@ -51,6 +51,7 @@ class UsrpNode(GenericModel):
 topo = Topology()
 
 def main(argv):
+    setAHCLogLevel(logging.INFO)
     id = 0 #default 0 if arg -i is not given
     try:
         opts, args = getopt.getopt(argv,"hi:",["id="])
