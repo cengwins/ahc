@@ -25,12 +25,14 @@ class ApplicationLayerMessageTypes(Enum):
 
 # define your own message header structure
 class ApplicationLayerMessageHeader(GenericMessageHeader):
-    pass
+    def __str__(self) -> str:
+        return "ApplicationLayerMessageHeader"
 
 
 # define your own message payload structure
 class ApplicationLayerMessagePayload(GenericMessagePayload):
-    pass
+    def __str__(self) -> str:
+        return "ApplicationLayerMessagePayload"
 
 
 class ApplicationLayerComponent(GenericModel):
@@ -116,30 +118,39 @@ class AdHocNode(GenericModel):
         self.components.append(self.net)
         self.components.append(self.link)
         
-        # CONNECTIONS AMONG SUBCOMPONENTS
-        self.appl |D| self.net
+        ##Connect the bottom component to the composite component....
+        ## CONNECTION USING INFIX OPERATAORS
+        self.appl |D| self.net 
         self.net |D| self.link
         self.link |D| self
         
         self |U| self.link 
         self.link |U| self.net
         self.net |U| self.appl 
+
+        ## CONNECTION using U (up) D (down) P (peer) functions
+
+        # self.appl.D(self.net)
+        # self.net.D(self.link)
+        # self.link.D(self)
+
+        # self.U(self.link)
+        # self.link.U(self.net)
+        # self.net.U(self.appl)
         
-        #self.appllayer.connect_me_to_component(ConnectorTypes.DOWN, self.netlayer)
-        #self.netlayer.connect_me_to_component(ConnectorTypes.UP, self.appllayer)
-
-        #self.netlayer.connect_me_to_component(ConnectorTypes.DOWN, self.linklayer)
-        #self.linklayer.connect_me_to_component(ConnectorTypes.UP, self.netlayer)
-
-        # Connect the bottom component to the composite component....
-        #self.linklayer.connect_me_to_component(ConnectorTypes.DOWN, self)
-        #self.connect_me_to_component(ConnectorTypes.UP, self.linklayer)
+        ## CONNECTION USING direct function    
+        # self.appl.connect_me_to_component(ConnectorTypes.DOWN, self.net)
+        # self.net.connect_me_to_component(ConnectorTypes.UP, self.appl)
+        # self.net.connect_me_to_component(ConnectorTypes.DOWN, self.link)
+        # self.link.connect_me_to_component(ConnectorTypes.UP, self.net)
+        # self.link.connect_me_to_component(ConnectorTypes.DOWN, self)
+        # self.connect_me_to_component(ConnectorTypes.UP, self.link)
 
 
 def main():
     #NOTSET, DEBUG, INFO, WARNING, ERROR, CRITICAL
+    setAHCLogLevel(25)
     setAHCLogLevel(DEBUG_LEVEL_APPLOG)
-    setAHCLogLevel(logging.INFO)
     # G = nx.Graph()
     # G.add_nodes_from([1, 2])
     # G.add_edges_from([(1, 2)])
@@ -170,7 +181,7 @@ def main():
     topo.start()
     
     #plt.show()  # while (True): pass
-    time.sleep(4)
+    time.sleep(1)
     logger.applog(str(topo))
     topo.exit()
 

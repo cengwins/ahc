@@ -17,9 +17,6 @@ class handler(BaseHTTPRequestHandler):
         self.send_header('Content-type','text/html')
         self.end_headers()
         log += str(self.rfile.read())
-        #print(self.log)
-        #message = "Hello, World! Here is a POST response"
-        #self.wfile.write(bytes(message, "utf8"))
 
 with HTTPServer(('', 8000), handler) as server:
     server.serve_forever()

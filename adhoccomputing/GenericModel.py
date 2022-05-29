@@ -90,7 +90,8 @@ class GenericModel:
                 p.trigger_event(event)
         except Exception as e:
             #raise(f"Cannot send message to Down Connector {self.componentname } -- {self.componentinstancenumber}")
-            logger.error(f"Cannot send message to DOWN Connector {self.componentname}-{self.componentinstancenumber} {str(event)} {e}")
+            #logger.error(f"Cannot send message to DOWN Connector {self.componentname}-{self.componentinstancenumber} {str(event)} {e}")
+            pass
         try:
             src = int(self.componentinstancenumber)
             event.eventsource = None # for avoiding thread.lock problem
@@ -101,7 +102,7 @@ class GenericModel:
                     if self.channel_queues[src][dest] is not None:
                         self.channel_queues[src][dest].put(event)
         except Exception as e:
-            logger.error(f"Cannot send message to DOWN Connector {self.componentname}-{self.componentinstancenumber} {str(event)} {e}")
+            logger.error(f"Cannot send message to DOWN Connector over queues {self.componentname}-{self.componentinstancenumber} {str(event)} {e}")
 
 
     def send_up_from_channel(self, event: Event, loopback = False):
@@ -116,7 +117,8 @@ class GenericModel:
                         p.trigger_event(event)
 
         except Exception as e:
-            logger.error(f"Cannot send message to UP Connector from channel {self.componentname}-{self.componentinstancenumber} {str(event)} {e}")
+            #logger.error(f"Cannot send message to UP Connector from channel {self.componentname}-{self.componentinstancenumber} {str(event)} {e}")
+            pass
 
         try:
             src = int(event.fromchannel.split("-")[0]) 
@@ -148,10 +150,17 @@ class GenericModel:
         except Exception as e:
             logger.error(f"Cannot send message to PEER Connector {self.componentname}-{self.componentinstancenumber} {str(event)} {e}")
 
-    
+    def U(self, component):
+        self.connect_me_to_component(ConnectorTypes.UP, component)
+  
+    def D(self, component):
+        self.connect_me_to_component(ConnectorTypes.DOWN, component)
+  
+    def P(self, component):
+        self.connect_me_to_component(ConnectorTypes.PEER, component)
     
     def connect_me_to_component(self, name, component):
-        logger.debug(f"Connecting {name} to {component.componentname}")
+        logger.debug(f"Connecting {self.componentname}-{self.componentinstancenumber} {name} to {component.componentname}-{component.componentinstancenumber}")
         #self.connectors[name] = component
         try:
             self.connectors[name] = component

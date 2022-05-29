@@ -70,9 +70,17 @@ class GenericChannel(GenericModel):
                      eventobj.eventcontent, fromchannel=self.componentinstancenumber,
                      eventid=eventobj.eventid, eventsource_componentname=eventobj.eventsource_componentname, eventsource_componentinstancenumber=eventobj.eventsource_componentinstancenumber)
     myevent.eventsource=None
+    self.send_up_from_channel(myevent, loopback=False)
+
+class GenericChannelWithLoopback(GenericChannel):
+
+  def on_message_from_peer(self, eventobj: Event):
+    logger.debug(f"{self.componentname}-{self.componentinstancenumber} on_deliver_to_component {self.componentname}")
+    myevent = Event(self, EventTypes.MFRB,
+                     eventobj.eventcontent, fromchannel=self.componentinstancenumber,
+                     eventid=eventobj.eventid, eventsource_componentname=eventobj.eventsource_componentname, eventsource_componentinstancenumber=eventobj.eventsource_componentinstancenumber)
+    myevent.eventsource=None
     self.send_up_from_channel(myevent, loopback=True)
-
-
 
 class FIFOBroadcastPerfectChannel(GenericChannel):
   pass

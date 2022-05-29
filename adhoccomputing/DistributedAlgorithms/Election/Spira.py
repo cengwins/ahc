@@ -54,7 +54,7 @@ class TestMessagePayload:
     self.fn = fn
     self.level = level
   def __str__(self) -> str:
-    return f"TestMessagePayload DN {self.dn} LEVEL {self.level}"
+    return f"TestMessagePayload FN {self.fn} LEVEL {self.level}"
 
 
 class ReportMessagePayload: 

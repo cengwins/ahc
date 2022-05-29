@@ -22,7 +22,7 @@ def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_int, payload:POINTER(c
             phymsg = pickle.loads(pload)
             msg = GenericMessage(phymsg.header, phymsg.payload)
             framer.send_self(Event(framer, PhyEventTypes.RECV, msg))
-            #logger.debug(f"Header= {msg.header.messagetype} Payload= {msg.payload} RSSI= {stats.rssi}")   
+            logger.info(f"Header= {msg.header.messagetype} Payload= {msg.payload} RSSI= {stats.rssi}")   
     except Exception as ex:
         logger.critical(f"Exception_ofdm_callback: {ex}")
     #mutex.release()
@@ -42,6 +42,7 @@ class BladeRFOfdmFlexFramePhy(FrameHandlerBase):
 
     
     def transmit(self, _header, _payload, _payload_len, _mod, _fec0, _fec1):   
+        logger.debug(f"{self.componentname}-{self.componentinstancenumber} will send {_payload_len} bytes")
         ofdmflexframegen_assemble(self.fg, _header, _payload, c_uint32(_payload_len))
         last_symbol = 0
         self.fgbuffer[:] = 0

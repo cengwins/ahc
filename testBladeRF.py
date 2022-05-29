@@ -10,7 +10,7 @@ from adhoccomputing.Experimentation.Topology import Topology
 from adhoccomputing.Networking.PhysicalLayer.BladeRFOfdmFlexFramePhy import  BladeRFOfdmFlexFramePhy
 from adhoccomputing.Networking.MacProtocol.CSMA import MacCsmaPPersistent, MacCsmaPPersistentConfigurationParameters
 from adhoccomputing.Networking.ApplicationLayer.PingPongApplicationLayer import *
-
+import logging
 
 
 class BladeRFNode(GenericModel):
@@ -20,13 +20,13 @@ class BladeRFNode(GenericModel):
         while(True):
             #logger.applog("Will start poking")
             self.appl.send_self(Event(self, PingPongApplicationLayerEventTypes.STARTBROADCAST, None))
-            time.sleep(0.1)    
+            time.sleep(5)    
         
     def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None, child_conn=None):
         super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology, child_conn)
         # SUBCOMPONENTS
         
-        macconfig = MacCsmaPPersistentConfigurationParameters(0.5, -30)
+        macconfig = MacCsmaPPersistentConfigurationParameters(0.5, -45)
         sdrconfig = SDRConfiguration(freq =915000000.0, bandwidth = 2000000, chan = 0, hw_tx_gain = 70, hw_rx_gain = 20, sw_tx_gain = -12.0)
         
         self.appl = PingPongApplicationLayer("PingPongApplicationLayer", componentinstancenumber, topology=topology)
@@ -60,25 +60,21 @@ def main(argv):
 # Note that the topology has to specific: usrp winslab_b210_0 is run by instance 0 of the component
 # Therefore, the usrps have to have names winslab_b210_x where x \in (0 to nodecount-1)
     topo.construct_winslab_topology_without_channels(num_nodes, BladeRFNode)
-   # mp_construct_sdr_topology_without_channels(num_nodes, BladeRFNode, topo)
+   # topo.mp_construct_sdr_topology_without_channels(num_nodes, BladeRFNode)
   #topo.construct_winslab_topology_with_channels(2, UsrpNode, FIFOBroadcastPerfectChannel)
   
   # time.sleep(1)
   # topo.nodes[0].send_self(Event(topo.nodes[0], UsrpNodeEventTypes.STARTBROADCAST, None))
 
     topo.start()
-    #i = 0
-    #while(i < 10000):
-    #    for k in range(num_nodes):
-    #        topo.nodes[k].appl.send_self(Event(topo.nodes[k], PingPongApplicationLayerEventTypes.STARTBROADCAST, None))
-    #        time.sleep(0.1)
-    #        pass
-        #time.sleep(0.1)
-        #topo.nodes[0].appl.send_self(Event(topo.nodes[0], UsrpApplicationLayerEventTypes.STARTBROADCAST, None))
-        #time.sleep(0.1)
-    #    i = i + 1
 
-    time.sleep(5)
+    
+    while(True):
+        #topo.nodes[0].appl.send_self(Event(topo.nodes[0], PingPongApplicationLayerEventTypes.STARTBROADCAST, None))
+        time.sleep(1)
+
+    
+    #time.sleep(30)
     #topo.exit()
     
     
@@ -86,7 +82,7 @@ def main(argv):
 def ctrlc_signal_handler(sig, frame):
     topo.exit()
     time.sleep(1)
-    #sys.exit(0)
+    sys.exit(0)
 
 
 def segfault_signal_handler(sig, frame):

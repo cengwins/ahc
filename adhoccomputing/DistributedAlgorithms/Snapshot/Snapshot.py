@@ -25,9 +25,9 @@ class SnapshotComponentModel(GenericModel):
         self.init_snapshot = False
         self.eventhandlers[SnapshotEventTypes.TS] = self.take_snapshot
 
-    def connect_me_to_component(self, name, component):
-        raise Exception(f"Only channels are allowed for connection to"
-                        " {self.__class__}")
+    # def connect_me_to_component(self, name, component):
+    #     raise Exception(f"Only channels are allowed for connection to"
+    #                     " {self.__class__}")
 
     def on_connected_to_component(self, name, channel):
         super().on_connected_to_component(name, channel)

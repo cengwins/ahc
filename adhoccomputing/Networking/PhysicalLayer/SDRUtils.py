@@ -76,3 +76,4 @@ class SDRUtils():
                     g=1.0
             g = g / num_samples / 1.0
             self.rssi = 10 * math.log10(math.sqrt(g/(20*2048.0))) - self.sdrconfig.hw_rx_gain
+        #logger.info(f"RSSI {self.rssi}")

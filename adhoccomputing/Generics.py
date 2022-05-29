@@ -1,6 +1,9 @@
 import datetime
-import logging
-import logging.handlers
+from logging import *
+from logging.handlers import *
+import requests
+from requests.adapters import HTTPAdapter, Retry
+import ssl
 from enum import Enum
 from threading import Timer, Thread, Event
 
@@ -128,7 +131,11 @@ class ConnectorList(dict):
       self[key]
     except KeyError:
       super(ConnectorList, self).__setitem__(key, [])
-    self[key].append(value)
+    if value in self[key]:
+      logger.error(f"Has already connected {key} to {value.componentname}-{value.componentinstancenumber}")
+    else:
+      logger.debug(f"{value.componentname}-{value.componentinstancenumber} is added to {key} ")
+      self[key].append(value)
 
 
 class SDRConfiguration():
@@ -142,15 +149,15 @@ class SDRConfiguration():
 
 
 DEBUG_LEVEL_APPLOG = 21
-logging.addLevelName(DEBUG_LEVEL_APPLOG, "APPLOG")
+addLevelName(DEBUG_LEVEL_APPLOG, "APPLOG")
 def applog(self, message, *args, **kws):
     if self.isEnabledFor(DEBUG_LEVEL_APPLOG):
         # Yes, logger takes its '*args' as 'args'.
         self._log(DEBUG_LEVEL_APPLOG, message, args, **kws) 
-logging.Logger.applog = applog
+Logger.applog = applog
 
 
-class CustomFormatter(logging.Formatter):
+class CustomFormatter(Formatter):
 
     debugcolor = '\033[0m' #"\x1b[38;20m"
     warningcolor = '\033[33m'#"\x1b[33;20m"''
@@ -162,31 +169,92 @@ class CustomFormatter(logging.Formatter):
     format = "===> %(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)"
 
     FORMATS = {
-        logging.DEBUG: debugcolor + format + reset,
-        logging.INFO: infocolor + format + reset,
+        DEBUG: debugcolor + format + reset,
+        INFO: infocolor + format + reset,
         DEBUG_LEVEL_APPLOG: applogcolor + format + reset,
-        logging.WARNING: warningcolor + format + reset,
-        logging.ERROR: errorcolor + format + reset,
-        logging.CRITICAL: criticialcolor + format + reset
+        WARNING: warningcolor + format + reset,
+        ERROR: errorcolor + format + reset,
+        CRITICAL: criticialcolor + format + reset
     }
 
     def format(self, record):
         log_fmt = self.FORMATS.get(record.levelno)
-        formatter = logging.Formatter(log_fmt)
+        formatter = Formatter(log_fmt)
         return formatter.format(record)
 
 
-logger = logging.getLogger("AHC")
-ch = logging.StreamHandler()
-#chweb = logging.handlers.HTTPHandler(host="localhost:8000", url='/logs', method='POST', secure=False)
+
+class AHCLoggingHttpHandler(HTTPHandler):
+  connestablished = True
+  def __init__(self, host: str, url: str, method: str = ..., secure: bool = ..., credentials: tuple[str, str] | None = ..., context: ssl.SSLContext | None = ...) -> None:
+    if secure==True:
+      try:
+        super().__init__(host, url, method, secure, credentials, context)
+      except:
+        pass
+    else:
+      try:
+        super().__init__(host, url, method, secure=False)
+      except:
+        pass
+ 
+  def emit(self, record: LogRecord) -> None:
+    if self.connestablished == True:
+      """
+      Emit a record.
+
+      Send the record to the web server as a percent-encoded dictionary
+      """
+      if self.connestablished == True:
+        try:
+          import urllib.parse
+          host = self.host
+          h = self.getConnection(host, self.secure)
+          url = self.url
+          data = urllib.parse.urlencode(self.mapLogRecord(record))
+          if self.method == "GET":
+              if (url.find('?') >= 0):
+                sep = '&'
+              else:
+                sep = '?'
+              url = url + "%c%s" % (sep, data)
+          h.putrequest(self.method, url)
+          # support multiple hosts on one IP address...
+          # need to strip optional :port from host, if present
+          i = host.find(":")
+          if i >= 0:
+            host = host[:i]
+          # See issue #30904: putrequest call above already adds this header
+          # on Python 3.x.
+          # h.putheader("Host", host)
+          if self.method == "POST":
+            h.putheader("Content-type",
+                          "application/x-www-form-urlencoded")
+            h.putheader("Content-length", str(len(data)))
+          if self.credentials:
+            import base64
+            s = ('%s:%s' % self.credentials).encode('utf-8')
+            s = 'Basic ' + base64.b64encode(s).strip().decode('ascii')
+            h.putheader('Authorization', s)
+          h.endheaders()
+          if self.method == "POST":
+            h.send(data.encode('utf-8'))
+          h.getresponse()    #can't do anything with the result
+        except Exception:
+            self.connestablished = False
+
+
+logger = getLogger("AHC")
+ch = StreamHandler()
+chweb = AHCLoggingHttpHandler(host="localhost:8000", url='/logs', method='POST', secure=False)
 def setAHCLogLevel(level):
   logger.setLevel(level)
   ch.setLevel(level)
   ch.setFormatter(CustomFormatter())
-  #chweb.setLevel(level)
-  #chweb.setFormatter(CustomFormatter())
+  chweb.setLevel(level)
+  chweb.setFormatter(CustomFormatter())
   logger.addHandler(ch)
-  #logger.addHandler(chweb)
+  logger.addHandler(chweb)
   
 
 

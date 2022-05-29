@@ -15,15 +15,24 @@ CRED = '\033[91m'
 CEND = '\033[0m'
 
 class A(GenericModel):
+  counter = 0 
+  def send_message(self):
+    self.counter += 1
+    evt = Event(self, EventTypes.MFRT, "TO CHANNEL" + str(self.counter))
+    self.send_down(evt)
+    logger.applog(f"I am {self.componentname}-{self.componentinstancenumber}, {str(evt)}")
+
   def on_init(self, eventobj: Event):
+    logger.applog(f"I am {self.componentname}-{self.componentinstancenumber}, will run on_init")
+      
     if self.componentinstancenumber == 0:
-      logger.applog(f"I am {self.componentname}-{self.componentinstancenumber}, eventcontent={eventobj.eventcontent}")
-      time.sleep(1)
-      for i in range(5):
-        evt = Event(self, EventTypes.MFRT, "TO CHANNEL" + str(i))
-        self.send_down(evt)
+      self.t = AHCTimer(1, self.send_message) # 1 SECOND
+      self.t.start()
+      logger.applog(f"I am {self.componentname}-{self.componentinstancenumber}, started message sending thread with AHCTimer")
+      
+        
   def on_message_from_bottom(self, eventobj: Event):
-      logger.applog(f"I am {self.componentname}-{self.componentinstancenumber}, eventcontent={eventobj.eventcontent}")
+    logger.applog(f"I am {self.componentname}-{self.componentinstancenumber}, eventcontent={eventobj.eventcontent}")
 
 class Node(GenericModel):
   def on_init(self, eventobj: Event):
@@ -50,7 +59,7 @@ class Node(GenericModel):
     self.connect_me_to_component(ConnectorTypes.UP, self.A)
 
 def main(argv):
-  setAHCLogLevel(21)
+  setAHCLogLevel(DEBUG)
   set_start_method = "fork";
   topo = Topology()
 
@@ -60,17 +69,17 @@ def main(argv):
   # time.sleep(1)
   # topo.exit()
 
-  G = nx.random_geometric_graph(4, 1)
-  # G =nx.Graph()
-  # G.add_node(0)
-  # G.add_node(1)
-  # G.add_node(2)
-  # G.add_edge(0,1)
-  # G.add_edge(1,0)
-  # G.add_edge(0,2)
-  # G.add_edge(2,0)
-  # G.add_edge(1,2)
-  # G.add_edge(2,1)
+  #G = nx.random_geometric_graph(4, 1)
+  G =nx.Graph()
+  G.add_node(0)
+  G.add_node(1)
+  G.add_node(2)
+  G.add_edge(0,1)
+  G.add_edge(1,0)
+  G.add_edge(0,2)
+  G.add_edge(2,0)
+  G.add_edge(1,2)
+  G.add_edge(2,1)
   
   ahcmanager = AHCManager(AHCManagerType.AHC_CLIENT, argv)
   try:

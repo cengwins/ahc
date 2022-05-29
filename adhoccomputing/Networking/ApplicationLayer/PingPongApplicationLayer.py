@@ -26,7 +26,7 @@ class PingPongApplicationLayer(GenericModel):
         self.eventhandlers[PingPongApplicationLayerEventTypes.STARTBROADCAST] = self.on_startbroadcast
 
     def on_message_from_top(self, eventobj: Event):
-        logger.debug(f"{self.componentname}.{self.componentinstancenumber} RECEIVED {str(eventobj)}")
+        logger.info(f"{self.componentname}.{self.componentinstancenumber} RECEIVED {str(eventobj)}")
         self.send_down(Event(self, EventTypes.MFRT, eventobj.eventcontent))
     
     def on_message_from_bottom(self, eventobj: Event):
@@ -45,5 +45,6 @@ class PingPongApplicationLayer(GenericModel):
         payload = "BMSG-" + str(self.counter) + ": " + str(self.componentinstancenumber) 
         broadcastmessage = GenericMessage(hdr, payload)
         evt = Event(self, EventTypes.MFRT, broadcastmessage)
+        logger.debug(f"{self.componentname}.{self.componentinstancenumber} WILL SEND {str(evt)}")
         self.send_down(evt)
     

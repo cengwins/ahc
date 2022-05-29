@@ -215,7 +215,7 @@ class Topology:
       if self.nodeproc is not None:
         for i in range(len(self.nodeproc)):
           self.nodeproc[i].start()
-          initatecheck = True
+          initatecheck = False
       if self.chproc is not None:
         for i in range(len(self.chproc)):
           self.chproc[i].start()

@@ -10,7 +10,7 @@ from adhoccomputing.Experimentation.Topology import Topology
 from adhoccomputing.Networking.PhysicalLayer.UsrpB210OfdmFlexFramePhy import  UsrpB210OfdmFlexFramePhy
 from adhoccomputing.Networking.MacProtocol.CSMA import MacCsmaPPersistent, MacCsmaPPersistentConfigurationParameters
 from adhoccomputing.Networking.ApplicationLayer.PingPongApplicationLayer import *
-
+import logging
 
          
 class UsrpNode(GenericModel):

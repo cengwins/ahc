@@ -6,7 +6,7 @@ from multiprocessing import Queue
 import sys, os, signal
 import argparse
 import configparser
-from ..Generics import *
+from adhoccomputing.Generics import *
 
 #Should there be need we can extend
 class AHCBaseManager(BaseManager): pass
@@ -68,7 +68,7 @@ class AHCManager():
             
             args, remaining_argv = conf_parser.parse_known_args()
             DomainName = ""
-            Port = 9000
+            Port = 9090
             if args.conf_file:
                 config.read(args.conf_file)
                 if (args.section in config):
