@@ -22,7 +22,7 @@ import logging
 macconfig = MacCsmaPPersistentConfigurationParameters(0.5, -50)
 sdrconfig = SDRConfiguration(freq =915000000.0, bandwidth = 5000000, chan = 0, hw_tx_gain = 70, hw_rx_gain = 30, sw_tx_gain = -12.0)
 
-appconfig = OpenCVVideoStreamingAppConfig(10)
+appconfig = OpenCVVideoStreamingAppConfig(5)
 
 
 class AdHocNode(GenericModel):

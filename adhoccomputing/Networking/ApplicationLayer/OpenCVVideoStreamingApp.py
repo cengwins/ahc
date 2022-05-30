@@ -26,8 +26,8 @@ class OpenCVVideoStreamingApp(GenericModel):
     CV2Timer = 1
     frame=None
     framerate = 20
-    frameheight = 160
-    framewidth = 120
+    frameheight = 320
+    framewidth = 240
     def on_init(self, eventobj: Event):
         self.counter = 0
         self.t = AHCTimer(1/self.framerate, self.send_frame)
@@ -71,7 +71,7 @@ class OpenCVVideoStreamingApp(GenericModel):
         ret, framehighres = self.cap.read()
         try:
             framesmallres = cv2.resize(framehighres, (self.frameheight,self.framewidth))
-            frame = cv2.cvtColor(framesmallres, cv2.COLOR_BGR2GRAY)
+            frame =  cv2.cvtColor(framesmallres, cv2.COLOR_BGR2GRAY)
             payload = pickle.dumps(frame)
             if self.initframe == True:
                 self.frame = frame   ##### LOOPBACK trials
@@ -89,7 +89,11 @@ class OpenCVVideoStreamingApp(GenericModel):
     def on_startstreaming(self, eventobj: Event):
         self.cap = cv2.VideoCapture(0)
         #self.codec = 0x47504A4D  # MJPG
-        self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter.fourcc('M','J','P','G'))
+        #self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter.fourcc('M','J','P','G'))
+        self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter.fourcc('H','2','6','4'))
+        #self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('a','v','c','1'))
+        #self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'FMP4'))
+        #self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPEG'))
         self.cap.set(cv2.CAP_PROP_FPS, self.framerate)
         #self.cap.set(cv2.CAP_PROP_FOURCC, self.codec)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.framewidth)

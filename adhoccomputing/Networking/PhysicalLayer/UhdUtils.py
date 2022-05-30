@@ -190,7 +190,7 @@ class AhcUhdUtils(SDRUtils):
                 recv_buffer = np.zeros( self.rx_max_num_samps, dtype=np.complex64)
                 num_rx_samps = self.rx_streamer.recv(recv_buffer, rx_metadata)
                 self.rx_callback(num_rx_samps, recv_buffer)
-                if cnt % 100 == 0:
+                if cnt % 10 == 0:
                     #print("Compute RSSI")
                     cnt = 0
                     if num_rx_samps > self.samps_per_est:

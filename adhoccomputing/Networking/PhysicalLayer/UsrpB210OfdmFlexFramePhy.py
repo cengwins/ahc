@@ -62,7 +62,7 @@ class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
         self.fgprops.fec0 = LIQUID_FEC_NONE
         self.fgprops.fec1 = LIQUID_FEC_HAMMING74
         self.fgprops.mod_scheme = LIQUID_MODEM_QPSK
-        self.M = 512
+        self.M = 1536
         self.cp_len = 32
         self.taper_len = 32
         self.fg = ofdmflexframegen_create(self.M, self.cp_len, self.taper_len, None, byref(self.fgprops))
