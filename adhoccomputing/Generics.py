@@ -148,12 +148,12 @@ class SDRConfiguration():
       self.sw_tx_gain=sw_tx_gain
 
 
-DEBUG_LEVEL_APPLOG = 21
-addLevelName(DEBUG_LEVEL_APPLOG, "APPLOG")
+LOG_LEVEL_APPLOG = 21
+addLevelName(LOG_LEVEL_APPLOG, "APPLOG")
 def applog(self, message, *args, **kws):
-    if self.isEnabledFor(DEBUG_LEVEL_APPLOG):
+    if self.isEnabledFor(LOG_LEVEL_APPLOG):
         # Yes, logger takes its '*args' as 'args'.
-        self._log(DEBUG_LEVEL_APPLOG, message, args, **kws) 
+        self._log(LOG_LEVEL_APPLOG, message, args, **kws) 
 Logger.applog = applog
 
 
@@ -171,7 +171,7 @@ class CustomFormatter(Formatter):
     FORMATS = {
         DEBUG: debugcolor + format + reset,
         INFO: infocolor + format + reset,
-        DEBUG_LEVEL_APPLOG: applogcolor + format + reset,
+        LOG_LEVEL_APPLOG: applogcolor + format + reset,
         WARNING: warningcolor + format + reset,
         ERROR: errorcolor + format + reset,
         CRITICAL: criticialcolor + format + reset

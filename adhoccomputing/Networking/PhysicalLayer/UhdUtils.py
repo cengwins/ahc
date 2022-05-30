@@ -20,12 +20,14 @@ from .SDRUtils import SDRUtils
 from ...Generics import *
 
 
+
 class AhcUhdUtils(SDRUtils):
     
     def __init__(self, componentinstancenumber) -> None:
         super().__init__(componentinstancenumber)
         self.mutex = Lock()
         self.cca = False
+        self.INIT_DELAY = 0
         if not bool (self.usrps):
             self.probe_usrps()
       
@@ -68,12 +70,21 @@ class AhcUhdUtils(SDRUtils):
         self.chan = self.sdrconfig.chan
         self.hw_tx_gain = self.sdrconfig.hw_tx_gain
         self.hw_rx_gain = self.sdrconfig.hw_rx_gain
-        self.tx_rate= self.bandwidth
-        self.rx_rate= self.bandwidth
+        self.tx_rate= self.bandwidth 
+        self.rx_rate= self.bandwidth 
         logger.info(f"Configuring {self.devicename}, freq={self.freq}, bandwidth={self.bandwidth}, channel={self.chan}, hw_tx_gain={self.hw_tx_gain}, hw_rx_gain={self.hw_rx_gain}")
         #self.usrp = uhd.usrp.MultiUSRP(f"name={self.devicename}")
         self.usrp = uhd.usrp.MultiUSRP(f"{self.devicename}")
         
+        curr_hw_time = self.usrp.get_time_last_pps()     
+
+        self.usrp.set_clock_source("internal")
+        self.usrp.set_time_now(uhd.types.TimeSpec(0.0))
+        #self.usrp.set_time_next_pps((curr_hw_time+1.0 ))
+        self.usrp.set_time_next_pps(uhd.types.TimeSpec(0.0))
+        #self.usrp.set_time_unknown_pps(uhd.types.TimeSpec(0.0))
+        #self.usrp.set_start_time(uhd.time_spec_t(curr_hw_time+2.0 ) )
+
         self.usrp.set_rx_bandwidth(self.bandwidth, self.chan)
         self.usrp.set_tx_bandwidth(self.bandwidth, self.chan)
         
@@ -88,6 +99,7 @@ class AhcUhdUtils(SDRUtils):
         
         self.usrp.set_rx_gain(self.hw_rx_gain, self.chan)
         self.usrp.set_tx_gain(self.hw_tx_gain, self.chan)
+        
 
         #self.usrp.set_rx_agc(True, self.chan)
         logger.info(f"------- USRP( {self.devicename } ) CONFIG --------------------" +
@@ -112,6 +124,10 @@ class AhcUhdUtils(SDRUtils):
         self.rx_streamer = self.usrp.get_rx_stream(stream_args)
         self.tx_streamer = self.usrp.get_tx_stream(stream_args)
     
+        self.tx_max_num_samps = self.tx_streamer.get_max_num_samps()
+        self.rx_max_num_samps = self.rx_streamer.get_max_num_samps()
+        print("Max samples that can be transmitted", self.tx_max_num_samps, " received ", self.rx_max_num_samps )
+
     def get_sdr_power(self,num_samps=1000000, chan=0):
         uhd.dsp.signals.get_usrp_power(self.rx_streamer, num_samps, chan)
         
@@ -158,22 +174,43 @@ class AhcUhdUtils(SDRUtils):
 
 
     def rx_thread(self):
+        
+        stream_cmd = uhd.types.StreamCMD(uhd.types.StreamMode.start_cont)
+        stream_cmd.stream_now = True
+        stream_cmd.time_spec = uhd.types.TimeSpec(self.usrp.get_time_now().get_real_secs() + self.INIT_DELAY)
+        cnt = 1
         logger.debug(f"rx_thread on usrp {self.devicename} on node {self.componentinstancenumber}")
         while(self.receiveenabled == True):
-            #self.mutex.acquire(1)
+            cnt += 1
+            self.mutex.acquire(1)
             try:
                 had_an_overflow = False
                 rx_metadata = uhd.types.RXMetadata()
-                max_samps_per_packet = self.rx_streamer.get_max_num_samps()
-                recv_buffer = np.zeros( max_samps_per_packet, dtype=np.complex64)
+  #              max_samps_per_packet = self.rx_streamer.get_max_num_samps()
+                recv_buffer = np.zeros( self.rx_max_num_samps, dtype=np.complex64)
                 num_rx_samps = self.rx_streamer.recv(recv_buffer, rx_metadata)
                 self.rx_callback(num_rx_samps, recv_buffer)
-                if num_rx_samps > self.samps_per_est:
-                    self.computeRSSI( self.samps_per_est, recv_buffer[:self.samps_per_est],type="fc32")
+                if cnt % 100 == 0:
+                    #print("Compute RSSI")
+                    cnt = 0
+                    if num_rx_samps > self.samps_per_est:
+                        self.computeRSSI( self.samps_per_est, recv_buffer[:self.samps_per_est],type="fc32")
+                #if rx_metadata.error_code == uhd.types.RXMetadataErrorCode.overflow:
+                #    print("Overflow")
+                #if rx_metadata.error_code == uhd.types.RXMetadataErrorCode.late:
+                #    print("Late")
+                    #logger.warning("Receiver error: %s, restarting streaming...", metadata.strerror())
+                    #stream_cmd.time_spec = uhd.types.TimeSpec(self.usrp.get_time_now().get_real_secs() + self.INIT_DELAY)
+                    #stream_cmd.stream_now = True
+                #
+                if rx_metadata.error_code != 0:
+                    self.rx_streamer.issue_stream_cmd(stream_cmd)
+                #    print(rx_metadata.error_code)
+                
             except RuntimeError as ex:
                 logger.error(f"Runtime error in receive: {ex}")
             finally:
-                #self.mutex.release()
+                self.mutex.release()
                 pass
         logger.debug("Will not read samples from the channel any more...")           
         
@@ -188,7 +225,9 @@ class AhcUhdUtils(SDRUtils):
     def transmit_samples(self, transmit_buffer):
         tx_metadata = uhd.types.TXMetadata()
         tx_metadata.has_time_spec = False
+        #tx_metadata.time_spec = uhd.types.TimeSpec(self.usrp.get_time_now().get_real_secs() + self.INIT_DELAY)
         tx_metadata.start_of_burst = False
         tx_metadata.end_of_burst = False
         num_tx_samps = self.tx_streamer.send(transmit_buffer, tx_metadata)
+        #print("TX", tx_metadata.error_code)
         return num_tx_samps

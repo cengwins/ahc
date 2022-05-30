@@ -22,8 +22,8 @@ class UsrpNode(GenericModel):
         super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology)
         # SUBCOMPONENTS
         
-        macconfig = MacCsmaPPersistentConfigurationParameters(0.5, -30)
-        sdrconfig = SDRConfiguration(freq =915000000.0, bandwidth = 2000000, chan = 0, hw_tx_gain = 70, hw_rx_gain = 20, sw_tx_gain = -12.0)
+        macconfig = MacCsmaPPersistentConfigurationParameters(0.5, -50)
+        sdrconfig = SDRConfiguration(freq =915000000.0, bandwidth = 5000000, chan = 0, hw_tx_gain = 70, hw_rx_gain = 30, sw_tx_gain = -12.0)
 
         self.appl = PingPongApplicationLayer("PingPongApplicationLayer", componentinstancenumber, topology=topology)
         self.phy = UsrpB210OfdmFlexFramePhy("UsrpB210OfdmFlexFramePhy", componentinstancenumber, topology=topology,usrpconfig=sdrconfig, )

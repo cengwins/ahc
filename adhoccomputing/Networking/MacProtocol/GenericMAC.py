@@ -12,7 +12,7 @@ class GenericMac(GenericModel):
 
     def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None, sdr=None):
         super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology)
-        self.framequeue = queue.Queue(maxsize=100)
+        self.framequeue = queue.Queue(maxsize=10000)
         self.sdrdev = sdr
         self.eventhandlers[GenericMacEventTypes.HANDLEMACFRAME] = self.on_handlemacframe
 

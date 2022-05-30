@@ -15,7 +15,7 @@ from adhoccomputing.Experimentation.Topology import Topology
 from adhoccomputing.Networking.LinkLayer.GenericLinkLayer import GenericLinkLayer
 from adhoccomputing.Networking.NetworkLayer.GenericNetworkLayer import GenericNetworkLayer
 from adhoccomputing.Networking.LogicalChannels.GenericChannel import GenericChannel
-
+import logging
 
 # define your own message types
 class ApplicationLayerMessageTypes(Enum):
@@ -149,8 +149,8 @@ class AdHocNode(GenericModel):
 
 def main():
     #NOTSET, DEBUG, INFO, WARNING, ERROR, CRITICAL
-    setAHCLogLevel(25)
-    setAHCLogLevel(DEBUG_LEVEL_APPLOG)
+    #setAHCLogLevel(25)
+    setAHCLogLevel(logging.INFO)
     # G = nx.Graph()
     # G.add_nodes_from([1, 2])
     # G.add_edges_from([(1, 2)])

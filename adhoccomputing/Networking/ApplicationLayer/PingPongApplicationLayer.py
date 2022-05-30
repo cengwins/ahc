@@ -31,7 +31,8 @@ class PingPongApplicationLayer(GenericModel):
     
     def on_message_from_bottom(self, eventobj: Event):
         evt = Event(self, EventTypes.MFRT, eventobj.eventcontent)
-        logger.info(f"{self.componentname}.{self.componentinstancenumber} RECEIVED {str(eventobj)}")
+        logger.applog(f"{self.componentname}.{self.componentinstancenumber} RECEIVED {str(eventobj)}")
+        #logger.applog(f"{self.componentname}.{self.componentinstancenumber} RECEIVED message")
         evt.eventcontent.header.messageto = MessageDestinationIdentifiers.LINKLAYERBROADCAST
         evt.eventcontent.header.messagefrom = self.componentinstancenumber
         evt.eventcontent.payload = eventobj.eventcontent.payload + "-" + str(self.componentinstancenumber)
@@ -42,8 +43,9 @@ class PingPongApplicationLayer(GenericModel):
         hdr = PingPongApplicationLayerMessageHeader(PingPongApplicationLayerMessageTypes.BROADCAST, self.componentinstancenumber, MessageDestinationIdentifiers.LINKLAYERBROADCAST)
         self.counter = self.counter + 1
         
-        payload = "BMSG-" + str(self.counter) + ": " + str(self.componentinstancenumber) 
+        payload = "BMSG-"*200 + str(self.counter) + ": " + str(self.componentinstancenumber) 
         broadcastmessage = GenericMessage(hdr, payload)
+        #print(f"Payload length {len(payload)}")
         evt = Event(self, EventTypes.MFRT, broadcastmessage)
         logger.debug(f"{self.componentname}.{self.componentinstancenumber} WILL SEND {str(evt)}")
         self.send_down(evt)
