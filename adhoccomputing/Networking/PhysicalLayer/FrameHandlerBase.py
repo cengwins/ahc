@@ -109,7 +109,7 @@ class FrameHandlerBase(GenericModel):
       payload_len = len(byte_arr_msg)
       payload = np.frombuffer(byte_arr_msg, dtype=np.ubyte)
       self.transmit(header, payload, payload_len, LIQUID_MODEM_QPSK, LIQUID_FEC_NONE, LIQUID_FEC_HAMMING74 )  # TODO: Check params
-      logger.applog(f"Trasmitting {payload_len} bytes")
+      #logger.applog(f"Trasmitting {payload_len} bytes")
       
     except Exception as ex:
       logger.critical(f"exection in pickle {ex}")

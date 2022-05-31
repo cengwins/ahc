@@ -78,7 +78,7 @@ def main(argv):
     
     while(True):
         topo.nodes[0].appl.send_self(Event(topo.nodes[0], PingPongApplicationLayerEventTypes.STARTBROADCAST, None))
-        time.sleep(0.2)
+        time.sleep(1)
 
     #time.sleep(5)
     #topo.exit()

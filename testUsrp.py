@@ -41,7 +41,7 @@ class UsrpApplicationLayer(GenericModel):
     
     def on_message_from_bottom(self, eventobj: Event):
         evt = Event(self, EventTypes.MFRT, eventobj.eventcontent)
-        logger.applog(f"I am Node.{self.componentinstancenumber}, received from Node.{eventobj.eventcontent.header.messagefrom} a message: {eventobj.eventcontent.payload}")    
+        logger.applog(f"I am Node.{self.componentinstancenumber}, received from Node.{eventobj.eventcontent.header.messagefrom} a message: {eventobj.eventcontent.header.sequencenumber}")    
         if self.componentinstancenumber == 1:
             evt.eventcontent.header.messageto = 0
             evt.eventcontent.header.messagefrom = 1
@@ -49,6 +49,7 @@ class UsrpApplicationLayer(GenericModel):
             evt.eventcontent.header.messageto = 1
             evt.eventcontent.header.messagefrom = 0
         evt.eventcontent.payload = eventobj.eventcontent.payload
+        evt.eventcontent.header.sequencenumber = eventobj.eventcontent.header.sequencenumber + 1
         #print(f"I am {self.componentname}.{self.componentinstancenumber}, sending down eventcontent={eventobj.eventcontent.payload}\n")
         self.send_down(evt)  # PINGPONG
     
@@ -58,7 +59,7 @@ class UsrpApplicationLayer(GenericModel):
         else:
             hdr = ApplicationLayerMessageHeader(ApplicationLayerMessageTypes.BROADCAST, 0, 1)
         self.counter = self.counter + 1
-        
+        hdr.sequencenumber = 1
         payload = "BMSG-"*200 + str(self.counter)
         broadcastmessage = GenericMessage(hdr, payload)
         evt = Event(self, EventTypes.MFRT, broadcastmessage)

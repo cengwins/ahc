@@ -10,7 +10,9 @@ class PingPongApplicationLayerMessageTypes(Enum):
 
 # define your own message header structure
 class PingPongApplicationLayerMessageHeader(GenericMessageHeader):
-    pass
+    def __init__(self, messagetype, messagefrom, messageto, nexthop=..., interfaceid=..., sequencenumber=-1, counter=0):
+        super().__init__(messagetype, messagefrom, messageto, nexthop, interfaceid, sequencenumber)
+    
 
 
 class PingPongApplicationLayerEventTypes(Enum):
@@ -31,18 +33,21 @@ class PingPongApplicationLayer(GenericModel):
     
     def on_message_from_bottom(self, eventobj: Event):
         evt = Event(self, EventTypes.MFRT, eventobj.eventcontent)
-        logger.applog(f"{self.componentname}.{self.componentinstancenumber} RECEIVED {str(eventobj)}")
+        logger.applog(f"{self.componentname}.{self.componentinstancenumber} RECEIVED {eventobj.eventcontent.header.sequencenumber}-{eventobj.eventcontent.header.counter}")
         #logger.applog(f"{self.componentname}.{self.componentinstancenumber} RECEIVED message")
         evt.eventcontent.header.messageto = MessageDestinationIdentifiers.LINKLAYERBROADCAST
         evt.eventcontent.header.messagefrom = self.componentinstancenumber
         evt.eventcontent.payload = eventobj.eventcontent.payload + "-" + str(self.componentinstancenumber)
-        time.sleep(0.1) # TODO WHAT Should this be?
+        evt.eventcontent.header.sequencenumber =  eventobj.eventcontent.header.sequencenumber
+        evt.eventcontent.header.counter = eventobj.eventcontent.header.counter + 1
+        #time.sleep(0.1) # TODO WHAT Should this be?
         self.send_down(evt)  # PINGPONG
     
     def on_startbroadcast(self, eventobj: Event):
         hdr = PingPongApplicationLayerMessageHeader(PingPongApplicationLayerMessageTypes.BROADCAST, self.componentinstancenumber, MessageDestinationIdentifiers.LINKLAYERBROADCAST)
         self.counter = self.counter + 1
-        
+        hdr.sequencenumber = self.counter
+        hdr.counter = 1
         payload = "BMSG-"*10000 + str(self.counter) + ": " + str(self.componentinstancenumber) 
         broadcastmessage = GenericMessage(hdr, payload)
         #print(f"Payload length {len(payload)}")
