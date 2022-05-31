@@ -29,7 +29,7 @@ class MessageSegmentationPayload(GenericMessagePayload):
 
 
 class MessageSegmentation(GenericModel):
-    MSS = 16000
+    MSS = 40000
     recvmsgs = {}
     def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None, child_conn=None, node_queues=None, channel_queues=None):
         super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology, child_conn, node_queues, channel_queues)
@@ -58,7 +58,7 @@ class MessageSegmentation(GenericModel):
                 segpayload = ploads[i]
                 segmsg = GenericMessage(seghdr, segpayload)
                 self.send_down(Event(None, EventTypes.MFRT, segmsg))
-                #time.sleep(0.0000001)
+                time.sleep(0.000001)
             seghdr = MessageSegmentationHeader(MessageSegmentationMessageTypes.LAST, hdr.messagefrom, hdr.messageto, sequencenumber=len(ploads)-1, fragmentid=fragmentid, numberoffragments=len(ploads))
             segpayload = ploads[len(ploads)-1]
             segmsg = GenericMessage(seghdr, segpayload)

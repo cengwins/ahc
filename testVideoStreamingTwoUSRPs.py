@@ -19,10 +19,8 @@ from adhoccomputing.Networking.ApplicationLayer.MessageSegmentation import *
 import logging
 
 
-macconfig = MacCsmaPPersistentConfigurationParameters(0.5, -50)
-#sdrconfig = SDRConfiguration(freq =915000000.0, bandwidth = 4000000, chan = 0, hw_tx_gain = 70, hw_rx_gain = 30, sw_tx_gain = -12.0)
+macconfig = MacCsmaPPersistentConfigurationParameters(0.5, -30)
 sdrconfig = SDRConfiguration(freq =915000000.0, bandwidth = 20000000, chan = 0, hw_tx_gain = 76, hw_rx_gain = 20, sw_tx_gain = -12.0)
-
 appconfig = OpenCVVideoStreamingAppConfig(20)
 
 
@@ -77,7 +75,7 @@ def main():
     setAHCLogLevel(logging.INFO)
     topo = Topology()
     #topo.construct_sender_receiver(AdHocNode, AdHocNode, GenericChannel)
-    topo.construct_winslab_topology_without_channels_for_docker(AdHocNode, 0)
+    topo.construct_winslab_topology_without_channels(2, AdHocNode, 0)
 
     
     
@@ -85,21 +83,30 @@ def main():
     cap = cv2.VideoCapture(0)
     cap.set(3,640)
     cap.set(4,480)
-    #cv2.startWindowThread()
-    fourcc = cv2.VideoWriter_fourcc(*'MP4V')
+    cv2.startWindowThread()
+    #fourcc = cv2.VideoWriter_fourcc(*'MP4V')
     #out = cv2.VideoWriter('output.mp4', fourcc, 20.0, (640,480))
-    cv2.namedWindow('frame')
+    cv2.namedWindow('frame0')
+    cv2.namedWindow('frame1')
+    #ret, frame = cap.read()
+    #cv2.imshow('frame', frame )
+    #c = cv2.waitKey(1)
     logger.applog(f"Frame rate will be {appconfig.framerate}")
     topo.start()
+    #
     time.sleep(3)
     topo.nodes[0].phy.trigger_event(Event(None, EventTypes.INIT, ""))
+    topo.nodes[1].phy.trigger_event(Event(None, EventTypes.INIT, ""))
+    #
     topo.nodes[0].appl.send_self(Event(None, OpenCVVideoStreamingAppEventTypes.STARTSTREAMING, ""))
     while(True):
-        frame = topo.nodes[0].appl.frame
+        frame = topo.nodes[1].appl.frame
         if frame is not None:
             #out.write(frame)
-            #frameresized = cv2.resize(frame, (640,480))
-            cv2.imshow('frame', frame)
+            f0 = cv2.resize(topo.nodes[0].appl.frame, (640,480))
+            f1 = cv2.resize(topo.nodes[1].appl.frame, (640,480))
+            cv2.imshow('frame0', f0)
+            cv2.imshow('frame1', f1)
             c = cv2.waitKey(1)
             if c & 0xFF == ord('q'):
                 break

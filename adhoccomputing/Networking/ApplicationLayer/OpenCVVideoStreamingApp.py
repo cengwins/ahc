@@ -24,16 +24,14 @@ class OpenCVVideoStreamingAppConfig:
 class OpenCVVideoStreamingApp(GenericModel):
     WindowName = "AHCStream"
     CV2Timer = 1
-    frame=None
+    #frame=None
     framerate = 20
-    frameheight = 320
-    framewidth = 240
+    frameheight = 40
+    framewidth = 30
     def on_init(self, eventobj: Event):
         self.counter = 0
-        self.t = AHCTimer(1/self.framerate, self.send_frame)
-        self.initframe = True
-        self.on_startstreaming(eventobj)
-
+        
+        
         #self.t = AHCTimer(10, self.send_frame)
     
     def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None):
@@ -44,7 +42,28 @@ class OpenCVVideoStreamingApp(GenericModel):
             self.frame = 1
         super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology)
         self.eventhandlers[OpenCVVideoStreamingAppEventTypes.STARTSTREAMING] = self.on_startstreaming
+        self.t = AHCTimer(1/self.framerate, self.send_frame)
+        self.cap = cv2.VideoCapture(0)
+        #self.codec = 0x47504A4D  # MJPG
+        #self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter.fourcc('M','J','P','G'))
+        self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter.fourcc('H','2','6','4'))
+        #self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('a','v','c','1'))
+        #self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'FMP4'))
+        #self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPEG'))
+        self.cap.set(cv2.CAP_PROP_FPS, self.framerate)
+        #self.cap.set(cv2.CAP_PROP_FOURCC, self.codec)
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.framewidth)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frameheight)
+        logger.applog(f"Video device {str(self.cap)}")
+        #self.cap.set(3,self.frameheight)
+        #self.cap.set(4,self.framewidth)
 
+            #self.on_startstreaming(eventobj)
+        self.initframe = True
+        #if self.componentinstancenumber == 1:
+        ret, framehighres = self.cap.read()
+        framesmallres = cv2.resize(framehighres, (self.frameheight,self.framewidth))
+        self.frame =  cv2.cvtColor(framesmallres, cv2.COLOR_BGR2GRAY)
 
     def on_message_from_top(self, eventobj: Event):
         logger.applog(f"{self.componentname}.{self.componentinstancenumber} RECEIVED {str(eventobj)}")
@@ -77,7 +96,7 @@ class OpenCVVideoStreamingApp(GenericModel):
                 self.frame = frame   ##### LOOPBACK trials
                 self.initframe = False
             #payload = frame.tobytes()
-            #logger.applog(f"Payload length {len(payload)}")
+            #logger.applog(f"{self.componentname}-{self.componentinstancenumber}: Payload length {len(payload)}")
             broadcastmessage = GenericMessage(hdr, payload)
             evt = Event(self, EventTypes.MFRT, broadcastmessage)
             #logger.applog(f"{self.componentname}.{self.componentinstancenumber} WILL SEND frame of length {len(payload)}")
@@ -87,19 +106,5 @@ class OpenCVVideoStreamingApp(GenericModel):
         
 
     def on_startstreaming(self, eventobj: Event):
-        self.cap = cv2.VideoCapture(0)
-        #self.codec = 0x47504A4D  # MJPG
-        #self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter.fourcc('M','J','P','G'))
-        self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter.fourcc('H','2','6','4'))
-        #self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('a','v','c','1'))
-        #self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'FMP4'))
-        #self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPEG'))
-        self.cap.set(cv2.CAP_PROP_FPS, self.framerate)
-        #self.cap.set(cv2.CAP_PROP_FOURCC, self.codec)
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.framewidth)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frameheight)
-        logger.applog(f"Video device {str(self.cap)}")
-        #self.cap.set(3,self.frameheight)
-        #self.cap.set(4,self.framewidth)
         self.t.start()
     

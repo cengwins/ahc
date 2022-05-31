@@ -6,7 +6,7 @@ from requests.adapters import HTTPAdapter, Retry
 import ssl
 from enum import Enum
 from threading import Timer, Thread, Event
-
+import time
 
 class GenericMessagePayload:
 
@@ -166,7 +166,7 @@ class CustomFormatter(Formatter):
     criticialcolor = '\033[31m' #"\x1b[31;1m"
     applogcolor = '\33[7m'
     reset = '\033[0m' #"\x1b[0m"
-    format = "===> %(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)"
+    format = "===> %(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d, %(threadName)s)"
 
     FORMATS = {
         DEBUG: debugcolor + format + reset,
@@ -266,9 +266,11 @@ class AHCTimer():
     self.thread = Timer(self.t, self.handle_function)
 
   def handle_function(self):
-    self.hFunction()
-    self.thread = Timer(self.t, self.handle_function)
-    self.thread.start()
+    while(True):
+      self.hFunction()
+      time.sleep(self.t)
+    #self.thread = Timer(self.t, self.handle_function)
+    #self.thread.start()
 
   def start(self):
     self.thread.start()

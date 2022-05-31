@@ -43,7 +43,7 @@ class PingPongApplicationLayer(GenericModel):
         hdr = PingPongApplicationLayerMessageHeader(PingPongApplicationLayerMessageTypes.BROADCAST, self.componentinstancenumber, MessageDestinationIdentifiers.LINKLAYERBROADCAST)
         self.counter = self.counter + 1
         
-        payload = "BMSG-"*200 + str(self.counter) + ": " + str(self.componentinstancenumber) 
+        payload = "BMSG-"*10000 + str(self.counter) + ": " + str(self.componentinstancenumber) 
         broadcastmessage = GenericMessage(hdr, payload)
         #print(f"Payload length {len(payload)}")
         evt = Event(self, EventTypes.MFRT, broadcastmessage)

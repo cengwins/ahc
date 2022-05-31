@@ -18,7 +18,7 @@ import re
 import sys
 from .SDRUtils import SDRUtils
 from ...Generics import *
-
+from ...Networking.PhysicalLayer.FrameHandlerBase import PhyEventTypes, PhyFrame
 
 
 class AhcUhdUtils(SDRUtils):
@@ -70,8 +70,8 @@ class AhcUhdUtils(SDRUtils):
         self.chan = self.sdrconfig.chan
         self.hw_tx_gain = self.sdrconfig.hw_tx_gain
         self.hw_rx_gain = self.sdrconfig.hw_rx_gain
-        self.tx_rate= self.bandwidth 
-        self.rx_rate= self.bandwidth 
+        self.tx_rate= self.bandwidth /4
+        self.rx_rate= self.bandwidth /4
         logger.info(f"Configuring {self.devicename}, freq={self.freq}, bandwidth={self.bandwidth}, channel={self.chan}, hw_tx_gain={self.hw_tx_gain}, hw_rx_gain={self.hw_rx_gain}")
         #self.usrp = uhd.usrp.MultiUSRP(f"name={self.devicename}")
         self.usrp = uhd.usrp.MultiUSRP(f"{self.devicename}")
@@ -100,6 +100,7 @@ class AhcUhdUtils(SDRUtils):
         self.usrp.set_rx_gain(self.hw_rx_gain, self.chan)
         self.usrp.set_tx_gain(self.hw_tx_gain, self.chan)
         
+        #self.usrp.set_master_clock_rate(self.bandwidth*4)
 
         #self.usrp.set_rx_agc(True, self.chan)
         logger.info(f"------- USRP( {self.devicename } ) CONFIG --------------------" +
@@ -152,7 +153,9 @@ class AhcUhdUtils(SDRUtils):
             return False, power_dbfs
         else:
             return True, power_dbfs
-    
+
+
+
     def start_rx(self, rx_callback, framer):
         logger.debug(f"start_rx on usrp winslab_b210_{self.componentinstancenumber}")
         self.framer = framer
@@ -180,18 +183,20 @@ class AhcUhdUtils(SDRUtils):
         stream_cmd.time_spec = uhd.types.TimeSpec(self.usrp.get_time_now().get_real_secs() + self.INIT_DELAY)
         cnt = 1
         logger.debug(f"rx_thread on usrp {self.devicename} on node {self.componentinstancenumber}")
+        
         while(self.receiveenabled == True):
             cnt += 1
             self.mutex.acquire(1)
             try:
-                had_an_overflow = False
                 rx_metadata = uhd.types.RXMetadata()
-  #              max_samps_per_packet = self.rx_streamer.get_max_num_samps()
                 recv_buffer = np.zeros( self.rx_max_num_samps, dtype=np.complex64)
                 num_rx_samps = self.rx_streamer.recv(recv_buffer, rx_metadata)
-                self.rx_callback(num_rx_samps, recv_buffer)
+                #self.rx_callback(num_rx_samps, recv_buffer)
+                #Let's put the frame to Framehandler's queue for speed up
+                if num_rx_samps > 0:
+                    frm = PhyFrame(num_rx_samps, recv_buffer)
+                    self.framer.frame_in_queue.put(Event(None, PhyEventTypes.RECV, frm))
                 if cnt % 10 == 0:
-                    #print("Compute RSSI")
                     cnt = 0
                     if num_rx_samps > self.samps_per_est:
                         self.computeRSSI( self.samps_per_est, recv_buffer[:self.samps_per_est],type="fc32")
