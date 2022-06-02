@@ -59,7 +59,7 @@ class AhcUhdUtils(SDRUtils):
         #self.devicename = "winslab_b210_" + str(self.componentinstancenumber) #device names are configured properly on devices
         try:
             logger.debug(f"SDR my componentinstancenumber is {self.componentinstancenumber}")
-            self.devicename = self.usrps[int(self.componentinstancenumber)] #get the list of devices online (should be done once!) and match serial to componentinstancenumber
+            self.devicename = self.getUsrp(int(self.componentinstancenumber)) #self.usrps[int(self.componentinstancenumber)] #get the list of devices online (should be done once!) and match serial to componentinstancenumber
         except Exception as ex:
             self.devicename = "THERE ARE NO USRPS CONNECTED"
             logger.error(f"Runtime error while probing usrp: {ex}")

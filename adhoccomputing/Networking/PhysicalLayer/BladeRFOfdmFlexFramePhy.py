@@ -16,14 +16,14 @@ def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_int, payload:POINTER(c
     #mutex.acquire(1)
     try:
         framer = framers.get_framer_by_id(userdata)
-        #logger.applog(f"Node {framer.componentinstancenumber} RSSI {stats.rssi} {framer.sdrdev.rssi} {payload_valid}")
+        #logger.applog(f"{framer.componentname}-{framer.componentinstancenumber} RSSI {stats.rssi} {framer.sdrdev.rssi}")
         if payload_valid != 0:
             #ofdmflexframesync_print(framer.fs) 
             pload = string_at(payload, payload_len)
             phymsg = pickle.loads(zlib.decompress(pload))
             msg = GenericMessage(phymsg.header, phymsg.payload)
             framer.send_self(Event(framer, PhyEventTypes.RECV, msg))
-            #logger.applog(f"Message= {str(msg)}   RSSI= {stats.rssi}")   
+            #logger.applog(f"{framer.componentname}-{framer.componentinstancenumber} Message= {str(msg)}   RSSI= {stats.rssi}")   
     except Exception as ex:
         logger.critical(f"Exception_ofdm_callback: {ex}")
     #mutex.release()

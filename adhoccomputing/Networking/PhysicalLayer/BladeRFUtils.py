@@ -196,7 +196,7 @@ class BladeRFUtils(SDRUtils):
         #self.bladerfdevice_rx_ch .enable = True
         self.bladerfdevice_rx_ch.frequency   = self.rx_freq #+ deltafreq
         self.bladerfdevice_rx_ch.sample_rate = self.bandwidth  #40000000 #self.rx_rate
-        #self.bladerfdevice_rx_ch.bandwidth   = self.bandwidth
+        #self.bladerfdevice_rx_ch.bandwidth   = self.bandwidth   # Will set later down
         self.bladerfdevice_rx_ch.gain        = self.rx_gain
         self.bladerfdevice_rx_ch.gain_mode   = _bladerf.GainMode.Manual
         #self.bladerfdevice.set_gain_mode ( self.bladerfdevice_rx_ch , _bladerf.GainMode.Manual)
@@ -217,7 +217,8 @@ class BladeRFUtils(SDRUtils):
 
     def configureSdr(self, type="x115", sdrconfig=None):
         try:
-            self.devicename = self.bladerfs[self.componentinstancenumber] #get the list of devices online (should be done once!) and match serial to componentinstancenumber
+            #self.devicename = self.bladerfs[self.componentinstancenumber] #get the list of devices online (should be done once!) and match serial to componentinstancenumber
+            self.devicename = self.getBladeRF (self.componentinstancenumber) #get the list of devices online (should be done once!) and match serial to componentinstancenumber
         except Exception as ex:
             self.devicename = "none"
             logger.critical(f"Error while probing bladerfs {ex}")
@@ -303,7 +304,13 @@ class BladeRFUtils(SDRUtils):
 # VGA2: 0 to 30 dB (step of 1 dB)
 # Stage names: lna, rxvga1, rxvga2
 
+
         libbladeRF.bladerf_log_set_verbosity(3)
+
+        actualbandwidth = _bladerf.ffi.new("bladerf_bandwidth *")
+        libbladeRF.bladerf_set_bandwidth(self.bladerfdevice.dev[0], 0,self.bandwidth, actualbandwidth)
+        libbladeRF.bladerf_set_bandwidth(self.bladerfdevice.dev[0], 1,self.bandwidth, actualbandwidth)
+        print("Actual bandwidth =", actualbandwidth[0])
 
         libbladeRF.bladerf_set_lna_gain(self.bladerfdevice.dev[0], 3)
         libbladeRF.bladerf_set_rxvga1(self.bladerfdevice.dev[0], 15)

@@ -22,7 +22,7 @@ def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_int, payload:POINTER(c
             phymsg = pickle.loads(zlib.decompress(pload))
             msg = GenericMessage(phymsg.header, phymsg.payload)
             framer.send_self(Event(framer, PhyEventTypes.RECV, msg))
-            #logger.debug(f"Header= {msg.header.messagetype} Payload= {msg.payload} RSSI= {stats.rssi}")   
+            #logger.applog(f"{framer.componentname}-{framer.componentinstancenumber} Header= {msg.header.messagetype} Payload= {msg.payload} RSSI= {stats.rssi}")   
     except Exception as ex:
         logger.critical(f"Exception_ofdm_callback: {ex}")
     mutex.release()

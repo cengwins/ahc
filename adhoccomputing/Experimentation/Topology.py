@@ -109,6 +109,16 @@ class Topology:
       ch.connect_me_to_component(ConnectorTypes.UP, self.nodes[k[1]])
 
 
+  def construct_winslab_topology_usrp_bladerf(self, nodecountusrp, nodecountbladerf, nodetypeusrp, nodetypebladerf, context=None):
+    self.G = nx.Graph()
+    self.G.add_nodes_from(range(nodecountusrp+nodecountbladerf))  # TODO : Change depending on the
+    for i in range(nodecountusrp):
+      cc = nodetypeusrp(nodetypeusrp.__name__, i,topology=self)
+      self.nodes[i] = cc
+    for i in range(nodecountbladerf):
+      id = i+nodecountusrp
+      cc = nodetypebladerf(nodetypebladerf.__name__, id,topology=self)
+      self.nodes[id] = cc
 
   def construct_winslab_topology_without_channels(self, nodecount, nodetype, context=None):
 

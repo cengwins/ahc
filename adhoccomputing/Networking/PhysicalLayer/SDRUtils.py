@@ -3,13 +3,32 @@ from ...Generics import *
 import math
 import numpy as np
 
+usedusrpcount = 0
+usedbladerfcount = 0
+
 class SDRUtils():
 
     bladerfs = {}
     usrps = {}
+    bladerfs_used = {}
+    usrps_used={}
 
     defaultsdrconfig = SDRConfiguration(freq =915000000.0, bandwidth = 2000000, chan = 0, hw_tx_gain = 70, hw_rx_gain = 20, sw_tx_gain = -12.0)
     sdrconfig = defaultsdrconfig
+
+    def getUsrp(self, id):
+        global usedusrpcount
+        selectedusrp = self.usrps[usedusrpcount]
+        usedusrpcount += 1
+        self.usrps_used[selectedusrp] = id
+        return selectedusrp
+
+    def getBladeRF(self, id):
+        global usedbladerfcount
+        selectedbladerf = self.bladerfs[usedbladerfcount]
+        usedbladerfcount += 1
+        self.bladerfs_used[selectedbladerf] = id
+        return selectedbladerf
 
     def __init__(self, componentinstancenumber) -> None:
         self.componentinstancenumber = componentinstancenumber
