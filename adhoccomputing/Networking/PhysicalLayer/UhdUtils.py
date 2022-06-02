@@ -70,8 +70,8 @@ class AhcUhdUtils(SDRUtils):
         self.chan = self.sdrconfig.chan
         self.hw_tx_gain = self.sdrconfig.hw_tx_gain
         self.hw_rx_gain = self.sdrconfig.hw_rx_gain
-        self.tx_rate= self.bandwidth /4
-        self.rx_rate= self.bandwidth /4
+        self.tx_rate= self.bandwidth / 8
+        self.rx_rate= self.bandwidth / 8
         logger.info(f"Configuring {self.devicename}, freq={self.freq}, bandwidth={self.bandwidth}, channel={self.chan}, hw_tx_gain={self.hw_tx_gain}, hw_rx_gain={self.hw_rx_gain}")
         #self.usrp = uhd.usrp.MultiUSRP(f"name={self.devicename}")
         self.usrp = uhd.usrp.MultiUSRP(f"{self.devicename}")
