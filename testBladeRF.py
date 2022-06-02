@@ -27,8 +27,9 @@ class BladeRFNode(GenericModel):
         # SUBCOMPONENTS
         
         macconfig = MacCsmaPPersistentConfigurationParameters(0.5, -40)
-        sdrconfig = SDRConfiguration(freq =2484000000, bandwidth = 2000000, chan = 0, hw_tx_gain = 0, hw_rx_gain = 39, sw_tx_gain = -12.0)
-        
+        sdrconfig = SDRConfiguration(freq =2484000000, bandwidth = 20000000, chan = 0, hw_tx_gain = 0, hw_rx_gain = 39, sw_tx_gain = -12.0)
+       
+
         self.appl = PingPongApplicationLayer("PingPongApplicationLayer", componentinstancenumber, topology=topology)
         self.phy = BladeRFOfdmFlexFramePhy("BladeRFOfdmFlexFramePhy", componentinstancenumber, usrpconfig=sdrconfig, topology=topology)
         self.mac = MacCsmaPPersistent("MacCsmaPPersistent", componentinstancenumber,  configurationparameters=macconfig, sdr=self.phy.sdrdev, topology=topology)
