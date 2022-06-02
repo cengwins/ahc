@@ -40,7 +40,7 @@ class PingPongApplicationLayer(GenericModel):
         evt.eventcontent.payload = eventobj.eventcontent.payload + "-" + str(self.componentinstancenumber)
         evt.eventcontent.header.sequencenumber =  eventobj.eventcontent.header.sequencenumber
         evt.eventcontent.header.counter = eventobj.eventcontent.header.counter + 1
-        #time.sleep(0.1) # TODO WHAT Should this be?
+        time.sleep(0.001) # TODO WHAT Should this be?
         self.send_down(evt)  # PINGPONG
     
     def on_startbroadcast(self, eventobj: Event):
@@ -48,7 +48,7 @@ class PingPongApplicationLayer(GenericModel):
         self.counter = self.counter + 1
         hdr.sequencenumber = self.counter
         hdr.counter = 1
-        payload = "BMSG-"*10000 + str(self.counter) + ": " + str(self.componentinstancenumber) 
+        payload = "BMSG-" + str(self.counter) + ": " + str(self.componentinstancenumber) 
         broadcastmessage = GenericMessage(hdr, payload)
         #print(f"Payload length {len(payload)}")
         evt = Event(self, EventTypes.MFRT, broadcastmessage)

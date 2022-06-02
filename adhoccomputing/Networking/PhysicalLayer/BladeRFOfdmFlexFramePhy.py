@@ -5,6 +5,7 @@ from .FrameHandlerBase import *
 from ...Generics import *
 from .LiquidDspUtils import *
 import numpy as np
+import zlib 
 
 mutex = Lock()
 
@@ -15,18 +16,18 @@ def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_int, payload:POINTER(c
     #mutex.acquire(1)
     try:
         framer = framers.get_framer_by_id(userdata)
-        logger.debug(f"Node {framer.componentinstancenumber} RSSI {stats.rssi} {framer.sdrdev.rssi}")
+        #logger.applog(f"Node {framer.componentinstancenumber} RSSI {stats.rssi} {framer.sdrdev.rssi} {payload_valid}")
         if payload_valid != 0:
             #ofdmflexframesync_print(framer.fs) 
             pload = string_at(payload, payload_len)
-            phymsg = pickle.loads(pload)
+            phymsg = pickle.loads(zlib.decompress(pload))
             msg = GenericMessage(phymsg.header, phymsg.payload)
             framer.send_self(Event(framer, PhyEventTypes.RECV, msg))
-            logger.info(f"Header= {msg.header.messagetype} Payload= {msg.payload} RSSI= {stats.rssi}")   
+            #logger.applog(f"Message= {str(msg)}   RSSI= {stats.rssi}")   
     except Exception as ex:
         logger.critical(f"Exception_ofdm_callback: {ex}")
     #mutex.release()
-    #ofdmflexframesync_reset(framer.fs)
+    ofdmflexframesync_reset(framer.fs)
     return 0
 
 
@@ -59,12 +60,12 @@ class BladeRFOfdmFlexFramePhy(FrameHandlerBase):
         self.fgprops.fec0 = LIQUID_FEC_NONE
         self.fgprops.fec1 = LIQUID_FEC_HAMMING74
         self.fgprops.mod_scheme = LIQUID_MODEM_QPSK
-        self.M = 256
-        self.cp_len = 64
-        self.taper_len = 64
+        self.M = 1024
+        self.cp_len = 8
+        self.taper_len = 8
         self.fg = ofdmflexframegen_create(self.M, self.cp_len, self.taper_len, None, byref(self.fgprops))
        
-        self.fgbuffer_len = 1024 #self.M + self.cp_len
+        self.fgbuffer_len = 8192 #1024 #(self.M + self.cp_len + self.taper_len)*8
         self.fgbuffer = np.zeros(self.fgbuffer_len*self.sdrdev.bytes_per_sample//sizeof(c_int16), dtype=np.int16) # sc16q1 samples
         
         #res = ofdmflexframegen_print(self.fg)

@@ -26,8 +26,8 @@ class BladeRFNode(GenericModel):
         super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology, child_conn)
         # SUBCOMPONENTS
         
-        macconfig = MacCsmaPPersistentConfigurationParameters(0.5, -45)
-        sdrconfig = SDRConfiguration(freq =915000000.0, bandwidth = 2000000, chan = 0, hw_tx_gain = 70, hw_rx_gain = 20, sw_tx_gain = -12.0)
+        macconfig = MacCsmaPPersistentConfigurationParameters(0.5, -40)
+        sdrconfig = SDRConfiguration(freq =2484000000, bandwidth = 2000000, chan = 0, hw_tx_gain = 0, hw_rx_gain = 39, sw_tx_gain = -12.0)
         
         self.appl = PingPongApplicationLayer("PingPongApplicationLayer", componentinstancenumber, topology=topology)
         self.phy = BladeRFOfdmFlexFramePhy("BladeRFOfdmFlexFramePhy", componentinstancenumber, usrpconfig=sdrconfig, topology=topology)
@@ -56,11 +56,11 @@ topo = Topology()
 def main(argv):
 
     setAHCLogLevel(logging.INFO)
-    num_nodes = 3
+    num_nodes = 2
 # Note that the topology has to specific: usrp winslab_b210_0 is run by instance 0 of the component
 # Therefore, the usrps have to have names winslab_b210_x where x \in (0 to nodecount-1)
     topo.construct_winslab_topology_without_channels(num_nodes, BladeRFNode)
-   # topo.mp_construct_sdr_topology_without_channels(num_nodes, BladeRFNode)
+    #topo.mp_construct_sdr_topology_without_channels(num_nodes, BladeRFNode)
   #topo.construct_winslab_topology_with_channels(2, UsrpNode, FIFOBroadcastPerfectChannel)
   
   # time.sleep(1)
@@ -68,14 +68,15 @@ def main(argv):
 
     topo.start()
 
-    
-    while(True):
-        #topo.nodes[0].appl.send_self(Event(topo.nodes[0], PingPongApplicationLayerEventTypes.STARTBROADCAST, None))
-        time.sleep(1)
+    i = 1
+    while(i<10000):
+        topo.nodes[0].appl.send_self(Event(topo.nodes[0], PingPongApplicationLayerEventTypes.STARTBROADCAST, None))
+        i += 1
+        time.sleep(0.1)
 
     
-    #time.sleep(30)
-    #topo.exit()
+    time.sleep(3)
+    topo.exit()
     
     
 

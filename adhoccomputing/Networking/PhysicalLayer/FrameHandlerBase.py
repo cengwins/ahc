@@ -98,13 +98,13 @@ class FrameHandlerBase(GenericModel):
 # Preserve the event id through the pipeline
     try:
       header  = np.zeros(8, dtype=np.ubyte)
-      for i in range(8):
-        header[i] = i
+      #for i in range(8):
+      #  header[i] = i
       hdr = PhyMessageHeader(PhyMessageTypes.PHYFRAMEDATA, self.componentinstancenumber,MessageDestinationIdentifiers.LINKLAYERBROADCAST)
       pld = PhyMessagePayload(eventobj.eventcontent.header, eventobj.eventcontent.payload )
       msg = GenericMessage(hdr, pld)
+      
       ##### COMPRESS
-
       byte_arr_msg = bytearray(zlib.compress(pickle.dumps(msg)))
       payload_len = len(byte_arr_msg)
       payload = np.frombuffer(byte_arr_msg, dtype=np.ubyte)

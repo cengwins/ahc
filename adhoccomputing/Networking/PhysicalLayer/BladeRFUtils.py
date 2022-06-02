@@ -3,6 +3,7 @@ import os
 import threading
 import time
 from bladerf              import _bladerf, _tool
+from bladerf._bladerf import libbladeRF
 from ...Generics import *
 from threading import Thread, Lock
 from .SDRUtils import SDRUtils
@@ -10,6 +11,7 @@ import numpy as np
 from ...Generics import *
 from .LiquidDspUtils import *
 import math
+from ...Networking.PhysicalLayer.FrameHandlerBase import PhyEventTypes, PhyFrame
 
 class BladeRFUtils(SDRUtils):
     
@@ -135,7 +137,7 @@ class BladeRFUtils(SDRUtils):
                 logger.debug(f"FPGA successfully loaded. Version: {str(fpga_version)}" )
 
         except _bladerf.BladeRFError:
-            logger.criticial(f"Error loading FPGA image:  {str(image )}" )
+            logger.critical(f"Error loading FPGA image:  {str(image )}" )
 
         return 0
 
@@ -153,25 +155,22 @@ class BladeRFUtils(SDRUtils):
             return -1
 
         # Configure bladeRF
+
         
-       
-        if self.componentinstancenumber == 0:
-            deltafreq = 1000000
-        else:
-            deltafreq = 0
         self.bladerfdevice_tx_ch.frequency   = self.tx_freq #+ deltafreq
-        self.bladerfdevice_tx_ch.sample_rate = self.bandwidth #40000000 #self.tx_rate
+        self.bladerfdevice_tx_ch.sample_rate = self.bandwidth  #40000000 #self.tx_rate
+        #self.bladerfdevice_tx_ch.bandwidth   = self.bandwidth
         self.bladerfdevice_tx_ch.gain        = self.tx_gain
-        self.bladerfdevice_tx_ch.bandwidth   = self.bandwidth
+        
         #self.bladerfdevice_tx_ch.gain_mode   = _bladerf.GainMode.Manual
         #self.bladerfdevice.set_gain_mode ( self.bladerfdevice_tx_ch , _bladerf.GainMode.Manual)
         # Setup stream
         self.bladerfdevice.sync_config(layout=_bladerf.ChannelLayout.TX_X1,
                         fmt=_bladerf.Format.SC16_Q11,
-                        num_buffers=16,
-                        buffer_size=8192*2,
-                        num_transfers=8,
-                        stream_timeout=500)
+                        num_buffers    = 256,
+                        buffer_size    = 8192,
+                        num_transfers  = 32,
+                        stream_timeout=100)
 
         # Enable module
         logger.debug( "TX: Start" )
@@ -194,24 +193,20 @@ class BladeRFUtils(SDRUtils):
 
         # Configure BladeRF
         
-
-        if self.componentinstancenumber == 0:
-            deltafreq = 0
-        else:
-            deltafreq = 1000000
+        #self.bladerfdevice_rx_ch .enable = True
         self.bladerfdevice_rx_ch.frequency   = self.rx_freq #+ deltafreq
-        self.bladerfdevice_rx_ch.sample_rate = self.bandwidth #40000000 #self.rx_rate
+        self.bladerfdevice_rx_ch.sample_rate = self.bandwidth  #40000000 #self.rx_rate
+        #self.bladerfdevice_rx_ch.bandwidth   = self.bandwidth
         self.bladerfdevice_rx_ch.gain        = self.rx_gain
-        self.bladerfdevice_rx_ch.bandwidth   = self.bandwidth
-        #self.bladerfdevice_rx_ch.gain_mode   = _bladerf.GainMode.Manual
+        self.bladerfdevice_rx_ch.gain_mode   = _bladerf.GainMode.Manual
         #self.bladerfdevice.set_gain_mode ( self.bladerfdevice_rx_ch , _bladerf.GainMode.Manual)
         # Setup synchronous stream
         self.bladerfdevice.sync_config(layout         = _bladerf.ChannelLayout.RX_X1,
                         fmt            = _bladerf.Format.SC16_Q11,
-                        num_buffers    = 16,
-                        buffer_size    = 8192*2,
-                        num_transfers  = 8,
-                        stream_timeout = 500)
+                        num_buffers    = 256,
+                        buffer_size    = 8192,
+                        num_transfers  = 32,
+                        stream_timeout = 100)
 
         # Enable module
         
@@ -244,6 +239,9 @@ class BladeRFUtils(SDRUtils):
         self.board_name = self.bladerfdevice.board_name
         self.fpga_size  = self.bladerfdevice.fpga_size
 
+        #self.bladerfdevice.device_reset()
+        #self.bladerfdevice.set_tuning_mode(1)
+        
 
         logger.debug(f"Loading FPGA on {self.devicename} at {self.fpgalocation}" )
         try:
@@ -270,13 +268,14 @@ class BladeRFUtils(SDRUtils):
         self.tx_gain = int(self.sdrconfig.hw_tx_gain)
         self.rx_gain = int(self.sdrconfig.hw_rx_gain)
         self.bandwidth = self.sdrconfig.bandwidth
-
+        
+        #self.bladerfdevice.set_frequency(0, self.rx_freq)
+        
         self.bladerfdevice_rx_ch             = self.bladerfdevice.Channel(self.rx_ch)
         self.bladerfdevice_tx_ch              = self.bladerfdevice.Channel(self.tx_ch)
         #self.bladerfdevice.set_gain_mode(tx_chan, _bladerf.GainMode.FastAttack_AGC)
         #self.bladerfdevice.set_gain_mode(rx_chan, _bladerf.GainMode.FastAttack_AGC)
-
-        
+  
         
         #TODO FOR TESTING
         #lb = _bladerf.Loopback.BB_TXVGA1_RXLPF
@@ -289,6 +288,38 @@ class BladeRFUtils(SDRUtils):
         
         self.configure_rx_channel()
         self.configure_tx_channel()
+        
+        #timestamp: libbladeRF.bladerf_timestamp = 0
+        #bqt = _bladerf.ffi.new("struct bladerf_quick_tune *")
+        #libbladeRF.bladerf_schedule_retune(self.bladerfdevice.dev[0], 0, timestamp, int(self.rx_freq), bqt)
+        #print(bqt.freqsel, bqt.vcocap, bqt.nint, bqt.nfrac, bqt.flags)
+        #libbladeRF.bladerf_schedule_retune(self.bladerfdevice.dev[0], 1, timestamp, int(self.rx_freq), bqt)
+        #print(bqt.freqsel, bqt.vcocap, bqt.nint, bqt.nfrac, bqt.flags)
+        
+#         RX Gain
+# Overall: 5 to 66 dB
+# LNA: 0 to 6 dB (step of 3 dB)
+# VGA1: 5 to 30 dB (step of 1 dB)
+# VGA2: 0 to 30 dB (step of 1 dB)
+# Stage names: lna, rxvga1, rxvga2
+
+        libbladeRF.bladerf_log_set_verbosity(3)
+
+        libbladeRF.bladerf_set_lna_gain(self.bladerfdevice.dev[0], 3)
+        libbladeRF.bladerf_set_rxvga1(self.bladerfdevice.dev[0], 15)
+        libbladeRF.bladerf_set_rxvga2(self.bladerfdevice.dev[0], 15)
+# TX Gain
+# Overall: -35 to 21 dB
+# VGA1: -35 to -4 dB (step of 1 dB)
+# VGA2: 0 to 25 dB (step of 1 dB)
+# Stage names: txvga1, txvga2
+# Frequency: 237500000 to 3800000000 Hz
+# Bandwidth: 1500000 to 28000000 Hz
+# Sample Rate: 80000 to 40000000 Hz (recommended max)
+
+        libbladeRF.bladerf_set_txvga1(self.bladerfdevice.dev[0], -4)
+        libbladeRF.bladerf_set_txvga2(self.bladerfdevice.dev[0], 10)
+       
 
         logger.info(f"\n===> BLADERF {self.bladerfdevice.get_serial()} CONFIG" + 
                 f"\n===> TX_CHAN {self.tx_ch}" +
@@ -328,18 +359,26 @@ class BladeRFUtils(SDRUtils):
         
 
     def rx_thread(self):
+        cnt = 1
+        num_samples = self.framer.fgbuffer_len
         
-        num_samples = 1024
-        buf = bytearray(num_samples*self.bytes_per_sample)
         num_samples_read = 0
         while(self.receiveenabled == True):
+            cnt += 1
             #self.mutex.acquire(1)
             try:
+                buf = bytearray(num_samples*self.bytes_per_sample)
                 self.bladerfdevice.sync_rx(buf, num_samples)
                 mybuf2 = np.frombuffer(buf, dtype=np.int16).flatten (order="C") #// int(self.sdrconfig.sw_tx_gain)
-                self.rx_callback( num_samples, mybuf2)
-                if num_samples*2 > self.samps_per_est:
-                    self.computeRSSI( self.samps_per_est*2, mybuf2[:self.samps_per_est*2],type="sc16")
+                #self.rx_callback( num_samples, mybuf2)
+                if num_samples > 0:
+                    frm = PhyFrame(num_samples, mybuf2)
+                    self.framer.frame_in_queue.put(Event(None, PhyEventTypes.RECV, frm))
+                if cnt > 10:
+                    cnt = 1
+                    if num_samples*2 > self.samps_per_est:
+                        self.computeRSSI( self.samps_per_est*2, mybuf2[:self.samps_per_est*2],type="sc16")
+                #logger.applog(f"Num samples {len(buf)} {num_samples} {len(mybuf2)}")
             except RuntimeError as ex:
                 logger.error("Runtime error in rx_thread: {ex}")
             finally:   

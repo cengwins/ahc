@@ -26,8 +26,8 @@ class OpenCVVideoStreamingApp(GenericModel):
     CV2Timer = 1
     #frame=None
     framerate = 20
-    frameheight = 40
-    framewidth = 30
+    frameheight = 80
+    framewidth = 60
     def on_init(self, eventobj: Event):
         self.counter = 0
         
@@ -46,7 +46,7 @@ class OpenCVVideoStreamingApp(GenericModel):
         self.cap = cv2.VideoCapture(0)
         #self.codec = 0x47504A4D  # MJPG
         #self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter.fourcc('M','J','P','G'))
-        self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter.fourcc('H','2','6','4'))
+        self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter.fourcc('H','2','6','5'))
         #self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('a','v','c','1'))
         #self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'FMP4'))
         #self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPEG'))
@@ -63,7 +63,7 @@ class OpenCVVideoStreamingApp(GenericModel):
         #if self.componentinstancenumber == 1:
         ret, framehighres = self.cap.read()
         framesmallres = cv2.resize(framehighres, (self.frameheight,self.framewidth))
-        self.frame =  cv2.cvtColor(framesmallres, cv2.COLOR_BGR2GRAY)
+        self.frame =  cv2.cvtColor(framesmallres, cv2.COLOR_BGRA2YUV_I420)
 
     def on_message_from_top(self, eventobj: Event):
         logger.applog(f"{self.componentname}.{self.componentinstancenumber} RECEIVED {str(eventobj)}")
@@ -90,13 +90,14 @@ class OpenCVVideoStreamingApp(GenericModel):
         ret, framehighres = self.cap.read()
         try:
             framesmallres = cv2.resize(framehighres, (self.frameheight,self.framewidth))
-            frame =  cv2.cvtColor(framesmallres, cv2.COLOR_BGR2GRAY)
+            frame =  framesmallres #cv2.cvtColor(framesmallres, cv2.COLOR_BGR2GRAY)
+            #(B,G,R) = cv2.split(frame)
             payload = pickle.dumps(frame)
             if self.initframe == True:
                 self.frame = frame   ##### LOOPBACK trials
                 self.initframe = False
             #payload = frame.tobytes()
-            #logger.applog(f"{self.componentname}-{self.componentinstancenumber}: Payload length {len(payload)}")
+            logger.applog(f"{self.componentname}-{self.componentinstancenumber}: Payload length {len(payload)}")
             broadcastmessage = GenericMessage(hdr, payload)
             evt = Event(self, EventTypes.MFRT, broadcastmessage)
             #logger.applog(f"{self.componentname}.{self.componentinstancenumber} WILL SEND frame of length {len(payload)}")
