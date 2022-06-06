@@ -57,7 +57,7 @@ topo = Topology()
 def main(argv):
 
     setAHCLogLevel(logging.INFO)
-    num_nodes = 2
+    num_nodes = 1
 # Note that the topology has to specific: usrp winslab_b210_0 is run by instance 0 of the component
 # Therefore, the usrps have to have names winslab_b210_x where x \in (0 to nodecount-1)
     topo.construct_winslab_topology_without_channels(num_nodes, BladeRFNode)

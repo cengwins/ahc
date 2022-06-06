@@ -70,8 +70,8 @@ class AhcUhdUtils(SDRUtils):
         self.chan = self.sdrconfig.chan
         self.hw_tx_gain = self.sdrconfig.hw_tx_gain
         self.hw_rx_gain = self.sdrconfig.hw_rx_gain
-        self.tx_rate= self.bandwidth / 4
-        self.rx_rate= self.bandwidth / 4
+        self.tx_rate= self.bandwidth 
+        self.rx_rate= self.bandwidth
         logger.info(f"Configuring {self.devicename}, freq={self.freq}, bandwidth={self.bandwidth}, channel={self.chan}, hw_tx_gain={self.hw_tx_gain}, hw_rx_gain={self.hw_rx_gain}")
         #self.usrp = uhd.usrp.MultiUSRP(f"name={self.devicename}")
         self.usrp = uhd.usrp.MultiUSRP(f"{self.devicename}")
@@ -94,8 +94,8 @@ class AhcUhdUtils(SDRUtils):
         self.usrp.set_rx_bandwidth(self.bandwidth,self.chan)
         self.usrp.set_tx_bandwidth(self.bandwidth,self.chan)
         
-        self.usrp.set_rx_rate(self.tx_rate, self.chan)
-        self.usrp.set_tx_rate(self.rx_rate, self.chan)
+        self.usrp.set_rx_rate(self.rx_rate, self.chan)
+        self.usrp.set_tx_rate(self.tx_rate, self.chan)
         
         self.usrp.set_rx_gain(self.hw_rx_gain, self.chan)
         self.usrp.set_tx_gain(self.hw_tx_gain, self.chan)
@@ -196,7 +196,7 @@ class AhcUhdUtils(SDRUtils):
                 if num_rx_samps > 0:
                     frm = PhyFrame(num_rx_samps, recv_buffer)
                     self.framer.frame_in_queue.put(Event(None, PhyEventTypes.RECV, frm))
-                if cnt % 10 == 0:
+                if cnt % 1 == 0:
                     cnt = 0
                     if num_rx_samps > self.samps_per_est:
                         self.computeRSSI( self.samps_per_est, recv_buffer[:self.samps_per_est],type="fc32")

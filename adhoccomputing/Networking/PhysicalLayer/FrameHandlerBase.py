@@ -76,7 +76,26 @@ class FrameHandlerBase(GenericModel):
     self.sdrdev.receiveenabled = True
     self.sdrdev.start_rx(self.rx_callback, self)
     return super().on_init(eventobj)
-        
+  
+
+  def frame_out_queue_handler(self, myqueue):
+    while not self.terminated:
+      eventobj: PhyFrame = myqueue.get()
+      #sendermutex.acquire(1)
+      recv_buffer= eventobj.eventcontent.recv_buffer
+      num_tx_samps= eventobj.eventcontent.num_rx_samps
+      #logger.applog(f"{self.componentname} {self.componentinstancenumber} received frame from QUEUE {num_tx_samps}")
+      if num_tx_samps == 0:
+        num_actual_tx_samps = self.sdrdev.finalize_transmit_samples()
+      else:
+        num_actual_tx_samps = self.sdrdev.transmit_samples(recv_buffer)
+
+      #print(num_actual_tx_samps, "will sleep ", num_tx_samps / self.sdrdev.tx_rate)
+      #time.sleep(num_tx_samps / self.sdrdev.tx_rate)
+      #sendermutex.release()
+      myqueue.task_done()
+    logger.warning(f"{self.componentname} {self.componentinstancenumber} TERMINATED SENDING....")
+
   def frame_in_queue_handler(self, myqueue):
     while not self.terminated:
       #logger.applog(f"{self.componentname} {self.componentinstancenumber} received frame from sdr")

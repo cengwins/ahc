@@ -313,8 +313,8 @@ class BladeRFUtils(SDRUtils):
         print("Actual bandwidth =", actualbandwidth[0])
 
         libbladeRF.bladerf_set_lna_gain(self.bladerfdevice.dev[0], 3)
-        libbladeRF.bladerf_set_rxvga1(self.bladerfdevice.dev[0], 15)
-        libbladeRF.bladerf_set_rxvga2(self.bladerfdevice.dev[0], 15)
+        libbladeRF.bladerf_set_rxvga1(self.bladerfdevice.dev[0], 20)
+        libbladeRF.bladerf_set_rxvga2(self.bladerfdevice.dev[0], 10)
 # TX Gain
 # Overall: -35 to 21 dB
 # VGA1: -35 to -4 dB (step of 1 dB)
@@ -381,7 +381,7 @@ class BladeRFUtils(SDRUtils):
                 if num_samples > 0:
                     frm = PhyFrame(num_samples, mybuf2)
                     self.framer.frame_in_queue.put(Event(None, PhyEventTypes.RECV, frm))
-                if cnt > 10:
+                if cnt > 1:
                     cnt = 1
                     if num_samples*2 > self.samps_per_est:
                         self.computeRSSI( self.samps_per_est*2, mybuf2[:self.samps_per_est*2],type="sc16")

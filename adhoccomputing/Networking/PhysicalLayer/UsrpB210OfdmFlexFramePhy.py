@@ -5,11 +5,11 @@ from .FrameHandlerBase import *
 from ...Generics import *
 from .LiquidDspUtils import *
 import numpy as np
-import time
-mutex = Lock()
-sendermutex = Lock()
-
 import zlib
+
+mutex = Lock()
+
+
 framers: FramerObjects = FramerObjects()
 
 #def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_uint32, payload:POINTER(c_ubyte), payload_len:c_uint32, payload_valid:c_int32, stats:struct_c__SA_framesyncstats_s, userdata:POINTER(None)):
@@ -17,7 +17,7 @@ def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_int, payload:POINTER(c
     mutex.acquire(1)
     try:
         framer = framers.get_framer_by_id(userdata)
-        #logger.applog(f"{framer.componentname}-{framer.componentinstancenumber} RSSI {stats.rssi} {framer.sdrdev.rssi}")
+        logger.applog(f"{framer.componentname}-{framer.componentinstancenumber} RSSI {stats.rssi} {framer.sdrdev.rssi}")
         if payload_valid != 0:
             #ofdmflexframesync_print(framer.fs) 
             pload = string_at(payload, payload_len)
@@ -28,13 +28,12 @@ def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_int, payload:POINTER(c
     except Exception as ex:
         logger.critical(f"Exception_ofdm_callback: {ex}")
     mutex.release()
-    #ofdmflexframesync_reset(framer.fs)
+    ofdmflexframesync_reset(framer.fs)
     return 0
 
 
   
 class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
-    
     
     def rx_callback(self, num_rx_samps, recv_buffer):
         try:
@@ -42,27 +41,8 @@ class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
         except Exception as ex:
             logger.critical(f"Exception rx_callback: {ex}")
 
-    def frame_out_queue_handler(self, myqueue):
-        while not self.terminated:
-            eventobj: PhyFrame = myqueue.get()
-            #sendermutex.acquire(1)
-            recv_buffer= eventobj.eventcontent.recv_buffer
-            num_tx_samps= eventobj.eventcontent.num_rx_samps
-            #logger.applog(f"{self.componentname} {self.componentinstancenumber} received frame from QUEUE {num_tx_samps}")
-            if num_tx_samps == 0:
-                num_actual_tx_samps = self.sdrdev.finalize_transmit_samples()
-            else:
-                num_actual_tx_samps = self.sdrdev.transmit_samples(recv_buffer)
-
-            #print(num_actual_tx_samps, "will sleep ", num_tx_samps / self.sdrdev.tx_rate)
-            #time.sleep(num_tx_samps / self.sdrdev.tx_rate)
-            #sendermutex.release()
-            myqueue.task_done()
-        logger.warning(f"{self.componentname} {self.componentinstancenumber} TERMINATED SENDING....")
-
     def transmit(self, _header, _payload, _payload_len, _mod, _fec0, _fec1):
-        #mutex.acquire(1)
-        #logger.applog(f"{self.componentname}-{self.componentinstancenumber} will transmit {_payload_len}")
+        logger.debug(f"{self.componentname}-{self.componentinstancenumber} will send {_payload_len} bytes")
         ofdmflexframegen_assemble(self.fg, _header, _payload, c_uint32(_payload_len))
         last_symbol = 0
         self.fgbuffer[:] = 0
@@ -72,11 +52,10 @@ class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
             frm = PhyFrame(self.fgbuffer_len, self.fgbuffer)
             self.frame_out_queue.put(Event(None, PhyEventTypes.SEND, frm))
             #self.sdrdev.transmit_samples(self.fgbuffer)
-            #time.sleep(self.sdrdev.INIT_DELAY)
+
         frm = PhyFrame(0, None)
         self.frame_out_queue.put(Event(None, PhyEventTypes.SEND, frm))
         #self.sdrdev.finalize_transmit_samples()
-        #mutex.release()
 
     def configure(self):
         self.fgprops = ofdmflexframegenprops_s(LIQUID_CRC_32, LIQUID_FEC_NONE, LIQUID_FEC_HAMMING74, LIQUID_MODEM_QPSK)
@@ -90,7 +69,7 @@ class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
         self.taper_len = 32
         self.fg = ofdmflexframegen_create(self.M, self.cp_len, self.taper_len, None, byref(self.fgprops))
 
-        self.fgbuffer_len = self.sdrdev.tx_max_num_samps# 2040 #(self.M + self.cp_len)*4
+        self.fgbuffer_len = 8192 #self.sdrdev.tx_max_num_samps# 2040 #(self.M + self.cp_len)*4
         self.fgbuffer = np.zeros(self.fgbuffer_len, dtype=np.complex64)
 
         #res = ofdmflexframegen_print(self.fg)

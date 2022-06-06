@@ -14,10 +14,11 @@ from adhoccomputing.Networking.PhysicalLayer.BladeRFOfdmFlexFramePhy import  Bla
 from adhoccomputing.Networking.MacProtocol.CSMA import MacCsmaPPersistent, MacCsmaPPersistentConfigurationParameters
 from adhoccomputing.Networking.ApplicationLayer.PingPongApplicationLayer import *
 import logging
+import random
  
-macconfig = MacCsmaPPersistentConfigurationParameters(0.5, -45)
-bladerfconfig = SDRConfiguration(freq =2484000000,      bandwidth = 20000000,   chan = 0,   hw_tx_gain = 0,     hw_rx_gain = 39,    sw_tx_gain = -12.0)
-usrpconfig =    SDRConfiguration(freq =2484000000.0,    bandwidth = 20000000,   chan = 0,   hw_tx_gain = 70,    hw_rx_gain = 20,    sw_tx_gain = -12.0)    
+macconfig = MacCsmaPPersistentConfigurationParameters(0.5, -40)
+bladerfconfig = SDRConfiguration(freq =2484000000,      bandwidth = 1500000,   chan = 0,   hw_tx_gain = 0,     hw_rx_gain = 39,    sw_tx_gain = -12.0)
+usrpconfig =    SDRConfiguration(freq =2484000000.0,    bandwidth = 1500000,   chan = 0,   hw_tx_gain = 70,    hw_rx_gain = 30,    sw_tx_gain = -12.0)    
   
 class UsrpNode(GenericModel):
     counter = 0
@@ -103,8 +104,11 @@ def main():
     topo.start()
     i = 0
     while(i < 10000):
-        topo.nodes[0].appl.send_self(Event(topo.nodes[0], PingPongApplicationLayerEventTypes.STARTBROADCAST, None))
-        time.sleep(0.1)
+        topo.nodes[0].appl.send_self(Event(topo.nodes[0], PingPongApplicationLayerEventTypes.STARTBROADCAST, "USRP-BMSG-"))
+        time.sleep(random.uniform(0, 1))
+        topo.nodes[1].appl.send_self(Event(topo.nodes[1], PingPongApplicationLayerEventTypes.STARTBROADCAST, "BLADERF-BMSG-"))
+
+        time.sleep(random.uniform(0, 1))
         #topo.nodes[1].appl.send_self(Event(topo.nodes[1], PingPongApplicationLayerEventTypes.STARTBROADCAST, None))
         #time.sleep(0.1)
         i = i + 1

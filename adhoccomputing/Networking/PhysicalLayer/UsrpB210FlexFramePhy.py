@@ -45,11 +45,15 @@ class UsrpB210FlexFramePhy(FrameHandlerBase):
             
             last_symbol = flexframegen_write_samples(self.fg, fgbuffer, self.fgbuffer_len)
             try:
-                self.sdrdev.transmit_samples(fgbuffer)
+                frm = PhyFrame(self.fgbuffer_len, self.fgbuffer)
+                self.frame_out_queue.put(Event(None, PhyEventTypes.SEND, frm))
+                #self.sdrdev.transmit_samples(fgbuffer)
                 # self.rx_callback(self.fgbuffer_len, npfgbuffer) #loopback for trial
             except Exception as ex:
                 logger.critical(f"Exception transmit: {ex}")
-        self.sdrdev.finalize_transmit_samples()
+        frm = PhyFrame(0, None)
+        self.frame_out_queue.put(Event(None, PhyEventTypes.SEND, frm))
+        #self.sdrdev.finalize_transmit_samples()
             
    
         

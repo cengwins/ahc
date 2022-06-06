@@ -33,22 +33,22 @@ class PingPongApplicationLayer(GenericModel):
     
     def on_message_from_bottom(self, eventobj: Event):
         evt = Event(self, EventTypes.MFRT, eventobj.eventcontent)
-        logger.applog(f"{self.componentname}.{self.componentinstancenumber} RECEIVED {eventobj.eventcontent.header.sequencenumber}-{eventobj.eventcontent.header.counter}")
+        logger.applog(f"{self.componentname}.{self.componentinstancenumber} RECEIVED {eventobj.eventcontent.header.sequencenumber}-{eventobj.eventcontent.header.counter} {eventobj.eventcontent.payload}")
         #logger.applog(f"{self.componentname}.{self.componentinstancenumber} RECEIVED message")
         evt.eventcontent.header.messageto = MessageDestinationIdentifiers.LINKLAYERBROADCAST
         evt.eventcontent.header.messagefrom = self.componentinstancenumber
         evt.eventcontent.payload = eventobj.eventcontent.payload + "-" + str(self.componentinstancenumber)
         evt.eventcontent.header.sequencenumber =  eventobj.eventcontent.header.sequencenumber
         evt.eventcontent.header.counter = eventobj.eventcontent.header.counter + 1
-        time.sleep(0.001) # TODO WHAT Should this be?
-        self.send_down(evt)  # PINGPONG
+        #time.sleep(0.0000001) # TODO WHAT Should this be?
+        #self.send_down(evt)  # PINGPONG
     
     def on_startbroadcast(self, eventobj: Event):
         hdr = PingPongApplicationLayerMessageHeader(PingPongApplicationLayerMessageTypes.BROADCAST, self.componentinstancenumber, MessageDestinationIdentifiers.LINKLAYERBROADCAST)
         self.counter = self.counter + 1
         hdr.sequencenumber = self.counter
         hdr.counter = 1
-        payload = "BMSG-" + str(self.counter) + ": " + str(self.componentinstancenumber) 
+        payload = eventobj.eventcontent + str(self.counter) + ": " + str(self.componentinstancenumber) 
         broadcastmessage = GenericMessage(hdr, payload)
         #print(f"Payload length {len(payload)}")
         evt = Event(self, EventTypes.MFRT, broadcastmessage)
