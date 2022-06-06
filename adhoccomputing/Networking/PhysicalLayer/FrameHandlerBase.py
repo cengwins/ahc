@@ -17,6 +17,7 @@ class PhyMessageTypes(Enum):
 
 class PhyEventTypes(Enum):
   RECV = "recv"
+  SEND = "send"
 
 
 # define your own message header structure
@@ -26,8 +27,8 @@ class PhyMessageHeader(GenericMessageHeader):
 class PhyFrame():
   def __init__(self, num_rx_samps, recv_buffer):
     self.num_rx_samps = num_rx_samps
-    #self.recv_buffer= copy.deepcopy(recv_buffer)
-    self.recv_buffer= recv_buffer
+    self.recv_buffer= copy.deepcopy(recv_buffer)
+    #self.recv_buffer= recv_buffer
     
 # define your own message payload structure
 class PhyMessagePayload(GenericMessagePayload):
@@ -42,12 +43,13 @@ class FrameHandlerBase(GenericModel):
   def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, usrpconfig=None, num_worker_threads=1, topology=None, framers=None, SDRType="b200"):
     super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology)
     self.frame_in_queue = queue.Queue()  # For speed up, a sparate queue for incoming frames will be used.
-    self.number_of_frame_handler_threads = 1
-    self.t = [None]*self.number_of_frame_handler_threads
-    for i in range(self.number_of_frame_handler_threads):
-        self.t[i] = Thread(target=self.frame_in_queue_handler, args=[self.frame_in_queue])
-        self.t[i].daemon = True
-        self.t[i].start()
+    self.frame_out_queue = queue.Queue()  # For speed up, a sparate queue for incoming frames will be used.
+    self.t_in = Thread(target=self.frame_in_queue_handler, args=[self.frame_in_queue])
+    self.t_in.daemon = True
+    self.t_in.start()
+    self.t_out = Thread(target=self.frame_out_queue_handler, args=[self.frame_out_queue])
+    self.t_out.daemon = True
+    self.t_out.start()
 
     self.usrpconfig = usrpconfig # should be UsrpConfiguration
     framers.add_framer(id(self), self)
@@ -74,8 +76,6 @@ class FrameHandlerBase(GenericModel):
     self.sdrdev.receiveenabled = True
     self.sdrdev.start_rx(self.rx_callback, self)
     return super().on_init(eventobj)
-        
-
         
   def frame_in_queue_handler(self, myqueue):
     while not self.terminated:

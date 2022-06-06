@@ -7,6 +7,8 @@ from .LiquidDspUtils import *
 import numpy as np
 import time
 mutex = Lock()
+sendermutex = Lock()
+
 import zlib
 framers: FramerObjects = FramerObjects()
 
@@ -40,7 +42,24 @@ class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
         except Exception as ex:
             logger.critical(f"Exception rx_callback: {ex}")
 
-    
+    def frame_out_queue_handler(self, myqueue):
+        while not self.terminated:
+            eventobj: PhyFrame = myqueue.get()
+            #sendermutex.acquire(1)
+            recv_buffer= eventobj.eventcontent.recv_buffer
+            num_tx_samps= eventobj.eventcontent.num_rx_samps
+            #logger.applog(f"{self.componentname} {self.componentinstancenumber} received frame from QUEUE {num_tx_samps}")
+            if num_tx_samps == 0:
+                num_actual_tx_samps = self.sdrdev.finalize_transmit_samples()
+            else:
+                num_actual_tx_samps = self.sdrdev.transmit_samples(recv_buffer)
+
+            #print(num_actual_tx_samps, "will sleep ", num_tx_samps / self.sdrdev.tx_rate)
+            #time.sleep(num_tx_samps / self.sdrdev.tx_rate)
+            #sendermutex.release()
+            myqueue.task_done()
+        logger.warning(f"{self.componentname} {self.componentinstancenumber} TERMINATED SENDING....")
+
     def transmit(self, _header, _payload, _payload_len, _mod, _fec0, _fec1):
         #mutex.acquire(1)
         #logger.applog(f"{self.componentname}-{self.componentinstancenumber} will transmit {_payload_len}")
@@ -50,9 +69,13 @@ class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
         while (last_symbol == 0):
             last_symbol = ofdmflexframegen_write(self.fg, self.fgbuffer, c_uint32(self.fgbuffer_len))
             # self.rx_callback(self.fgbuffer_len, self.fgbuffer) #loopback for trial
-            self.sdrdev.transmit_samples(self.fgbuffer)
+            frm = PhyFrame(self.fgbuffer_len, self.fgbuffer)
+            self.frame_out_queue.put(Event(None, PhyEventTypes.SEND, frm))
+            #self.sdrdev.transmit_samples(self.fgbuffer)
             #time.sleep(self.sdrdev.INIT_DELAY)
-        self.sdrdev.finalize_transmit_samples()
+        frm = PhyFrame(0, None)
+        self.frame_out_queue.put(Event(None, PhyEventTypes.SEND, frm))
+        #self.sdrdev.finalize_transmit_samples()
         #mutex.release()
 
     def configure(self):
