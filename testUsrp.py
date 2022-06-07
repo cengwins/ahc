@@ -72,7 +72,7 @@ def main():
     while(i < 100):
         #topo.nodes[1].appl.send_self(Event(topo.nodes[1], UsrpApplicationLayerEventTypes.STARTBROADCAST, None))
         #time.sleep(0.1)
-        topo.nodes[0].appl.send_self(Event(topo.nodes[0], PingPongApplicationLayerEventTypes.STARTBROADCAST, None))
+        topo.nodes[0].appl.send_self(Event(topo.nodes[0], PingPongApplicationLayerEventTypes.STARTBROADCAST, "BMSG-"))
         time.sleep(0.1)
         i = i + 1
     topo.exit()
