@@ -76,7 +76,7 @@ class AhcUhdUtils(SDRUtils):
         #self.usrp = uhd.usrp.MultiUSRP(f"name={self.devicename}")
         #self.usrp = uhd.usrp.MultiUSRP(f"{self.devicename},num_recv_frames=1024,num_send_frames=1024,recv_buff_size=8192,send_buff_size=8192,send_frame_size=8200,recv_frame_size=8200")
         #self.usrp = uhd.usrp.MultiUSRP(f"{self.devicename},num_recv_frames=1024,num_send_frames=1024,send_frame_size=8200,recv_frame_size=8200")
-        self.usrp = uhd.usrp.MultiUSRP(f"{self.devicename},num_recv_frames=1024")
+        self.usrp = uhd.usrp.MultiUSRP(f"{self.devicename}")
         
         curr_hw_time = self.usrp.get_time_last_pps()     
 
