@@ -74,7 +74,7 @@ class AhcUhdUtils(SDRUtils):
         self.rx_rate= self.bandwidth * 1
         logger.info(f"Configuring {self.devicename}, freq={self.freq}, bandwidth={self.bandwidth}, channel={self.chan}, hw_tx_gain={self.hw_tx_gain}, hw_rx_gain={self.hw_rx_gain}")
         #self.usrp = uhd.usrp.MultiUSRP(f"name={self.devicename}")
-        self.usrp = uhd.usrp.MultiUSRP(f"{self.devicename},num_recv_frames=1024,num_send_frames=1024,recv_buff_size=262144,send_buff_size=262144,send_frame_size=16360,recv_frame_size=16360")
+        self.usrp = uhd.usrp.MultiUSRP(f"{self.devicename},num_recv_frames=1024,num_send_frames=1024,recv_buff_size=16360,send_buff_size=16360,send_frame_size=16360,recv_frame_size=16360")
         
         curr_hw_time = self.usrp.get_time_last_pps()     
 
