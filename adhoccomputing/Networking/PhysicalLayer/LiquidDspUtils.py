@@ -285,9 +285,11 @@ agc_crcf_reset.argtypes = [agc_crcf]
 agc_crcf_execute = liquiddsp.agc_crcf_execute
 agc_crcf_execute.restype = ctypes.c_int32
 agc_crcf_execute.argtypes = [agc_crcf, liquid_float_complex, ctypes.POINTER(struct_c__SA_liquid_float_complex)]
+#agc_crcf_execute.argtypes = [agc_crcf, liquid_float_complex, np.ctypeslib.ndpointer(dtype=np.complex64, ndim=1, flags='C_CONTIGUOUS')]
 agc_crcf_execute_block = liquiddsp.agc_crcf_execute_block
 agc_crcf_execute_block.restype = ctypes.c_int32
-agc_crcf_execute_block.argtypes = [agc_crcf, ctypes.POINTER(struct_c__SA_liquid_float_complex), ctypes.c_uint32, ctypes.POINTER(struct_c__SA_liquid_float_complex)]
+agc_crcf_execute_block.argtypes = [agc_crcf, np.ctypeslib.ndpointer(dtype=np.complex64, ndim=1, flags='C_CONTIGUOUS'), ctypes.c_uint32, np.ctypeslib.ndpointer(dtype=np.complex64, ndim=1, flags='C_CONTIGUOUS')]
+#agc_crcf_execute_block.argtypes = [agc_crcf, ctypes.POINTER(struct_c__SA_liquid_float_complex), ctypes.c_uint32, ctypes.POINTER(struct_c__SA_liquid_float_complex)]
 agc_crcf_lock = liquiddsp.agc_crcf_lock
 agc_crcf_lock.restype = ctypes.c_int32
 agc_crcf_lock.argtypes = [agc_crcf]
@@ -372,7 +374,8 @@ agc_rrrf_execute.restype = ctypes.c_int32
 agc_rrrf_execute.argtypes = [agc_rrrf, ctypes.c_float, ctypes.POINTER(ctypes.c_float)]
 agc_rrrf_execute_block = liquiddsp.agc_rrrf_execute_block
 agc_rrrf_execute_block.restype = ctypes.c_int32
-agc_rrrf_execute_block.argtypes = [agc_rrrf, ctypes.POINTER(ctypes.c_float), ctypes.c_uint32, ctypes.POINTER(ctypes.c_float)]
+agc_rrrf_execute_block.argtypes = [agc_rrrf, np.ctypeslib.ndpointer(dtype=np.complex64, ndim=1, flags='C_CONTIGUOUS'), ctypes.c_uint32, np.ctypeslib.ndpointer(dtype=np.complex64, ndim=1, flags='C_CONTIGUOUS')]
+#agc_rrrf_execute_block.argtypes = [agc_rrrf, ctypes.POINTER(ctypes.c_float), ctypes.c_uint32, ctypes.POINTER(ctypes.c_float)]
 agc_rrrf_lock = liquiddsp.agc_rrrf_lock
 agc_rrrf_lock.restype = ctypes.c_int32
 agc_rrrf_lock.argtypes = [agc_rrrf]

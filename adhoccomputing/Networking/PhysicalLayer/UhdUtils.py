@@ -70,11 +70,11 @@ class AhcUhdUtils(SDRUtils):
         self.chan = self.sdrconfig.chan
         self.hw_tx_gain = self.sdrconfig.hw_tx_gain
         self.hw_rx_gain = self.sdrconfig.hw_rx_gain
-        self.tx_rate= self.bandwidth 
-        self.rx_rate= self.bandwidth
+        self.tx_rate= self.bandwidth * 1
+        self.rx_rate= self.bandwidth * 1
         logger.info(f"Configuring {self.devicename}, freq={self.freq}, bandwidth={self.bandwidth}, channel={self.chan}, hw_tx_gain={self.hw_tx_gain}, hw_rx_gain={self.hw_rx_gain}")
         #self.usrp = uhd.usrp.MultiUSRP(f"name={self.devicename}")
-        self.usrp = uhd.usrp.MultiUSRP(f"{self.devicename}")
+        self.usrp = uhd.usrp.MultiUSRP(f"{self.devicename},num_recv_frames=1024")
         
         curr_hw_time = self.usrp.get_time_last_pps()     
 
@@ -88,8 +88,8 @@ class AhcUhdUtils(SDRUtils):
         self.usrp.set_rx_bandwidth(self.bandwidth, self.chan)
         self.usrp.set_tx_bandwidth(self.bandwidth, self.chan)
         
-        self.usrp.set_rx_freq(self.freq, self.chan)
-        self.usrp.set_tx_freq(self.freq, self.chan)
+        self.usrp.set_rx_freq(uhd.libpyuhd.types.tune_request(self.freq) , self.chan)
+        self.usrp.set_tx_freq(uhd.libpyuhd.types.tune_request(self.freq), self.chan)
         
         self.usrp.set_rx_bandwidth(self.bandwidth,self.chan)
         self.usrp.set_tx_bandwidth(self.bandwidth,self.chan)
@@ -97,6 +97,9 @@ class AhcUhdUtils(SDRUtils):
         self.usrp.set_rx_rate(self.rx_rate, self.chan)
         self.usrp.set_tx_rate(self.tx_rate, self.chan)
         
+        #self.usrp.set_normalized_rx_gain(0.5, self.chan)
+        #self.usrp.set_normalized_tx_gain(0.1, self.chan)
+        #self.usrp.set_rx_agc(True, 0)
         self.usrp.set_rx_gain(self.hw_rx_gain, self.chan)
         self.usrp.set_tx_gain(self.hw_tx_gain, self.chan)
         
@@ -127,7 +130,9 @@ class AhcUhdUtils(SDRUtils):
     
         self.tx_max_num_samps = self.tx_streamer.get_max_num_samps()
         self.rx_max_num_samps = self.rx_streamer.get_max_num_samps()
-        print("Max samples that can be transmitted", self.tx_max_num_samps, " received ", self.rx_max_num_samps )
+        logger.debug(f"Max samples that can be transmitted {self.tx_max_num_samps} received  {self.rx_max_num_samps}" )
+
+        
 
     def get_sdr_power(self,num_samps=1000000, chan=0):
         uhd.dsp.signals.get_usrp_power(self.rx_streamer, num_samps, chan)
@@ -196,10 +201,10 @@ class AhcUhdUtils(SDRUtils):
                 if num_rx_samps > 0:
                     frm = PhyFrame(num_rx_samps, recv_buffer)
                     self.framer.frame_in_queue.put(Event(None, PhyEventTypes.RECV, frm))
-                if cnt % 1 == 0:
-                    cnt = 0
-                    if num_rx_samps > self.samps_per_est:
-                        self.computeRSSI( self.samps_per_est, recv_buffer[:self.samps_per_est],type="fc32")
+                #if cnt % 1 == 0:
+                #    cnt = 0
+                #    if num_rx_samps > self.samps_per_est:
+                #        self.computeRSSI( self.samps_per_est, recv_buffer[:self.samps_per_est],type="fc32")
                 #if rx_metadata.error_code == uhd.types.RXMetadataErrorCode.overflow:
                 #    print("Overflow")
                 #if rx_metadata.error_code == uhd.types.RXMetadataErrorCode.late:

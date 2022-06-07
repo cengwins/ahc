@@ -9,6 +9,7 @@ import zlib
 
 mutex = Lock()
 
+
 framers: FramerObjects = FramerObjects()
 
 #def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_uint32, payload:POINTER(c_ubyte), payload_len:c_uint32, payload_valid:c_int32, stats:struct_c__SA_framesyncstats_s, userdata:POINTER(None)):
@@ -16,7 +17,7 @@ def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_int, payload:POINTER(c
     mutex.acquire(1)
     try:
         framer = framers.get_framer_by_id(userdata)
-        logger.applog(f"{framer.componentname}-{framer.componentinstancenumber} RSSI {stats.rssi} {framer.sdrdev.rssi}")
+        #logger.applog(f"{framer.componentname}-{framer.componentinstancenumber} RSSI {stats.rssi} {framer.sdrdev.rssi}")
         if payload_valid != 0:
             #ofdmflexframesync_print(framer.fs) 
             pload = string_at(payload, payload_len)
@@ -33,11 +34,38 @@ def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_int, payload:POINTER(c
 
   
 class BladeRFOfdmFlexFramePhy(FrameHandlerBase):
-    
+
+
+    def cdb64_to_sc16q11(self, data):
+        return bytearray(
+            (
+            np.frombuffer(
+                memoryview(data), dtype=np.float32
+                ).astype(np.float16) * 2048
+            )
+                    .astype(np.int16)
+                    .tobytes()
+        )
+
+    def sc16q11_to_cdb64(self, data):
+        return (
+                np.frombuffer(data, dtype=np.int16)
+                .astype(np.float32) / 2048
+                )\
+            .view(np.complex64)
 
     def rx_callback(self, num_rx_samps, recv_buffer):
+        q = agc_crcf_create()
+        agc_crcf_set_bandwidth(q,  0.25)#self.sdrdev.bandwidth/self.sdrdev.rx_rate)       
+        #agc_crcf_set_rssi(q,0.01)
+        #agc_crcf_squelch_enable_auto(q)
+        agc_buffer = np.zeros(num_rx_samps, dtype=np.complex64) 
         try:
-            ofdmflexframesync_execute_sc16q11(self.fs, recv_buffer , num_rx_samps)
+            agc_crcf_execute_block(q, self.sc16q11_to_cdb64(recv_buffer), num_rx_samps, agc_buffer)
+            ofdmflexframesync_execute(self.fs, agc_buffer , num_rx_samps)
+            self.sdrdev.rssi = agc_crcf_get_rssi(q)
+            #print( agc_crcf_get_rssi(q), agc_crcf_get_gain(q), agc_crcf_get_bandwidth(q), agc_crcf_get_signal_level(q))
+            agc_crcf_destroy(q)
         except Exception as ex:
             logger.critical(f"Exception rx_callback: {ex}")
     
@@ -64,12 +92,12 @@ class BladeRFOfdmFlexFramePhy(FrameHandlerBase):
         self.fgprops.fec0 = LIQUID_FEC_NONE
         self.fgprops.fec1 = LIQUID_FEC_HAMMING74
         self.fgprops.mod_scheme = LIQUID_MODEM_QPSK
-        self.M = 1536
-        self.cp_len = 32
+        self.M = 2000
+        self.cp_len = 64
         self.taper_len = 32
         self.fg = ofdmflexframegen_create(self.M, self.cp_len, self.taper_len, None, byref(self.fgprops))
        
-        self.fgbuffer_len = 8192 #1024 #(self.M + self.cp_len + self.taper_len)*8
+        self.fgbuffer_len = 8192
         self.fgbuffer = np.zeros(self.fgbuffer_len*self.sdrdev.bytes_per_sample//sizeof(c_int16), dtype=np.int16) # sc16q1 samples
         
         #res = ofdmflexframegen_print(self.fg)

@@ -16,18 +16,14 @@ import logging
 class BladeRFNode(GenericModel):
     counter = 0
     def on_init(self, eventobj: Event):
-        i = 0
-        while(True):
-            #logger.applog("Will start poking")
-            self.appl.send_self(Event(self, PingPongApplicationLayerEventTypes.STARTBROADCAST, None))
-            time.sleep(5)    
+        pass
         
     def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None, child_conn=None):
         super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology, child_conn)
         # SUBCOMPONENTS
         
         macconfig = MacCsmaPPersistentConfigurationParameters(0.5, -40)
-        sdrconfig = SDRConfiguration(freq =2484000000, bandwidth = 20000000, chan = 0, hw_tx_gain = 0, hw_rx_gain = 39, sw_tx_gain = -12.0)
+        sdrconfig = SDRConfiguration(freq =2484000000, bandwidth = 1500000, chan = 0, hw_tx_gain = 30, hw_rx_gain = 39, sw_tx_gain = -12.0)
        
 
         self.appl = PingPongApplicationLayer("PingPongApplicationLayer", componentinstancenumber, topology=topology)
@@ -68,10 +64,10 @@ def main(argv):
   # topo.nodes[0].send_self(Event(topo.nodes[0], UsrpNodeEventTypes.STARTBROADCAST, None))
 
     topo.start()
-
+    time.sleep(1)
     i = 1
     while(i<10000):
-        topo.nodes[0].appl.send_self(Event(topo.nodes[0], PingPongApplicationLayerEventTypes.STARTBROADCAST, None))
+        topo.nodes[0].appl.send_self(Event(topo.nodes[0], PingPongApplicationLayerEventTypes.STARTBROADCAST, "BMSG-"))
         i += 1
         time.sleep(0.1)
 

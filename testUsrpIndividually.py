@@ -22,8 +22,8 @@ class UsrpNode(GenericModel):
         super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology)
         # SUBCOMPONENTS
         
-        macconfig = MacCsmaPPersistentConfigurationParameters(0.5, -50)
-        sdrconfig = SDRConfiguration(freq =2484000000.0, bandwidth = 2048000, chan = 0, hw_tx_gain = 76, hw_rx_gain = 20, sw_tx_gain = -12.0)
+        macconfig = MacCsmaPPersistentConfigurationParameters(0.5, -40)
+        sdrconfig = SDRConfiguration(freq =2484000000.0, bandwidth = 1500000, chan = 0, hw_tx_gain = 70, hw_rx_gain = 30, sw_tx_gain = -12.0)
 
         self.appl = PingPongApplicationLayer("PingPongApplicationLayer", componentinstancenumber, topology=topology)
         self.phy = UsrpB210OfdmFlexFramePhy("UsrpB210OfdmFlexFramePhy", componentinstancenumber, topology=topology,usrpconfig=sdrconfig, )
@@ -75,9 +75,9 @@ def main(argv):
   # topo.nodes[0].send_self(Event(topo.nodes[0], UsrpNodeEventTypes.STARTBROADCAST, None))
 
     topo.start()
-    
+    time.sleep(1)
     while(True):
-        topo.nodes[0].appl.send_self(Event(topo.nodes[0], PingPongApplicationLayerEventTypes.STARTBROADCAST, None))
+        topo.nodes[0].appl.send_self(Event(topo.nodes[0], PingPongApplicationLayerEventTypes.STARTBROADCAST, "BMSG-"))
         time.sleep(0.1)
 
     #time.sleep(5)

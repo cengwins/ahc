@@ -2,7 +2,7 @@ import time
 
 from ...Generics import *
 from ...GenericModel import GenericModel
-
+import random
 
 # define your own message types
 class PingPongApplicationLayerMessageTypes(Enum):
@@ -21,11 +21,12 @@ class PingPongApplicationLayerEventTypes(Enum):
 
 class PingPongApplicationLayer(GenericModel):
     def on_init(self, eventobj: Event):
-        self.counter = 0
+        pass
     
     def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None):
         super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology)
         self.eventhandlers[PingPongApplicationLayerEventTypes.STARTBROADCAST] = self.on_startbroadcast
+        self.counter = 0
 
     def on_message_from_top(self, eventobj: Event):
         logger.info(f"{self.componentname}.{self.componentinstancenumber} RECEIVED {str(eventobj)}")
@@ -41,7 +42,9 @@ class PingPongApplicationLayer(GenericModel):
         evt.eventcontent.header.sequencenumber =  eventobj.eventcontent.header.sequencenumber
         evt.eventcontent.header.counter = eventobj.eventcontent.header.counter + 1
         #time.sleep(0.0000001) # TODO WHAT Should this be?
-        #self.send_down(evt)  # PINGPONG
+        time.sleep(random.uniform(0, 0.1))
+        #if evt.eventcontent.header.counter < 2:
+        self.send_down(evt)  # PINGPONG
     
     def on_startbroadcast(self, eventobj: Event):
         hdr = PingPongApplicationLayerMessageHeader(PingPongApplicationLayerMessageTypes.BROADCAST, self.componentinstancenumber, MessageDestinationIdentifiers.LINKLAYERBROADCAST)

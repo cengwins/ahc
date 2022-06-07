@@ -108,9 +108,9 @@ class FrameHandlerBase(GenericModel):
   def on_recv(self, eventobj: Event):
     logger.debug(f"{self.componentname}.{self.componentinstancenumber} RECEIVED {str(eventobj)}")
 
-    #if eventobj.eventcontent.payload.phyheader.messagefrom != self.componentinstancenumber:
-    msg = GenericMessage(eventobj.eventcontent.payload.phyheader, eventobj.eventcontent.payload.phypayload)
-    self.send_up(Event(self, EventTypes.MFRB, msg))
+    if 1 or eventobj.eventcontent.payload.phyheader.messagefrom != self.componentinstancenumber:
+      msg = GenericMessage(eventobj.eventcontent.payload.phyheader, eventobj.eventcontent.payload.phypayload)
+      self.send_up(Event(self, EventTypes.MFRB, msg))
 
   def on_message_from_top(self, eventobj: Event):
 # channel receives the input message and will process the message by the process event in the next pipeline stage

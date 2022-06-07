@@ -19,11 +19,11 @@ from adhoccomputing.Networking.ApplicationLayer.MessageSegmentation import *
 import logging
 
 
-macconfig = MacCsmaPPersistentConfigurationParameters(0.5, -50)
+macconfig = MacCsmaPPersistentConfigurationParameters(0.5, -40)
 #sdrconfig = SDRConfiguration(freq =915000000.0, bandwidth = 4000000, chan = 0, hw_tx_gain = 70, hw_rx_gain = 30, sw_tx_gain = -12.0)
-sdrconfig = SDRConfiguration(freq =2484000000, bandwidth = 2000000, chan = 0, hw_tx_gain = 0, hw_rx_gain = 39, sw_tx_gain = -12.0)
+sdrconfig = SDRConfiguration(freq =2484000000, bandwidth = 1500000, chan = 0, hw_tx_gain = 30, hw_rx_gain = 39, sw_tx_gain = -12.0)
 
-appconfig = OpenCVVideoStreamingAppConfig(20)
+appconfig = OpenCVVideoStreamingAppConfig(10)
 
 
 class AdHocNode(GenericModel):

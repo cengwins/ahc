@@ -17,8 +17,8 @@ import logging
 import random
  
 macconfig = MacCsmaPPersistentConfigurationParameters(0.5, -40)
-bladerfconfig = SDRConfiguration(freq =2484000000,      bandwidth = 1500000,   chan = 0,   hw_tx_gain = 0,     hw_rx_gain = 39,    sw_tx_gain = -12.0)
-usrpconfig =    SDRConfiguration(freq =2484000000.0,    bandwidth = 1500000,   chan = 0,   hw_tx_gain = 70,    hw_rx_gain = 30,    sw_tx_gain = -12.0)    
+bladerfconfig = SDRConfiguration(freq =2484000000,      bandwidth = 1500000,   chan = 0,   hw_tx_gain = 30,     hw_rx_gain = 39,    sw_tx_gain = -12.0)
+usrpconfig =    SDRConfiguration(freq =2484000000.0,    bandwidth = 1500000,   chan = 0,   hw_tx_gain = 70,    hw_rx_gain = 39,    sw_tx_gain = -12.0)    
   
 class UsrpNode(GenericModel):
     counter = 0
@@ -56,11 +56,7 @@ class UsrpNode(GenericModel):
 class BladeRFNode(GenericModel):
     counter = 0
     def on_init(self, eventobj: Event):
-        i = 0
-        while(True):
-            #logger.applog("Will start poking")
-            self.appl.send_self(Event(self, PingPongApplicationLayerEventTypes.STARTBROADCAST, None))
-            time.sleep(5)    
+        pass
         
     def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None, child_conn=None):
         super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology, child_conn)
@@ -102,12 +98,12 @@ def main():
   # topo.nodes[0].send_self(Event(topo.nodes[0], UsrpNodeEventTypes.STARTBROADCAST, None))
 
     topo.start()
+    time.sleep(1)
     i = 0
     while(i < 10000):
         topo.nodes[0].appl.send_self(Event(topo.nodes[0], PingPongApplicationLayerEventTypes.STARTBROADCAST, "USRP-BMSG-"))
         time.sleep(random.uniform(0, 1))
         topo.nodes[1].appl.send_self(Event(topo.nodes[1], PingPongApplicationLayerEventTypes.STARTBROADCAST, "BLADERF-BMSG-"))
-
         time.sleep(random.uniform(0, 1))
         #topo.nodes[1].appl.send_self(Event(topo.nodes[1], PingPongApplicationLayerEventTypes.STARTBROADCAST, None))
         #time.sleep(0.1)

@@ -90,14 +90,14 @@ class OpenCVVideoStreamingApp(GenericModel):
         ret, framehighres = self.cap.read()
         try:
             framesmallres = cv2.resize(framehighres, (self.frameheight,self.framewidth))
-            frame =  framesmallres #cv2.cvtColor(framesmallres, cv2.COLOR_BGR2GRAY)
+            frame =  cv2.cvtColor(framesmallres, cv2.COLOR_BGR2GRAY)
             #(B,G,R) = cv2.split(frame)
             payload = pickle.dumps(frame)
             if self.initframe == True:
                 self.frame = frame   ##### LOOPBACK trials
                 self.initframe = False
             #payload = frame.tobytes()
-            logger.applog(f"{self.componentname}-{self.componentinstancenumber}: Payload length {len(payload)}")
+            #logger.applog(f"{self.componentname}-{self.componentinstancenumber}: Payload length {len(payload)}")
             broadcastmessage = GenericMessage(hdr, payload)
             evt = Event(self, EventTypes.MFRT, broadcastmessage)
             #logger.applog(f"{self.componentname}.{self.componentinstancenumber} WILL SEND frame of length {len(payload)}")

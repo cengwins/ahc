@@ -158,9 +158,9 @@ class BladeRFUtils(SDRUtils):
 
         
         self.bladerfdevice_tx_ch.frequency   = self.tx_freq #+ deltafreq
-        self.bladerfdevice_tx_ch.sample_rate = self.bandwidth  #40000000 #self.tx_rate
+        self.bladerfdevice_tx_ch.sample_rate = self.tx_rate
         #self.bladerfdevice_tx_ch.bandwidth   = self.bandwidth
-        self.bladerfdevice_tx_ch.gain        = self.tx_gain
+        #self.bladerfdevice_tx_ch.gain        = self.tx_gain
         
         #self.bladerfdevice_tx_ch.gain_mode   = _bladerf.GainMode.Manual
         #self.bladerfdevice.set_gain_mode ( self.bladerfdevice_tx_ch , _bladerf.GainMode.Manual)
@@ -195,9 +195,9 @@ class BladeRFUtils(SDRUtils):
         
         #self.bladerfdevice_rx_ch .enable = True
         self.bladerfdevice_rx_ch.frequency   = self.rx_freq #+ deltafreq
-        self.bladerfdevice_rx_ch.sample_rate = self.bandwidth  #40000000 #self.rx_rate
+        self.bladerfdevice_rx_ch.sample_rate = self.rx_rate
         #self.bladerfdevice_rx_ch.bandwidth   = self.bandwidth   # Will set later down
-        self.bladerfdevice_rx_ch.gain        = self.rx_gain
+        #self.bladerfdevice_rx_ch.gain        = self.rx_gain
         self.bladerfdevice_rx_ch.gain_mode   = _bladerf.GainMode.Manual
         #self.bladerfdevice.set_gain_mode ( self.bladerfdevice_rx_ch , _bladerf.GainMode.Manual)
         # Setup synchronous stream
@@ -264,8 +264,8 @@ class BladeRFUtils(SDRUtils):
         self.rx_ch = _bladerf.CHANNEL_RX(rx_chan)
         self.rx_freq = int(self.sdrconfig.freq)
         self.tx_freq = int(self.sdrconfig.freq)
-        self.rx_rate = int(self.sdrconfig.bandwidth)
-        self.tx_rate = int(self.sdrconfig.bandwidth)
+        self.rx_rate = int(self.sdrconfig.bandwidth) * 1
+        self.tx_rate = int(self.sdrconfig.bandwidth) * 1
         self.tx_gain = int(self.sdrconfig.hw_tx_gain)
         self.rx_gain = int(self.sdrconfig.hw_rx_gain)
         self.bandwidth = self.sdrconfig.bandwidth
@@ -381,10 +381,10 @@ class BladeRFUtils(SDRUtils):
                 if num_samples > 0:
                     frm = PhyFrame(num_samples, mybuf2)
                     self.framer.frame_in_queue.put(Event(None, PhyEventTypes.RECV, frm))
-                if cnt > 1:
-                    cnt = 1
-                    if num_samples*2 > self.samps_per_est:
-                        self.computeRSSI( self.samps_per_est*2, mybuf2[:self.samps_per_est*2],type="sc16")
+                #if cnt > 1:
+                #    cnt = 1
+                #    if num_samples*2 > self.samps_per_est:
+                #        self.computeRSSI( self.samps_per_est*2, mybuf2[:self.samps_per_est*2],type="sc16")
                 #logger.applog(f"Num samples {len(buf)} {num_samples} {len(mybuf2)}")
             except RuntimeError as ex:
                 logger.error("Runtime error in rx_thread: {ex}")
