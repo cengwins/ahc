@@ -24,11 +24,13 @@ def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_int, payload:POINTER(c
             phymsg = pickle.loads(zlib.decompress(pload))
             msg = GenericMessage(phymsg.header, phymsg.payload)
             framer.send_self(Event(framer, PhyEventTypes.RECV, msg))
+            agc_crcf_reset(framer.q)
             #logger.applog(f"{framer.componentname}-{framer.componentinstancenumber} Header= {msg.header.messagetype} Payload= {msg.payload} RSSI= {stats.rssi}")   
     except Exception as ex:
-        logger.critical(f"Exception_ofdm_callback: {ex}")
+        logger.critical(f"{framer.componentname}-{framer.componentinstancenumber} Exception_ofdm_callback: {ex}")
     mutex.release()
     ofdmflexframesync_reset(framer.fs)
+    #
     return 0
 
 
@@ -36,17 +38,13 @@ def ofdm_callback(header:POINTER(c_ubyte), header_valid:c_int, payload:POINTER(c
 class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
     
     def rx_callback(self, num_rx_samps, recv_buffer):
-        q = agc_crcf_create()
-        agc_crcf_set_bandwidth(q,  0.25 ) #self.sdrdev.bandwidth/self.sdrdev.rx_rate)       
-        #agc_crcf_set_rssi(q,0.01)
-        #agc_crcf_squelch_enable_auto(q)
         agc_buffer = np.zeros(num_rx_samps, dtype=np.complex64) 
         try:
-            agc_crcf_execute_block(q, recv_buffer, num_rx_samps, agc_buffer)
+            agc_crcf_execute_block(self.q, recv_buffer, num_rx_samps, agc_buffer)
             ofdmflexframesync_execute(self.fs, agc_buffer , num_rx_samps)
-            self.sdrdev.rssi = agc_crcf_get_rssi(q)
-            #print( agc_crcf_get_rssi(q), agc_crcf_get_gain(q), agc_crcf_get_bandwidth(q), agc_crcf_get_signal_level(q))
-            agc_crcf_destroy(q)
+            #self.sdrdev.rssi = agc_crcf_get_rssi(self.q)
+            #print(self.componentinstancenumber, agc_crcf_get_rssi(self.q), agc_crcf_get_gain(self.q), agc_crcf_get_bandwidth(self.q), agc_crcf_get_signal_level(self.q))
+            #agc_crcf_print(self.q)
         except Exception as ex:
             logger.critical(f"Exception rx_callback: {ex}")
 
@@ -67,21 +65,30 @@ class UsrpB210OfdmFlexFramePhy(FrameHandlerBase):
         #self.sdrdev.finalize_transmit_samples()
 
     def configure(self):
+        self.q = agc_crcf_create()
+        agc_crcf_set_bandwidth(self.q,  0.25)#self.sdrdev.bandwidth/self.sdrdev.rx_rate)      
+        #agc_crcf_set_signal_level(self.q,0.0003) 
+        #agc_crcf_set_rssi(q,-50)
+        #agc_crcf_squelch_enable_auto(q)
+        agc_crcf_squelch_enable(self.q)
+        agc_crcf_squelch_set_threshold(self.q, -50)
+        agc_crcf_squelch_set_timeout  (self.q, 100)
         self.fgprops = ofdmflexframegenprops_s(LIQUID_CRC_32, LIQUID_FEC_NONE, LIQUID_FEC_HAMMING74, LIQUID_MODEM_QPSK)
         res = ofdmflexframegenprops_init_default(byref(self.fgprops))
         self.fgprops.check = LIQUID_CRC_32
         self.fgprops.fec0 = LIQUID_FEC_NONE
         self.fgprops.fec1 = LIQUID_FEC_HAMMING74
         self.fgprops.mod_scheme = LIQUID_MODEM_QPSK
-        self.M = 2000
-        self.cp_len = 64
-        self.taper_len = 32
+        self.M = 64
+        self.cp_len = 16
+        self.taper_len = 4
+        
         self.fg = ofdmflexframegen_create(self.M, self.cp_len, self.taper_len, None, byref(self.fgprops))
-
-        self.fgbuffer_len = 8192
+        #self.sdrdev.rx_max_num_samps = 8192 #self.M + self.taper_len
+        self.fgbuffer_len = self.sdrdev.rx_max_num_samps
         self.fgbuffer = np.zeros(self.fgbuffer_len, dtype=np.complex64)
 
-        #res = ofdmflexframegen_print(self.fg)
+        res = ofdmflexframegen_print(self.fg)
         
         self.ofdm_callback_function = framesync_callback(ofdm_callback)
         

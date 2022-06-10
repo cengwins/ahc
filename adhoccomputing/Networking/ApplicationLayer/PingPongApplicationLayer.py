@@ -43,8 +43,8 @@ class PingPongApplicationLayer(GenericModel):
         evt.eventcontent.header.counter = eventobj.eventcontent.header.counter + 1
         #time.sleep(0.0000001) # TODO WHAT Should this be?
         time.sleep(random.uniform(0, 0.1))
-        #if evt.eventcontent.header.counter < 2:
-        self.send_down(evt)  # PINGPONG
+        if evt.eventcontent.header.counter < 5:
+            self.send_down(evt)  # PINGPONG
     
     def on_startbroadcast(self, eventobj: Event):
         hdr = PingPongApplicationLayerMessageHeader(PingPongApplicationLayerMessageTypes.BROADCAST, self.componentinstancenumber, MessageDestinationIdentifiers.LINKLAYERBROADCAST)

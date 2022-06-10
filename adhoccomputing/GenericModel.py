@@ -197,7 +197,7 @@ class GenericModel:
             workitem = myqueue.get()
             if workitem.event in self.eventhandlers:
                 self.on_pre_event(workitem)
-                logger.debug(f"{self.componentname}-{self.componentinstancenumber} will handle {workitem.event}")
+                #logger.debug(f"{self.componentname}-{self.componentinstancenumber} will handle {workitem.event}")
                 self.eventhandlers[workitem.event](eventobj=workitem)  # call the handler
             else:
                 logger.error(f"{self.componentname}.{self.componentinstancenumber} Event Handler: {workitem.event} is not implemented")
@@ -209,13 +209,13 @@ class GenericModel:
         pass
 
     def trigger_event(self, eventobj: Event):
-        logger.debug(f"{self.componentname}.{self.componentinstancenumber} invoked with {str(eventobj)}")
+        #logger.debug(f"{self.componentname}.{self.componentinstancenumber} invoked with {str(eventobj)}")
         self.inputqueue.put_nowait(eventobj)
 
     def on_pre_event(self, event):
-        logger.debug(f"{self.componentname}.{self.componentinstancenumber} invoked with {str(event)} will run on_pre_event here")
+        #logger.debug(f"{self.componentname}.{self.componentinstancenumber} invoked with {str(event)} will run on_pre_event here")
         pass
         
     def send_self(self, event: Event):
-        logger.debug(f"{self.componentname}.{self.componentinstancenumber} invoking itself with {str(event)}")
+        #logger.debug(f"{self.componentname}.{self.componentinstancenumber} invoking itself with {str(event)}")
         self.trigger_event(event)

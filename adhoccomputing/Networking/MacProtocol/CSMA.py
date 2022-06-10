@@ -23,7 +23,7 @@ class MacCsmaPPersistent(GenericMac):
     def on_init(self, eventobj: Event):
         self.retrialcnt = 0
         super().on_init(eventobj)  # required because of inheritence
-        logger.debug(f"{self.componentname}.{self.componentinstancenumber} RECEIVED {str(eventobj)}")
+        #logger.debug(f"{self.componentname}.{self.componentinstancenumber} RECEIVED {str(eventobj)}")
 
     def handle_frame(self):
         #TODO: not a good solution put message in queue, schedule a future event to retry yhe first item in queueu    

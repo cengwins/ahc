@@ -44,12 +44,13 @@ class FrameHandlerBase(GenericModel):
     super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology)
     self.frame_in_queue = queue.Queue()  # For speed up, a sparate queue for incoming frames will be used.
     self.frame_out_queue = queue.Queue()  # For speed up, a sparate queue for incoming frames will be used.
-    self.t_in = Thread(target=self.frame_in_queue_handler, args=[self.frame_in_queue])
-    self.t_in.daemon = True
-    self.t_in.start()
+
     self.t_out = Thread(target=self.frame_out_queue_handler, args=[self.frame_out_queue])
     self.t_out.daemon = True
     self.t_out.start()
+    self.t_in = Thread(target=self.frame_in_queue_handler, args=[self.frame_in_queue])
+    self.t_in.daemon = True
+    self.t_in.start()
 
     self.usrpconfig = usrpconfig # should be UsrpConfiguration
     framers.add_framer(id(self), self)
@@ -72,7 +73,7 @@ class FrameHandlerBase(GenericModel):
     return super().on_exit(eventobj)
 
   def on_init(self, eventobj: Event):
-    logger.debug(f"====> I WILL START RECEIVING SAMPLES :  {self.componentname} - {self.componentinstancenumber}")
+    logger.applog(f"====> I WILL START RECEIVING SAMPLES :  {self.componentname} - {self.componentinstancenumber}")
     self.sdrdev.receiveenabled = True
     self.sdrdev.start_rx(self.rx_callback, self)
     return super().on_init(eventobj)
@@ -98,17 +99,18 @@ class FrameHandlerBase(GenericModel):
 
   def frame_in_queue_handler(self, myqueue):
     while not self.terminated:
-      #logger.applog(f"{self.componentname} {self.componentinstancenumber} received frame from sdr")
+      
       eventobj = myqueue.get()
       recv_buffer= eventobj.eventcontent.recv_buffer
       num_rx_samps= eventobj.eventcontent.num_rx_samps
+      #logger.applog(f"{self.componentname} {self.componentinstancenumber} received {num_rx_samps} samples from sdr")
       self.rx_callback(num_rx_samps, recv_buffer)
       myqueue.task_done()
 
   def on_recv(self, eventobj: Event):
     logger.debug(f"{self.componentname}.{self.componentinstancenumber} RECEIVED {str(eventobj)}")
 
-    if 1 or eventobj.eventcontent.payload.phyheader.messagefrom != self.componentinstancenumber:
+    if 0 or eventobj.eventcontent.payload.phyheader.messagefrom != self.componentinstancenumber:
       msg = GenericMessage(eventobj.eventcontent.payload.phyheader, eventobj.eventcontent.payload.phypayload)
       self.send_up(Event(self, EventTypes.MFRB, msg))
 

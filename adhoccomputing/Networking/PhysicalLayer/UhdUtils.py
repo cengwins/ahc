@@ -70,13 +70,13 @@ class AhcUhdUtils(SDRUtils):
         self.chan = self.sdrconfig.chan
         self.hw_tx_gain = self.sdrconfig.hw_tx_gain
         self.hw_rx_gain = self.sdrconfig.hw_rx_gain
-        self.tx_rate= self.bandwidth * 1
-        self.rx_rate= self.bandwidth * 1
+        self.tx_rate= self.bandwidth 
+        self.rx_rate= self.bandwidth 
         logger.info(f"Configuring {self.devicename}, freq={self.freq}, bandwidth={self.bandwidth}, channel={self.chan}, hw_tx_gain={self.hw_tx_gain}, hw_rx_gain={self.hw_rx_gain}")
         #self.usrp = uhd.usrp.MultiUSRP(f"name={self.devicename}")
         #self.usrp = uhd.usrp.MultiUSRP(f"{self.devicename},num_recv_frames=1024,num_send_frames=1024,recv_buff_size=8192,send_buff_size=8192,send_frame_size=8200,recv_frame_size=8200")
-        #self.usrp = uhd.usrp.MultiUSRP(f"{self.devicename},num_recv_frames=1024,num_send_frames=1024,send_frame_size=8200,recv_frame_size=8200")
-        self.usrp = uhd.usrp.MultiUSRP(f"{self.devicename}")
+        self.usrp = uhd.usrp.MultiUSRP(f"{self.devicename},num_recv_frames=64,num_send_frames=64")
+        #self.usrp = uhd.usrp.MultiUSRP(f"{self.devicename}")
         
         curr_hw_time = self.usrp.get_time_last_pps()     
 
@@ -90,8 +90,10 @@ class AhcUhdUtils(SDRUtils):
         self.usrp.set_rx_bandwidth(self.bandwidth, self.chan)
         self.usrp.set_tx_bandwidth(self.bandwidth, self.chan)
         
-        self.usrp.set_rx_freq(uhd.libpyuhd.types.tune_request(self.freq) , self.chan)
-        self.usrp.set_tx_freq(uhd.libpyuhd.types.tune_request(self.freq), self.chan)
+        #self.usrp.set_rx_freq(uhd.libpyuhd.types.tune_request(self.freq) , self.chan)
+        #self.usrp.set_tx_freq(uhd.libpyuhd.types.tune_request(self.freq), self.chan)
+        self.usrp.set_rx_freq(self.freq , self.chan)
+        self.usrp.set_tx_freq(self.freq, self.chan)
         
         self.usrp.set_rx_bandwidth(self.bandwidth,self.chan)
         self.usrp.set_tx_bandwidth(self.bandwidth,self.chan)
@@ -108,6 +110,7 @@ class AhcUhdUtils(SDRUtils):
         #self.usrp.set_master_clock_rate(self.bandwidth*4)
 
         #self.usrp.set_rx_agc(True, self.chan)
+
         logger.info(f"------- USRP( {self.devicename } ) CONFIG --------------------" +
         f"===> CHANNEL= {self.chan}" +
         f"===> RX-BANDWIDTH= {self.usrp.get_rx_bandwidth(self.chan)}" +
@@ -201,12 +204,13 @@ class AhcUhdUtils(SDRUtils):
                 #self.rx_callback(num_rx_samps, recv_buffer)
                 #Let's put the frame to Framehandler's queue for speed up
                 if num_rx_samps > 0:
+                    #logger.applog(f"{self.componentinstancenumber} received {num_rx_samps}")
                     frm = PhyFrame(num_rx_samps, recv_buffer)
                     self.framer.frame_in_queue.put(Event(None, PhyEventTypes.RECV, frm))
-                #if cnt % 1 == 0:
+                #if cnt % 2 == 0:
                 #    cnt = 0
-                #    if num_rx_samps > self.samps_per_est:
-                #        self.computeRSSI( self.samps_per_est, recv_buffer[:self.samps_per_est],type="fc32")
+                if num_rx_samps > self.samps_per_est:
+                    self.computeRSSI( self.samps_per_est, recv_buffer[:self.samps_per_est],type="fc32")
                 #if rx_metadata.error_code == uhd.types.RXMetadataErrorCode.overflow:
                 #    print("Overflow")
                 #if rx_metadata.error_code == uhd.types.RXMetadataErrorCode.late:

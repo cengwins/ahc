@@ -63,7 +63,7 @@ class BladeRFOfdmFlexFramePhy(FrameHandlerBase):
         try:
             agc_crcf_execute_block(q, self.sc16q11_to_cdb64(recv_buffer), num_rx_samps, agc_buffer)
             ofdmflexframesync_execute(self.fs, agc_buffer , num_rx_samps)
-            self.sdrdev.rssi = agc_crcf_get_rssi(q)
+            #self.sdrdev.rssi = agc_crcf_get_rssi(q)
             #print( agc_crcf_get_rssi(q), agc_crcf_get_gain(q), agc_crcf_get_bandwidth(q), agc_crcf_get_signal_level(q))
             agc_crcf_destroy(q)
         except Exception as ex:

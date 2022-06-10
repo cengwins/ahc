@@ -381,10 +381,10 @@ class BladeRFUtils(SDRUtils):
                 if num_samples > 0:
                     frm = PhyFrame(num_samples, mybuf2)
                     self.framer.frame_in_queue.put(Event(None, PhyEventTypes.RECV, frm))
-                #if cnt > 1:
-                #    cnt = 1
-                #    if num_samples*2 > self.samps_per_est:
-                #        self.computeRSSI( self.samps_per_est*2, mybuf2[:self.samps_per_est*2],type="sc16")
+                if cnt > 1:
+                    cnt = 1
+                    if num_samples*2 > self.samps_per_est:
+                        self.computeRSSI( self.samps_per_est*2, mybuf2[:self.samps_per_est*2],type="sc16")
                 #logger.applog(f"Num samples {len(buf)} {num_samples} {len(mybuf2)}")
             except RuntimeError as ex:
                 logger.error("Runtime error in rx_thread: {ex}")

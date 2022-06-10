@@ -9,7 +9,7 @@ import os, sys, signal
 
 
 class NodeProcess(Process):
-    def __init__(self,nodetype, componentinstancenumber, child_conn,node_queues, channel_queues):
+    def __init__(self,nodetype, componentinstancenumber, child_conn,node_queues=None, channel_queues=None):
         self.nodetype = nodetype
         self.componentinstancenumber = componentinstancenumber
         self.child_conn = child_conn
@@ -24,7 +24,8 @@ class NodeProcess(Process):
 
     def run(self):
         signal.signal(signal.SIGINT, self.ctrlc_signal_handler)
-        self.node = self.nodetype(self.nodetype.__name__, self.componentinstancenumber, child_conn = self.child_conn, node_queues=self.node_queues, channel_queues=self.channel_queues)
+        #self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None, child_conn=None, node_queues=None, channel_queues=None
+        self.node = self.nodetype(self.nodetype.__name__, self.componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None, child_conn = self.child_conn, node_queues=self.node_queues, channel_queues=self.channel_queues)
         polltime=0.00000001
         while(True):
             if self.child_conn.poll(polltime):
