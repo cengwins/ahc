@@ -3,6 +3,7 @@ import sys
 import random
 
 sys.path.insert(0, os.getcwd())
+sys.path.append('../ahc')
 
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -41,14 +42,15 @@ class AdHocNode(ComponentModel):
 #    self.eventhandlers["messagefromchannel"] = self.onMessageFromChannel
 
 def main():
-  # G = nx.Graph()
-  # G.add_nodes_from([1, 2])
-  # G.add_edges_from([(1, 2)])
-  # nx.draw(G, with_labels=True, font_weight='bold')
-  # plt.draw()
-  G = nx.random_geometric_graph(19, 0.5)
+ 
+  G = nx.Graph()
+  # Full mesh topology with 4 processes
+  G.add_edges_from([(0, 1), (0, 2), (0, 3), 
+                    (1, 2), (1, 3),
+                    (2, 3)])  
   topo = Topology()
   topo.construct_from_graph(G, AdHocNode, P2PFIFOFairLossChannel)
+
   for ch in topo.channels:
     topo.channels[ch].setPacketLossProbability(random.random())
     topo.channels[ch].setAverageNumberOfDuplicates(0)
@@ -57,7 +59,8 @@ def main():
 
   topo.start()
   topo.plot()
-  plt.show()  # while (True): pass
+  plt.show()  
+  while (True): pass
 
   print(topo.nodecolors)
 

@@ -67,7 +67,9 @@ class ControlledFlooding(ComponentModel):
           self.send_up(Event(self, EventTypes.MFRB, payload))
           # Also continue flooding once
           time.sleep(random.randint(1, 3))
-          self.senddownbroadcast(eventobj, eventobj.eventcontent.header.messagefrom,
+          myevent = Event(self, 0, payload)
+
+          self.senddownbroadcast(myevent, eventobj.eventcontent.header.messagefrom,
                                  eventobj.eventcontent.header.sequencenumber)
 
   def __init__(self, componentname, componentinstancenumber):

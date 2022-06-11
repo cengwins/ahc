@@ -2,12 +2,12 @@
 
 Functions
 ---------
-- encode        : encoding a graph in which both n (node count) and m (edge count) is unknown
-- decode        : decoding a graph in which both n (node count) and m (edge count) is unknown
+- encode        : encoding a graph in which both n (node count) and m (edge count) are unknown
+- decode        : decoding a graph in which both n (node count) and m (edge count) are unknown
 - encode_n      : encoding a graph in which n (node count) is known
 - decode_n      : decoding a graph in which n (node count) is known
-- encode_nm     : encoding a graph in which both n (node count) and m (edge count) is known
-- decode_nm     : decoding a graph in which both n (node count) and m (edge count) is known
+- encode_nm     : encoding a graph in which both n (node count) and m (edge count) are known
+- decode_nm     : decoding a graph in which both n (node count) and m (edge count) are known
 
 
 References
@@ -21,7 +21,6 @@ import operator
 import networkx as nx
 import matplotlib.pyplot as plt
 import threading
-import numpy as np
 
 mutex1 = threading.Lock()
 mutex2 = threading.Lock()
@@ -48,10 +47,10 @@ def perm(n, k):
 
 
 def comb(n, k):
+    # Tried pascals triangle, prime factorization, but all not as fast as current solution
     comb = perm(n, k) // math.factorial(k)
     return comb
 
-    # Tried pascals triangle, prime factorization, but all not as fast as current solution
     # return math.factorial(n) // math.factorial(k) // math.factorial(n - k)
 
 
@@ -259,11 +258,11 @@ def Jprime(x, c):
     Output  - First derivative of cost function at x 
 
     '''
-    tot = np.float64(0.0)
-    ln = np.float64(1.0) / math.log(10)
+    tot = 0.0
+    ln = 1.0 / math.log(10)
 
     for p in range(0, c): 
-        tot += np.float64(1.0) / np.float64(x-p)
+        tot += 1.0 / (x-p)
 
     return tot*ln
 
@@ -362,7 +361,7 @@ if __name__ == "__main__":
         [(1, 5), (2, 4), (4, 3), (4 , 5), (5, 6), (6, 12), 
          (11,12), (13, 21), (21, 22), (22, 23), (25, 26), 
          (23, 24), (26, 23), (27, 28), (28, 29), (29, 30), 
-         (33, 34), (34, 35), (8, 9), (36, 9), (9, 10) ])
+         (33, 34), (34, 35), (8, 9), (36, 9), (9, 10), (100, 1000), (1000, 3000) ])
 
     # Ecnode the graph G
     m, tot = encode_nm(G)
