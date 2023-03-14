@@ -1,7 +1,7 @@
 from enum import Enum
 from tabulate import tabulate
 
-from ahc.Ahc import ComponentModel, Event, EventTypes, GenericMessageHeader, GenericMessage, MessageDestinationIdentifiers
+from ...GenericModel import GenericModel, Event, EventTypes, GenericMessageHeader, GenericMessage, MessageDestinationIdentifiers
 from threading import Timer
 
 class DsdvTimer():
@@ -42,7 +42,7 @@ class RoutingTableColumn(Enum):
     sequenceNumber = 3
 
 
-class DsdvService(ComponentModel):
+class DsdvService(GenericModel):
 
     def __init__(self, componentname, componentinstancenumber):
         super().__init__(componentname, componentinstancenumber)    # init super class

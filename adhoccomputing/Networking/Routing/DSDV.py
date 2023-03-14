@@ -261,7 +261,7 @@ class AdHocNode(GenericModel):
         super().__init__(componentname, componentid)
 
 
-def main():
+def runner():
     # G = nx.Graph()
     # G.add_nodes_from([1, 2])
     # G.add_edges_from([(1, 2)])
@@ -301,14 +301,9 @@ def main():
     nx.draw(G, with_labels=True, font_weight='bold')
     plt.draw()
     topo = Topology()
-    topo.construct_from_graph(G, DSDVNode, P2PFIFOPerfectChannel, dynamic=False, path="/Users/bahadirkisbet/Desktop/projects/ahc/Routing/DSDV/logs/topology.txt")
+    topo.construct_from_graph(G, DSDVNode, GenericChannel, dynamic=False, path="/Users/bahadirkisbet/Desktop/projects/ahc/Routing/DSDV/logs/topology.txt")
     topo.start()
     sleep(15)
     exit(0)
     plt.show()
     #plt.show()
-
-
-
-if __name__ == "__main__":
-    main()
