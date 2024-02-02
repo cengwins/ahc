@@ -1,27 +1,6 @@
 # Ad Hoc Computing (AHC) Framework
 
-Communication engineers are specialised in digital communications and networking technologies, whereas computer engineers or application developers are mostly specialised in software engineering with no or minimal background in the communication domain. With the introduction of virtualisation and softwarization, networks have become programmable that requires knowledge from both telecommunication and computer engineering domains. We have to fill the gap between these two domains to address the challenges of future networks. The main objective of the AHC project is to develop a distributed computing and learning environment on wireless networks employing software-defined radios. There are many simulators, emulators, and test-beds for researching networks or event-driven concurrent programming tools of distributed algorithms. However, there is a need for a tool that helps researchers integrate distributed algorithms considering the specifics of wireless networks. The tool has to incorporate wireless channel characteristics, packet collisions, contention-based channel access, forward- and backward-error correction, topology management, multi-hopping, or end-to-end reliable data transport and many other issues related to wireless communication and networking. 
-
-The overall goal of the AHC project is to develop an open-source education and research software framework that facilitates the development of distributed algorithms on wireless networks considering the impairments of wireless channels. The framework will be used as a learning and prompt-prototyping tool. 
-
-## Objectives
-The specific objectives are
-- Creating web-based education tools for teaching and learning distributed systems, networks, and communication,
-- Abstraction of the intricate details of the digital communication discipline from networking or distributed computing domains,
-- Creating easy-to-understand and accessible educational materials about wireless networks,
-- Providing hands-on opportunities for learning these technologies, inside of the classroom and out,
-- Facilitating a framework to invent new technologies,
-- Improving existing open-source digital communications technologies,
-- Creating a remote simulation environment by using web-based tools for getting more realistic, real-world experiment results,
-- Creating simulation configurations dynamically so that users will be able to run simulations by meeting specific requirements of projects. 
-
-## Users
-
-The users of the AHC framework will be students, teachers, researchers and engineers working in the fields of digital communication, networking or distributed computing. The developed framework will be available to all these user groups as open-source software. 
-
-# Design
-
-In this section, we present the details of the ad hoc computing library (AHC) library and algorithms thereof following an asynchronous event-driven composition model.  The AHC library is being implemented in Python language, and the software is provided as open-source at [https://github.com/cengwins/ahc](https://github.com/cengwins/ahc).  The basic abstraction of AHC is a component, which is a single-threaded automaton. In other words, a component is a single-threaded process implemented in python where the thread waits on a queue for accepting input events from other components. Each component has a name and an instance number. The name and the instance number together uniquely represent each component instance. A component is an event-driven active process that waits for an input event. From this perspective, a component is an automaton. 
+We present the details of the ad hoc computing library (AHC) library and algorithms thereof following an asynchronous event-driven composition model.  The AHC library is being implemented in Python language, and the software is provided as open-source at [https://github.com/cengwins/ahc](https://github.com/cengwins/ahc).  The basic abstraction of AHC is a component, which is a single-threaded automaton. In other words, a component is a single-threaded process implemented in python where the thread waits on a queue for accepting input events from other components. Each component has a name and an instance number. The name and the instance number together uniquely represent each component instance. A component is an event-driven active process that waits for an input event. From this perspective, a component is an automaton. 
 
 Each component has a separate eventhandlers dictionary (hash table) to which the event handlers are added on the initialization of the component. The component model automatically adds the "init" event to the eventhandlers dictionary. Note that the name of the event is "init" and the function that will handle the "init" event is onInit. The constructor of the component model executes the following.
 - initializes the eventhandlers dictionary. This dictionary allows us to develop generic component models and automata. 
@@ -70,3 +49,57 @@ As we have already described, the lowest-layer component's down connector is con
 ## Contact
 
 Ertan Onur - [@ertan10r](https://twitter.com/Ertan10r) - eronur@metu.edu.tr
+
+
+
+
+
+## Features to be added
+
+Some features that can be added to AHCv2
+
+- Implementation of various logical channel models
+- Implementation of various failure models (omission, commission, Byzantine, ...)
+- Ethernet switch implementation
+- Extension of logical clocks
+- Implementation of various topology generators (Erdös-Renyi, power law, small-world graphs)
+- Porting routing protocols from AHC v1.2.2 to AHCv2
+- Porting some distributed algorithms from AHC v1.2.2 to AHCv2
+- Openflow data plane 
+- TAP interface integration for Ethernet-based communication
+- TUN interface integration for IP-based communication
+- Distribution of the AHCv2 (This will be AHCv3)
+- Implementation of various queueing disciplines internal to AHCv2
+- Implementation of additional distributed algorithms
+    - Failure detectors
+    - Consensus
+        - PAXOS
+        - RAFT
+    - Networking
+        - Pipelining protocols
+        - ARQ protocols
+        - Reliable data transport protocols
+    - Group communication
+        - Atomic multi/broadcast
+        - Ordered multi/broadcast
+            - Local-order, total-order, causal-order, FIFO broadcast 
+        - Reliable multi/broadcast
+        - Reliable ordered multi/broadcast
+    - Atomic commit
+    - Distributed graph algorithms 
+        - Spanning tree protocols
+        - Distance vector protocols
+        - Link state protocols
+        - Interval routing
+        - Prefix routing
+    - Mutual exclusion algorithms
+    - Snapshot algorithms
+    - Global state collection algorithms (Computation of the network topology, counting the number of processes in a distributed system, detecting termination, detecting deadlock, detecting loss of coordination)
+    - Coordination algorithms
+        - Leader election
+    - Distributed hash tables (Tapestry, Pastry, Kademlia)
+    - Distributed key-value store
+    - Conflict-free Replicated Data Types (CRDT)
+    - Distributed algorithm to AHCv2 compiler
+    - [TLA+](http://lamport.azurewebsites.net/tla/news.html) to AHCv2 compiler (This will help us be formal)
+

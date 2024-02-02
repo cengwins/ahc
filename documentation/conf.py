@@ -9,7 +9,7 @@
 project = 'Ad Hoc Computing Framework'
 copyright = '2024, Ertan Onur'
 author = 'Ertan Onur'
-release = 'v2.1.6'
+release = 'v2.1.8'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
