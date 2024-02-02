@@ -247,6 +247,7 @@ class AHCLoggingHttpHandler(HTTPHandler):
 logger = getLogger("AHC")
 ch = StreamHandler()
 chweb = AHCLoggingHttpHandler(host="localhost:8000", url='/logs', method='POST', secure=False)
+
 def setAHCLogLevel(level):
   logger.setLevel(level)
   ch.setLevel(level)

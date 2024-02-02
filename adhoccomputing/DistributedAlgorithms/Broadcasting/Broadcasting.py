@@ -29,8 +29,9 @@ class ControlledFlooding(GenericModel):
     destination = MessageDestinationIdentifiers.NETWORKLAYERBROADCAST
     nexthop = MessageDestinationIdentifiers.LINKLAYERBROADCAST
     logger.info(f"{self.componentinstancenumber} will SEND a message to {destination} over {nexthop}")
+    interfaceid = float('inf')  
     hdr = BroadcastingMessageHeader(BroadcastingMessageTypes.SIMPLEFLOOD, whosends, destination,
-                                    nexthop, sequencenumber=sequencenumber)
+                                    nexthop, interfaceid=interfaceid,sequencenumber=sequencenumber)
     payload = applmsg
     broadcastmessage = GenericMessage(hdr, payload)
     self.send_down(Event(self, EventTypes.MFRT, broadcastmessage))
@@ -60,8 +61,10 @@ class ControlledFlooding(GenericModel):
           self.send_up(evt)
           # Also continue flooding once
           #time.sleep(random.randint(1, 3))
-          self.senddownbroadcast(eventobj, eventobj.eventcontent.header.messagefrom,
-                                 eventobj.eventcontent.header.sequencenumber)
+          event = Event(self, BroadcastingEventTypes.BROADCAST, payload)
+          self.senddownbroadcast(event, eventobj.eventcontent.header.messagefrom, eventobj.eventcontent.header.sequencenumber)
+          #self.senddownbroadcast(eventobj, eventobj.eventcontent.header.messagefrom,
+          #                       eventobj.eventcontent.header.sequencenumber)
 
   def __init__(self, componentname, componentinstancenumber, context=None, configurationparameters=None, num_worker_threads=1, topology=None):
     super().__init__(componentname, componentinstancenumber, context, configurationparameters, num_worker_threads, topology)
