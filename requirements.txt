@@ -1,4 +1,3 @@
-adhoccomputing @ file:///Users/eonur/Development/ahc
 alabaster==0.7.16
 Babel==2.14.0
 certifi==2023.11.17
