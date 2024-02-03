@@ -58,18 +58,26 @@ Ertan Onur - [@ertan10r](https://twitter.com/Ertan10r) - eronur@metu.edu.tr
 
 Some features that can be added to AHCv2
 
+### High Priority 
 - Implementation of various logical channel models
+- Integration with [OVS](https://www.openvswitch.org)
+- Openflow data plane 
+- Distributed algorithm to AHCv2 compiler
+- [TLA+](http://lamport.azurewebsites.net/tla/news.html) to AHCv2 compiler (This will help us be formal)
+- Implementation of various queueing disciplines internal to AHCv2
+- Distribution of the AHCv2 (This will be AHCv3)
+- TAP interface integration for Ethernet-based communication
+- TUN interface integration for IP-based communication
+
+
+### Low Priority 
+
 - Implementation of various failure models (omission, commission, Byzantine, ...)
-- Ethernet switch implementation
+- Ethernet switch implementation as a component
 - Extension of logical clocks
 - Implementation of various topology generators (Erdös-Renyi, power law, small-world graphs)
 - Porting routing protocols from AHC v1.2.2 to AHCv2
 - Porting some distributed algorithms from AHC v1.2.2 to AHCv2
-- Openflow data plane 
-- TAP interface integration for Ethernet-based communication
-- TUN interface integration for IP-based communication
-- Distribution of the AHCv2 (This will be AHCv3)
-- Implementation of various queueing disciplines internal to AHCv2
 - Implementation of additional distributed algorithms
     - Failure detectors
     - Consensus
@@ -100,6 +108,4 @@ Some features that can be added to AHCv2
     - Distributed hash tables (Tapestry, Pastry, Kademlia)
     - Distributed key-value store
     - Conflict-free Replicated Data Types (CRDT)
-    - Distributed algorithm to AHCv2 compiler
-    - [TLA+](http://lamport.azurewebsites.net/tla/news.html) to AHCv2 compiler (This will help us be formal)
 
